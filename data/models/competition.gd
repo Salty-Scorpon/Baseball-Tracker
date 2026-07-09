@@ -1,6 +1,8 @@
 class_name Competition
 extends RefCounted
 
+const DateUtils := preload("res://data/date_utils.gd")
+
 var id: String
 var name: String
 var year: int
@@ -54,4 +56,8 @@ func validate() -> PackedStringArray:
 	if name.strip_edges().is_empty(): errors.append("Competition name is required.")
 	if year < 0: errors.append("Competition year cannot be negative.")
 	if ruleset_id.strip_edges().is_empty(): errors.append("Competition ruleset_id is required.")
+	if not DateUtils.is_valid_iso_date(start_date): errors.append("Competition start_date must use YYYY-MM-DD.")
+	if not DateUtils.is_valid_iso_date(end_date): errors.append("Competition end_date must use YYYY-MM-DD.")
+	if DateUtils.is_valid_iso_date(start_date) and DateUtils.is_valid_iso_date(end_date) and not start_date.is_empty() and not end_date.is_empty() and start_date > end_date:
+		errors.append("Competition start_date cannot be after end_date.")
 	return errors
