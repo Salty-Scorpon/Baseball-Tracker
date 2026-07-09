@@ -66,13 +66,13 @@ func _on_entity_selected(index: int) -> void:
 	_show_editor(_selected_entity())
 
 func _on_new_pressed() -> void:
-	var entity := _make_new_entity(selected_type)
+	var entity: Variant = _make_new_entity(selected_type)
 	selected_id = entity.id
 	_show_editor(entity)
 	status_label.text = "Editing new %s. Save to add it." % _singular(selected_type)
 
 func _on_save_pressed() -> void:
-	var entity := _selected_entity()
+	var entity: Variant = _selected_entity()
 	var is_new := false
 	if entity == null:
 		entity = _make_new_entity(selected_type)
