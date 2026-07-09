@@ -1,6 +1,8 @@
 class_name Game
 extends RefCounted
 
+const DateUtils := preload("res://data/date_utils.gd")
+
 var id: String
 var competition_id: String
 var home_team_id: String
@@ -52,5 +54,6 @@ func validate() -> PackedStringArray:
 	if home_team_id.strip_edges().is_empty(): errors.append("Game home_team_id is required.")
 	if away_team_id.strip_edges().is_empty(): errors.append("Game away_team_id is required.")
 	if home_team_id == away_team_id and not home_team_id.is_empty(): errors.append("Game home and away teams must be different IDs.")
+	if not DateUtils.is_valid_iso_date(date): errors.append("Game date must use YYYY-MM-DD.")
 	if not ["Scheduled", "In Progress", "Final", "Suspended", "Cancelled"].has(status): errors.append("Game status is invalid.")
 	return errors

@@ -8,6 +8,8 @@ const TeamModel := preload("res://data/models/team.gd")
 const PlayerModel := preload("res://data/models/player.gd")
 const GameModel := preload("res://data/models/game.gd")
 const RulesetModel := preload("res://data/models/ruleset.gd")
+const DateUtils := preload("res://data/date_utils.gd")
+const DateFieldScript := preload("res://ui/common/date_field.gd")
 
 @onready var entity_tabs: TabBar = %EntityTabs
 @onready var search_field: LineEdit = %SearchField
@@ -141,15 +143,19 @@ func _show_editor(entity: Variant) -> void:
 	if entity == null:
 		return
 	for spec in _field_specs(selected_type):
-		_add_field(spec[0], spec[1], _get_value(entity, spec[0]), spec[2] if spec.size() > 2 else [])
+		_add_field(spec[0], spec[1], _get_value(entity, spec[0]), spec[2] if spec.size() > 2 else [], spec[3] if spec.size() > 3 else "")
 	warning_label.text = "\n".join(_validate_entity(entity))
 
-func _add_field(property: String, label_text: String, value: Variant, options: Array = []) -> void:
+func _add_field(property: String, label_text: String, value: Variant, options: Array = [], editor_type: String = "") -> void:
 	var label := Label.new()
 	label.text = label_text
 	form_grid.add_child(label)
 	var control: Control
-	if not options.is_empty():
+	if editor_type == "date":
+		var date_field := DateFieldScript.new()
+		date_field.set_date_text(_stringify_value(value))
+		control = date_field
+	elif not options.is_empty():
 		var option := OptionButton.new()
 		option.add_item("")
 		for item in options:
@@ -166,10 +172,10 @@ func _add_field(property: String, label_text: String, value: Variant, options: A
 
 func _field_specs(type: String) -> Array:
 	match type:
-		"competitions": return [["id", "ID"], ["name", "Name"], ["year", "Year"], ["location", "Location"], ["ruleset_id", "Ruleset ID", _ids(repository.rulesets)], ["start_date", "Start Date"], ["end_date", "End Date"], ["notes", "Notes"]]
+		"competitions": return [["id", "ID"], ["name", "Name"], ["year", "Year"], ["location", "Location"], ["ruleset_id", "Ruleset ID", _ids(repository.rulesets)], ["start_date", "Start Date", [], "date"], ["end_date", "End Date", [], "date"], ["notes", "Notes"]]
 		"teams": return [["id", "ID"], ["competition_id", "Competition", _ids(repository.competitions)], ["name", "Team Name"], ["school_name", "School"], ["region", "Region"], ["short_name", "Short Name"], ["abbreviation", "Abbreviation"], ["coach_name", "Coach"], ["colors", "Colors (comma separated)"], ["notes", "Notes"]]
 		"players": return [["id", "ID"], ["team_id", "Team", _ids(repository.teams)], ["display_name", "Display Name"], ["first_name", "First Name"], ["last_name", "Last Name"], ["japanese_name", "Japanese Name"], ["kana_reading", "Kana"], ["jersey_number", "Jersey #"], ["grade", "Grade"], ["positions", "Positions (comma separated)"], ["throws_hand", "Throws", ["Unknown", "Left", "Right", "Switch"]], ["bats", "Bats", ["Unknown", "Left", "Right", "Switch"]], ["notes", "Notes"]]
-		"games": return [["id", "ID"], ["competition_id", "Competition", _ids(repository.competitions)], ["home_team_id", "Home Team", _ids(repository.teams)], ["away_team_id", "Away Team", _ids(repository.teams)], ["date", "Date"], ["start_time", "Start Time"], ["venue", "Venue"], ["round", "Round"], ["game_number", "Game #"], ["status", "Status", ["Scheduled", "In Progress", "Final", "Suspended", "Cancelled"]], ["notes", "Notes"]]
+		"games": return [["id", "ID"], ["competition_id", "Competition", _ids(repository.competitions)], ["home_team_id", "Home Team", _ids(repository.teams)], ["away_team_id", "Away Team", _ids(repository.teams)], ["date", "Date", [], "date"], ["start_time", "Start Time"], ["venue", "Venue"], ["round", "Round"], ["game_number", "Game #"], ["status", "Status", ["Scheduled", "In Progress", "Final", "Suspended", "Cancelled"]], ["notes", "Notes"]]
 	return []
 
 func _apply_fields_to_entity(entity: Variant) -> void:
@@ -238,6 +244,16 @@ func _manual_validation_warnings() -> PackedStringArray:
 		var key := "%s|%s" % [player.team_id, player.jersey_number]
 		if jerseys.has(key): warnings.append("Duplicate jersey #%s on team %s." % [player.jersey_number, player.team_id])
 		jerseys[key] = true
+	for game in repository.games:
+		var competition: Competition = repository.find_entity_by_id(game.competition_id, "competitions")
+		if competition == null or game.date.strip_edges().is_empty() or not DateUtils.is_valid_iso_date(game.date):
+			continue
+		if not DateUtils.is_valid_iso_date(competition.start_date) or not DateUtils.is_valid_iso_date(competition.end_date):
+			continue
+		if not competition.start_date.strip_edges().is_empty() and game.date < competition.start_date:
+			warnings.append("Game %s date %s is before competition %s start date %s." % [game.id, game.date, competition.id, competition.start_date])
+		if not competition.end_date.strip_edges().is_empty() and game.date > competition.end_date:
+			warnings.append("Game %s date %s is after competition %s end date %s." % [game.id, game.date, competition.id, competition.end_date])
 	return warnings
 
 func _selected_entity() -> Variant: return repository.find_entity_by_id(selected_id, selected_type)
@@ -245,7 +261,10 @@ func _current_collection() -> Array: return repository.get(selected_type)
 func _ids(items: Array) -> Array: return items.map(func(item): return item.id)
 func _first_id(items: Array) -> String: return "" if items.is_empty() else items[0].id
 func _singular(type: String) -> String: return type.trim_suffix("s")
-func _field_text(control: Control) -> String: return control.text if control is LineEdit else control.get_item_text(control.selected)
+func _field_text(control: Control) -> String:
+	if control.has_method("get_date_text"):
+		return control.get_date_text()
+	return control.text if control is LineEdit else control.get_item_text(control.selected)
 func _csv_to_array(text: String) -> Array[String]:
 	var output: Array[String] = []
 	for part in text.split(",", false): output.append(part.strip_edges())
