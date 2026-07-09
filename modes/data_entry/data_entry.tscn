@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://ui/common/placeholder_screen.gd" id="1_placeholder"]
+[ext_resource type="Script" path="res://modes/data_entry/data_entry.gd" id="1_data_entry"]
 
 [node name="DataEntry" type="Control"]
 layout_mode = 3
@@ -9,37 +9,117 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_placeholder")
-screen_title = "DataEntry"
-description = "Placeholder for tournament, team, player, schedule, and historical data entry workflows."
+script = ExtResource("1_data_entry")
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="Root" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 12
 
-[node name="Content" type="VBoxContainer" parent="CenterContainer"]
+[node name="Header" type="HBoxContainer" parent="Root"]
 layout_mode = 2
-theme_override_constants/separation = 16
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/Content"]
-unique_name_in_owner = true
+[node name="Title" type="Label" parent="Root/Header"]
 layout_mode = 2
-text = "DataEntry"
-horizontal_alignment = 1
+size_flags_horizontal = 3
+text = "Data Entry"
+theme_override_font_sizes/font_size = 24
 
-[node name="DescriptionLabel" type="Label" parent="CenterContainer/Content"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Placeholder for tournament, team, player, schedule, and historical data entry workflows."
-horizontal_alignment = 1
-autowrap_mode = 3
-
-[node name="BackButton" type="Button" parent="CenterContainer/Content"]
+[node name="BackButton" type="Button" parent="Root/Header"]
 layout_mode = 2
 text = "Back to Main Menu"
 
-[connection signal="pressed" from="CenterContainer/Content/BackButton" to="." method="_on_back_button_pressed"]
+[node name="MainSplit" type="HSplitContainer" parent="Root"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 320
+
+[node name="ListPanel" type="VBoxContainer" parent="Root/MainSplit"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_constants/separation = 8
+
+[node name="EntityTabs" type="TabBar" parent="Root/MainSplit/ListPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+tab_count = 4
+tab_0/title = "Competitions"
+tab_1/title = "Teams"
+tab_2/title = "Players"
+tab_3/title = "Games"
+
+[node name="SearchField" type="LineEdit" parent="Root/MainSplit/ListPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Search/filter"
+
+[node name="NewButton" type="Button" parent="Root/MainSplit/ListPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "New"
+
+[node name="EntityList" type="ItemList" parent="Root/MainSplit/ListPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EditorPanel" type="VBoxContainer" parent="Root/MainSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="EditorTitle" type="Label" parent="Root/MainSplit/EditorPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Select an entity"
+theme_override_font_sizes/font_size = 20
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Root/MainSplit/EditorPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="FormGrid" type="GridContainer" parent="Root/MainSplit/EditorPanel/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 2
+
+[node name="WarningLabel" type="Label" parent="Root/MainSplit/EditorPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+text = ""
+
+[node name="Actions" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+
+[node name="SaveButton" type="Button" parent="Root/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save"
+
+[node name="DeleteButton" type="Button" parent="Root/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Delete"
+
+[node name="ValidateButton" type="Button" parent="Root/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Validate"
+
+[node name="StatusLabel" type="Label" parent="Root/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[connection signal="pressed" from="Root/Header/BackButton" to="." method="_on_back_button_pressed"]
