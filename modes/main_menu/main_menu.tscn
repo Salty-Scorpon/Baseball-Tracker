@@ -1,0 +1,65 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://modes/main_menu/main_menu.gd" id="1_menu"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuPanel" type="PanelContainer" parent="CenterContainer"]
+layout_mode = 2
+
+[node name="MenuMargin" type="MarginContainer" parent="CenterContainer/MenuPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="MenuItems" type="VBoxContainer" parent="CenterContainer/MenuPanel/MenuMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="CenterContainer/MenuPanel/MenuMargin/MenuItems"]
+layout_mode = 2
+text = "Baseball Stat Tracker"
+horizontal_alignment = 1
+
+[node name="DataEntryButton" type="Button" parent="CenterContainer/MenuPanel/MenuMargin/MenuItems"]
+layout_mode = 2
+text = "Data Entry"
+
+[node name="GameEntryButton" type="Button" parent="CenterContainer/MenuPanel/MenuMargin/MenuItems"]
+layout_mode = 2
+text = "Game Entry"
+
+[node name="DataViewingButton" type="Button" parent="CenterContainer/MenuPanel/MenuMargin/MenuItems"]
+layout_mode = 2
+text = "Data Viewing"
+
+[node name="ImportExportButton" type="Button" parent="CenterContainer/MenuPanel/MenuMargin/MenuItems"]
+layout_mode = 2
+text = "Import / Export"
+
+[node name="SettingsButton" type="Button" parent="CenterContainer/MenuPanel/MenuMargin/MenuItems"]
+layout_mode = 2
+text = "Settings"
+
+[connection signal="pressed" from="CenterContainer/MenuPanel/MenuMargin/MenuItems/DataEntryButton" to="." method="_on_data_entry_button_pressed"]
+[connection signal="pressed" from="CenterContainer/MenuPanel/MenuMargin/MenuItems/GameEntryButton" to="." method="_on_game_entry_button_pressed"]
+[connection signal="pressed" from="CenterContainer/MenuPanel/MenuMargin/MenuItems/DataViewingButton" to="." method="_on_data_viewing_button_pressed"]
+[connection signal="pressed" from="CenterContainer/MenuPanel/MenuMargin/MenuItems/ImportExportButton" to="." method="_on_import_export_button_pressed"]
+[connection signal="pressed" from="CenterContainer/MenuPanel/MenuMargin/MenuItems/SettingsButton" to="." method="_on_settings_button_pressed"]
