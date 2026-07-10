@@ -5,10 +5,10 @@ signal navigate_requested(screen_name: StringName)
 const SaveManagerScript := preload("res://data/saving/save_manager.gd")
 const SampleDataFactory := preload("res://data/sample_data_factory.gd")
 const GameEventModel := preload("res://data/models/game_event.gd")
+const GameReplay := preload("res://data/game_replay.gd")
 
 const EVENT_TYPES := ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Pitching change", "Substitution", "Manual correction"]
 const OUT_EVENTS := {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt": 1, "Sacrifice fly": 1, "Caught stealing": 1}
-const ADVANCE_EVENTS := {"Single": 1, "Double": 2, "Triple": 3, "Home run": 4, "Walk": 1, "Hit by pitch": 1, "Reached on error": 1, "Fielder's choice": 1}
 
 @onready var game_picker: OptionButton = %GamePicker
 @onready var teams_label: Label = %TeamsLabel
@@ -133,49 +133,20 @@ func _add_event() -> void:
 	event.rbi_count = int(rbi_spin.value)
 	event.notes = notes.text.strip_edges()
 	event.manual_override = type == "Manual correction" or event.runs_scored > 0 or not event.notes.is_empty()
-	_apply_event_to_state(event)
-	event.base_state_after = bases.duplicate(true)
 	repository.add_game_event(event)
+	_replay_events(true)
 	selected_game.status = "In Progress"
 	SaveManagerScript.save_project(repository)
 	notes.text = ""
 	_sync_default_outs()
 	_refresh_all()
 
-func _apply_event_to_state(event: GameEvent) -> void:
-	if ADVANCE_EVENTS.has(event.event_type):
-		_advance_runners(int(ADVANCE_EVENTS[event.event_type]), event.batter_id, event.event_type == "Home run")
-	elif event.event_type == "Stolen base":
-		_steal_one_base()
-	outs += event.outs_added
-	_add_runs(event.runs_scored)
-	while outs >= 3:
-		outs -= 3
-		bases = {"1B": "", "2B": "", "3B": ""}
-		if half_inning == "top":
-			half_inning = "bottom"
-		else:
-			half_inning = "top"
-			current_inning += 1
-
-func _advance_runners(bases_to_advance: int, batter_id: String, clear_bases: bool = false) -> void:
-	var occupied := [bases["3B"], bases["2B"], bases["1B"]]
-	bases = {"1B": "", "2B": "", "3B": ""}
-	for runner in occupied:
-		if runner.is_empty(): continue
-		var from_base := 3 - occupied.find(runner)
-		var target := from_base + bases_to_advance
-		if target <= 3: bases["%dB" % target] = runner
-	if not batter_id.is_empty() and not clear_bases and bases_to_advance <= 3:
-		bases["%dB" % bases_to_advance] = batter_id
-
-func _steal_one_base() -> void:
-	if not bases["2B"].is_empty() and bases["3B"].is_empty(): bases["3B"] = bases["2B"]; bases["2B"] = ""
-	elif not bases["1B"].is_empty() and bases["2B"].is_empty(): bases["2B"] = bases["1B"]; bases["1B"] = ""
-
-func _add_runs(count: int) -> void:
-	if half_inning == "top": score["away"] += count
-	else: score["home"] += count
+func _apply_replay_state(replay_state: GameReplayState) -> void:
+	current_inning = replay_state.inning
+	half_inning = replay_state.half_inning
+	outs = replay_state.outs
+	score = replay_state.score.duplicate(true)
+	bases = replay_state.bases.duplicate(true)
 
 func _undo_last_event() -> void:
 	var events := _game_events()
@@ -188,10 +159,8 @@ func _undo_last_event() -> void:
 	_refresh_all()
 	status_label.text = "Removed the most recent event and replayed game state."
 
-func _replay_events() -> void:
-	current_inning = 1; half_inning = "top"; outs = 0; score = {"away": 0, "home": 0}; bases = {"1B": "", "2B": "", "3B": ""}
-	for event in _game_events():
-		_apply_event_to_state(event)
+func _replay_events(mutate_events: bool = false) -> void:
+	_apply_replay_state(GameReplay.replay(_game_events(), starting_pitchers, mutate_events))
 
 func _refresh_all() -> void:
 	_refresh_matchup_options()
