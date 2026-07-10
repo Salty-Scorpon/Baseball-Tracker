@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://ui/common/placeholder_screen.gd" id="1_placeholder"]
+[ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
 
 [node name="GameEntry" type="Control"]
 layout_mode = 3
@@ -9,37 +9,162 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_placeholder")
-screen_title = "GameEntry"
-description = "Placeholder for live or post-game event entry workflows."
+script = ExtResource("1_game_entry")
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="Root" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 10
 
-[node name="Content" type="VBoxContainer" parent="CenterContainer"]
+[node name="Header" type="HBoxContainer" parent="Root"]
 layout_mode = 2
-theme_override_constants/separation = 16
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/Content"]
+[node name="TitleLabel" type="Label" parent="Root/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Game Entry"
+
+[node name="BackButton" type="Button" parent="Root/Header"]
+layout_mode = 2
+text = "Back"
+
+[node name="Body" type="HSplitContainer" parent="Root"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 430
+
+[node name="SetupPanel" type="VBoxContainer" parent="Root/Body"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SetupLabel" type="Label" parent="Root/Body/SetupPanel"]
+layout_mode = 2
+text = "Setup"
+
+[node name="GamePicker" type="OptionButton" parent="Root/Body/SetupPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "GameEntry"
-horizontal_alignment = 1
 
-[node name="DescriptionLabel" type="Label" parent="CenterContainer/Content"]
+[node name="TeamsLabel" type="Label" parent="Root/Body/SetupPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Placeholder for live or post-game event entry workflows."
-horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="BackButton" type="Button" parent="CenterContainer/Content"]
+[node name="LineupGrid" type="GridContainer" parent="Root/Body/SetupPanel"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "Back to Main Menu"
+columns = 2
 
-[connection signal="pressed" from="CenterContainer/Content/BackButton" to="." method="_on_back_button_pressed"]
+[node name="AwayLineup" type="TextEdit" parent="Root/Body/SetupPanel/LineupGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 150)
+layout_mode = 2
+placeholder_text = "Away lineup, one player per line"
+
+[node name="HomeLineup" type="TextEdit" parent="Root/Body/SetupPanel/LineupGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 150)
+layout_mode = 2
+placeholder_text = "Home lineup, one player per line"
+
+[node name="PitcherGrid" type="GridContainer" parent="Root/Body/SetupPanel"]
+layout_mode = 2
+columns = 2
+
+[node name="AwayPitcher" type="OptionButton" parent="Root/Body/SetupPanel/PitcherGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="HomePitcher" type="OptionButton" parent="Root/Body/SetupPanel/PitcherGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ApplySetupButton" type="Button" parent="Root/Body/SetupPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Confirm Teams, Lineups, and Pitchers"
+
+[node name="ScoringPanel" type="VBoxContainer" parent="Root/Body"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StateLabel" type="Label" parent="Root/Body/ScoringPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="BasesLabel" type="Label" parent="Root/Body/ScoringPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="EventGrid" type="GridContainer" parent="Root/Body/ScoringPanel"]
+layout_mode = 2
+columns = 2
+
+[node name="EventType" type="OptionButton" parent="Root/Body/ScoringPanel/EventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="RunsSpin" type="SpinBox" parent="Root/Body/ScoringPanel/EventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 4.0
+
+[node name="ManualOutsSpin" type="SpinBox" parent="Root/Body/ScoringPanel/EventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 3.0
+
+[node name="RbiSpin" type="SpinBox" parent="Root/Body/ScoringPanel/EventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 4.0
+
+[node name="Batter" type="OptionButton" parent="Root/Body/ScoringPanel/EventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Pitcher" type="OptionButton" parent="Root/Body/ScoringPanel/EventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Notes" type="LineEdit" parent="Root/Body/ScoringPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Manual override notes / confusing scoring details"
+
+[node name="Buttons" type="HBoxContainer" parent="Root/Body/ScoringPanel"]
+layout_mode = 2
+
+[node name="AddEventButton" type="Button" parent="Root/Body/ScoringPanel/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add Event"
+
+[node name="UndoButton" type="Button" parent="Root/Body/ScoringPanel/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Undo Last Event"
+
+[node name="FinalizeButton" type="Button" parent="Root/Body/ScoringPanel/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Mark Final"
+
+[node name="History" type="ItemList" parent="Root/Body/ScoringPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StatusLabel" type="Label" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
