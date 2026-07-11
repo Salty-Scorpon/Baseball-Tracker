@@ -2,8 +2,8 @@ extends Control
 
 signal navigate_requested(screen_name: StringName)
 
-@export var screen_title := "Placeholder"
-@export_multiline var description := "This screen will be implemented in a future task."
+@export var screen_title = "Placeholder"
+@export_multiline var description = "This screen will be implemented in a future task."
 
 @onready var title_label: Label = %TitleLabel
 @onready var description_label: Label = %DescriptionLabel

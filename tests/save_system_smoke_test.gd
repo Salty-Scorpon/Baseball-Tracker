@@ -1,14 +1,14 @@
 extends SceneTree
 
-const SampleDataFactory := preload("res://data/sample_data_factory.gd")
-const SaveManagerScript := preload("res://data/saving/save_manager.gd")
+const SampleDataFactory = preload("res://data/sample_data_factory.gd")
+const SaveManagerScript = preload("res://data/saving/save_manager.gd")
 
-const SAVE_PATH := "user://save_system_smoke_test.json"
+const SAVE_PATH = "user://save_system_smoke_test.json"
 
 func _init() -> void:
-	var exit_code := 0
-	var repository := SaveManagerScript.new_project()
-	var sample := SampleDataFactory.create_sample_competition()
+	var exit_code = 0
+	var repository = SaveManagerScript.new_project()
+	var sample = SampleDataFactory.create_sample_competition()
 
 	repository.add_ruleset(sample["rulesets"][0])
 	repository.add_competition(sample["competition"])
@@ -19,12 +19,12 @@ func _init() -> void:
 	for game in sample["games"]:
 		repository.add_game(game)
 
-	var reference_errors := repository.validate_broken_references()
+	var reference_errors = repository.validate_broken_references()
 	if not reference_errors.is_empty():
 		push_error("Sample data has broken references before save: %s" % [reference_errors])
 		exit_code = 1
 
-	var save_error := SaveManagerScript.save_project(repository, SAVE_PATH)
+	var save_error = SaveManagerScript.save_project(repository, SAVE_PATH)
 	if save_error != OK:
 		push_error("Save failed with error %d." % save_error)
 		exit_code = 1
@@ -34,12 +34,12 @@ func _init() -> void:
 		push_error("Repository reset did not clear project data.")
 		exit_code = 1
 
-	var loaded := SaveManagerScript.load_project(SAVE_PATH)
+	var loaded = SaveManagerScript.load_project(SAVE_PATH)
 	if loaded == null:
 		push_error("Load returned null repository.")
 		exit_code = 1
 	else:
-		var loaded_errors := loaded.validate_broken_references()
+		var loaded_errors = loaded.validate_broken_references()
 		if not loaded_errors.is_empty():
 			push_error("Loaded data has broken references: %s" % [loaded_errors])
 			exit_code = 1

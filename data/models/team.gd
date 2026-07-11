@@ -45,7 +45,7 @@ func to_dict() -> Dictionary:
 	}
 
 static func from_dict(data: Dictionary) -> Team:
-	var team := Team.new(str(data.get("id", "")), str(data.get("competition_id", "")), str(data.get("name", "")))
+	var team = Team.new(str(data.get("id", "")), str(data.get("competition_id", "")), str(data.get("name", "")))
 	team.school_name = str(data.get("school_name", ""))
 	team.region = str(data.get("region", ""))
 	team.short_name = str(data.get("short_name", ""))
@@ -66,7 +66,7 @@ func add_game_id(game_id: String) -> void:
 		game_ids.append(game_id)
 
 func validate() -> PackedStringArray:
-	var errors := PackedStringArray()
+	var errors = PackedStringArray()
 	if id.strip_edges().is_empty():
 		errors.append("Team id is required.")
 	if competition_id.strip_edges().is_empty():

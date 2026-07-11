@@ -1,11 +1,11 @@
 extends SceneTree
 
-const GameEventModel := preload("res://data/models/game_event.gd")
-const GameReplay := preload("res://data/game_replay.gd")
+const GameEventModel = preload("res://data/models/game_event.gd")
+const GameReplay = preload("res://data/game_replay.gd")
 
 func _init() -> void:
-	var exit_code := 0
-	var events := [
+	var exit_code = 0
+	var events = [
 		_event("e1", 1, "Single", "away_batter_1", "home_pitcher_1", 0, 0),
 		_event("e2", 2, "Double", "away_batter_2", "home_pitcher_1", 1, 0),
 		_event("e3", 3, "Groundout", "away_batter_3", "home_pitcher_1", 0, 1),
@@ -15,7 +15,7 @@ func _init() -> void:
 		_event("e7", 7, "Home run", "home_batter_2", "away_pitcher_2", 2, 0),
 	]
 
-	var state := GameReplay.replay(events, {"away": "away_pitcher_1", "home": "home_pitcher_1"}, true)
+	var state = GameReplay.replay(events, {"away": "away_pitcher_1", "home": "home_pitcher_1"}, true)
 	exit_code = _expect(state.score["away"] == 1 and state.score["home"] == 2, "Replay recalculates score from the same ordered event log.", exit_code)
 	exit_code = _expect(state.inning == 1 and state.half_inning == "bottom" and state.outs == 0, "Replay rebuilds inning half and outs.", exit_code)
 	exit_code = _expect(state.bases["1B"] == "" and state.bases["2B"] == "" and state.bases["3B"] == "", "Replay rebuilds base state after scoring plays.", exit_code)
@@ -25,13 +25,13 @@ func _init() -> void:
 
 	events[1].event_type = "Triple"
 	events[1].result = "Triple"
-	var edited_state := GameReplay.replay(events, {"away": "away_pitcher_1", "home": "home_pitcher_1"}, true)
+	var edited_state = GameReplay.replay(events, {"away": "away_pitcher_1", "home": "home_pitcher_1"}, true)
 	exit_code = _expect(edited_state.score["away"] == 1 and edited_state.bases["3B"] == "away_batter_2", "Editing an earlier event and replaying recalculates later state canonically.", exit_code)
 
 	quit(exit_code)
 
 func _event(id: String, sequence_number: int, event_type: String, batter_id: String, pitcher_id: String, runs_scored: int, outs_added: int) -> GameEvent:
-	var event := GameEventModel.new(id, "game_replay_test")
+	var event = GameEventModel.new(id, "game_replay_test")
 	event.sequence_number = sequence_number
 	event.event_type = event_type
 	event.result = event_type

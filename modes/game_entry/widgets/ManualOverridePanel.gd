@@ -20,29 +20,29 @@ const OVERRIDE_KEYS: Array[String] = [
 	"score",
 ]
 
-const BOOLEAN_KEYS := {"earned_run": true, "at_bat_credit": true}
-const INTEGER_KEYS := {"rbi": true, "pitch_count": true, "outs": true}
-const DICTIONARY_KEYS := {"base_state": true, "score": true, "fielder_assignment": true}
+const BOOLEAN_KEYS = {"earned_run": true, "at_bat_credit": true}
+const INTEGER_KEYS = {"rbi": true, "pitch_count": true, "outs": true}
+const DICTIONARY_KEYS = {"base_state": true, "score": true, "fielder_assignment": true}
 
 @onready var collapse_button: Button = %CollapseButton
 @onready var rows_container: VBoxContainer = %RowsContainer
 @onready var summary_label: Label = %SummaryLabel
 
-var _controls := {}
-var _is_collapsed := true
-var _pending_overrides := {}
+var _controls = {}
+var _is_collapsed = true
+var _pending_overrides = {}
 
 func _ready() -> void:
 	collapse_button.pressed.connect(_toggle_collapsed)
 	_build_rows()
-	var startup_overrides := _pending_overrides.duplicate(true)
+	var startup_overrides = _pending_overrides.duplicate(true)
 	reset()
 	if not startup_overrides.is_empty():
 		set_overrides(startup_overrides)
 	_set_collapsed(true)
 
 func get_overrides() -> Dictionary:
-	var output := {}
+	var output = {}
 	for key in OVERRIDE_KEYS:
 		var row: Dictionary = _controls[key]
 		output[key] = {
@@ -58,14 +58,14 @@ func set_overrides(data: Dictionary) -> void:
 		return
 	for key in OVERRIDE_KEYS:
 		var row: Dictionary = _controls[key]
-		var entry := Dictionary(data.get(key, {}))
+		var entry = Dictionary(data.get(key, {}))
 		row["enabled"].button_pressed = bool(entry.get("enabled", false))
 		row["value"].text = _value_to_text(entry.get("value", null))
 		row["reason"].text = str(entry.get("reason", ""))
 	_update_summary()
 
 func reset() -> void:
-	var defaults := {}
+	var defaults = {}
 	for key in OVERRIDE_KEYS:
 		defaults[key] = {"enabled": false, "value": null, "reason": ""}
 	set_overrides(defaults)
@@ -78,13 +78,13 @@ func has_active_overrides() -> bool:
 
 func validate() -> Array[String]:
 	var warnings: Array[String] = []
-	var data := get_overrides()
+	var data = get_overrides()
 	for key in OVERRIDE_KEYS:
 		var entry: Dictionary = data[key]
 		if not bool(entry["enabled"]):
 			continue
 		var row: Dictionary = _controls[key]
-		var raw_value := str(row["value"].text).strip_edges()
+		var raw_value = str(row["value"].text).strip_edges()
 		if raw_value.is_empty():
 			warnings.append("%s override is enabled without a value." % _label_for_key(key))
 		elif DICTIONARY_KEYS.has(key) and not entry["value"] is Dictionary:
@@ -100,20 +100,20 @@ func _build_rows() -> void:
 		child.queue_free()
 	_controls.clear()
 	for key in OVERRIDE_KEYS:
-		var row := VBoxContainer.new()
+		var row = VBoxContainer.new()
 		row.name = "%sRow" % key.to_pascal_case()
-		var header := HBoxContainer.new()
-		var enabled := CheckBox.new()
+		var header = HBoxContainer.new()
+		var enabled = CheckBox.new()
 		enabled.text = _label_for_key(key)
 		enabled.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		enabled.toggled.connect(func(_pressed: bool) -> void: _update_summary())
 		header.add_child(enabled)
 		row.add_child(header)
-		var value := LineEdit.new()
+		var value = LineEdit.new()
 		value.placeholder_text = _placeholder_for_key(key)
 		value.text_changed.connect(func(_new_text: String) -> void: _update_summary())
 		row.add_child(value)
-		var reason := LineEdit.new()
+		var reason = LineEdit.new()
 		reason.placeholder_text = "Reason / scorer notes"
 		reason.text_changed.connect(func(_new_text: String) -> void: _update_summary())
 		row.add_child(reason)
@@ -132,14 +132,14 @@ func _set_collapsed(collapsed: bool) -> void:
 func _update_summary() -> void:
 	if not is_node_ready():
 		return
-	var active := []
+	var active = []
 	for key in OVERRIDE_KEYS:
 		if _controls.has(key) and _controls[key]["enabled"].button_pressed:
 			active.append(_label_for_key(key))
 	summary_label.text = "No active manual overrides." if active.is_empty() else "Active: %s" % ", ".join(active)
 
 func _read_value(key: String, raw_text: String) -> Variant:
-	var text := raw_text.strip_edges()
+	var text = raw_text.strip_edges()
 	if text.is_empty():
 		return null
 	if INTEGER_KEYS.has(key):
@@ -149,7 +149,7 @@ func _read_value(key: String, raw_text: String) -> Variant:
 			return text.to_lower() in ["true", "yes", "1", "y"]
 		return text
 	if DICTIONARY_KEYS.has(key):
-		var parsed := JSON.parse_string(text)
+		var parsed = JSON.parse_string(text)
 		return parsed if parsed is Dictionary else text
 	return text
 

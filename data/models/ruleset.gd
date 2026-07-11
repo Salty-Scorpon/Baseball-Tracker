@@ -1,7 +1,7 @@
 class_name Ruleset
 extends RefCounted
 
-const DEFAULT_ID := "ruleset_standard_baseball"
+const DEFAULT_ID = "ruleset_standard_baseball"
 
 var id: String
 var name: String
@@ -35,7 +35,7 @@ func to_dict() -> Dictionary:
 	}
 
 static func from_dict(data: Dictionary) -> Ruleset:
-	var ruleset := Ruleset.new(str(data.get("id", "")), str(data.get("name", "Standard Baseball")))
+	var ruleset = Ruleset.new(str(data.get("id", "")), str(data.get("name", "Standard Baseball")))
 	ruleset.innings = int(data.get("innings", 9))
 	ruleset.allow_ties = bool(data.get("allow_ties", false))
 	ruleset.mercy_rule = Dictionary(data.get("mercy_rule", {})).duplicate(true)
@@ -45,7 +45,7 @@ static func from_dict(data: Dictionary) -> Ruleset:
 	return ruleset
 
 func validate() -> PackedStringArray:
-	var errors := PackedStringArray()
+	var errors = PackedStringArray()
 	if id.strip_edges().is_empty():
 		errors.append("Ruleset id is required.")
 	if name.strip_edges().is_empty():

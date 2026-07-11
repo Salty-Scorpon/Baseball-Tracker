@@ -10,8 +10,8 @@ extends RefCounted
 ## details["runner_advancements"], details["fielder_assignment"], and
 ## details["manual_overrides"].
 
-const SEVERITY_ERROR := "error"
-const SEVERITY_WARNING := "warning"
+const SEVERITY_ERROR = "error"
+const SEVERITY_WARNING = "warning"
 
 const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"single",
@@ -25,7 +25,7 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"flyout",
 ]
 
-const PITCH_THROWN_EVENT_TYPES := {
+const PITCH_THROWN_EVENT_TYPES = {
 	"single": true,
 	"double": true,
 	"triple": true,
@@ -37,21 +37,21 @@ const PITCH_THROWN_EVENT_TYPES := {
 	"flyout": true,
 }
 
-const BATTED_BALL_OUT_EVENT_TYPES := {
+const BATTED_BALL_OUT_EVENT_TYPES = {
 	"groundout": true,
 	"flyout": true,
 }
 
-const ACTIVE_BASES := {"1B": true, "2B": true, "3B": true}
+const ACTIVE_BASES = {"1B": true, "2B": true, "3B": true}
 
 static func validate_event_payload(payload: Dictionary) -> Array[Dictionary]:
 	var messages: Array[Dictionary] = []
-	var event_type := _normalize_event_type(str(payload.get("event_type", "")))
-	var details := _as_dictionary(payload.get("details", {}))
-	var advancements := _as_array(details.get("runner_advancements", []))
-	var count := _as_dictionary(details.get("count", {}))
-	var fielder_assignment := _as_dictionary(details.get("fielder_assignment", {}))
-	var manual_overrides := _as_dictionary(details.get("manual_overrides", payload.get("manual_overrides", {})))
+	var event_type = _normalize_event_type(str(payload.get("event_type", "")))
+	var details = _as_dictionary(payload.get("details", {}))
+	var advancements = _as_array(details.get("runner_advancements", []))
+	var count = _as_dictionary(details.get("count", {}))
+	var fielder_assignment = _as_dictionary(details.get("fielder_assignment", {}))
+	var manual_overrides = _as_dictionary(details.get("manual_overrides", payload.get("manual_overrides", {})))
 
 	if event_type.is_empty():
 		_add_error(messages, "event_type", "Event type is required.")
@@ -90,24 +90,24 @@ static func warnings_only(messages: Array) -> Array[Dictionary]:
 	return output
 
 static func _validate_count(messages: Array[Dictionary], event_type: String, count: Dictionary, manual_overrides: Dictionary) -> void:
-	var strikes := int(count.get("strikes", count.get("strikes_on_final_pitch", 0)))
+	var strikes = int(count.get("strikes", count.get("strikes_on_final_pitch", 0)))
 	if event_type in ["walk", "hit_by_pitch"] and strikes > 2 and not _has_enabled_override(manual_overrides, "pitch_count"):
 		_add_error(messages, "details.count.strikes", "%s cannot have more than 2 strikes in the final count." % event_type.capitalize())
-	var balls := int(count.get("balls", count.get("balls_on_final_pitch", 0)))
+	var balls = int(count.get("balls", count.get("balls_on_final_pitch", 0)))
 	if balls < 0 or strikes < 0:
 		_add_error(messages, "details.count", "Final count values cannot be negative.")
 
 static func _validate_runner_advancements(messages: Array[Dictionary], event_type: String, batter_id: String, advancements: Array) -> void:
-	var occupied_after := {}
-	var batter_scored := false
-	var saw_batter := false
+	var occupied_after = {}
+	var batter_scored = false
+	var saw_batter = false
 	for index in range(advancements.size()):
-		var advancement := _as_dictionary(advancements[index])
-		var runner_id := str(advancement.get("runner_id", ""))
-		var label := "runner %d" % (index + 1)
-		var end_base := str(advancement.get("end_base", "")).to_upper()
-		var scored := bool(advancement.get("scored", false)) or end_base == "SCORED"
-		var is_out := bool(advancement.get("out", false)) or end_base == "OUT"
+		var advancement = _as_dictionary(advancements[index])
+		var runner_id = str(advancement.get("runner_id", ""))
+		var label = "runner %d" % (index + 1)
+		var end_base = str(advancement.get("end_base", "")).to_upper()
+		var scored = bool(advancement.get("scored", false)) or end_base == "SCORED"
+		var is_out = bool(advancement.get("out", false)) or end_base == "OUT"
 		if runner_id == batter_id and not batter_id.is_empty():
 			saw_batter = true
 			batter_scored = scored
@@ -122,9 +122,9 @@ static func _validate_runner_advancements(messages: Array[Dictionary], event_typ
 		_add_error(messages, "details.runner_advancements", "A home run must score the batter.")
 
 static func _validate_outs(messages: Array[Dictionary], event_type: String, payload: Dictionary, advancements: Array, manual_overrides: Dictionary) -> void:
-	var outs_before := int(payload.get("outs_before", 0))
-	var outs_after := int(payload.get("outs_after", outs_before + _outs_from_advancements(advancements)))
-	var outs_added := max(0, outs_after - outs_before)
+	var outs_before = int(payload.get("outs_before", 0))
+	var outs_after = int(payload.get("outs_after", outs_before + _outs_from_advancements(advancements)))
+	var outs_added = max(0, outs_after - outs_before)
 	if event_type == "strikeout" and outs_added < 1 and not _has_enabled_override(manual_overrides, "outs"):
 		_add_warning(messages, "outs_after", "A strikeout should add at least one out unless manually overridden.")
 	if BATTED_BALL_OUT_EVENT_TYPES.has(event_type) and outs_added < 1 and not _has_enabled_override(manual_overrides, "outs"):
@@ -135,20 +135,20 @@ static func _validate_outs(messages: Array[Dictionary], event_type: String, payl
 static func _validate_fielder_assignment(messages: Array[Dictionary], event_type: String, fielder_assignment: Dictionary) -> void:
 	if not BATTED_BALL_OUT_EVENT_TYPES.has(event_type):
 		return
-	var has_fielder := not _is_blank(fielder_assignment.get("primary_fielder_id", "")) or not _is_blank(fielder_assignment.get("putout_fielder_id", "")) or not _as_array(fielder_assignment.get("assist_fielder_ids", [])).is_empty()
+	var has_fielder = not _is_blank(fielder_assignment.get("primary_fielder_id", "")) or not _is_blank(fielder_assignment.get("putout_fielder_id", "")) or not _as_array(fielder_assignment.get("assist_fielder_ids", [])).is_empty()
 	if not has_fielder:
 		_add_warning(messages, "details.fielder_assignment", "Fielder assignment is unknown for this batted-ball out.")
 
 static func _outs_from_advancements(advancements: Array) -> int:
-	var total := 0
+	var total = 0
 	for item in advancements:
-		var advancement := _as_dictionary(item)
+		var advancement = _as_dictionary(item)
 		if bool(advancement.get("out", false)) or str(advancement.get("end_base", "")).to_upper() == "OUT":
 			total += 1
 	return total
 
 static func _has_enabled_override(manual_overrides: Dictionary, key: String) -> bool:
-	var entry := manual_overrides.get(key, {})
+	var entry = manual_overrides.get(key, {})
 	return entry is Dictionary and bool(entry.get("enabled", false))
 
 static func _add_error(messages: Array[Dictionary], field: String, message: String) -> void:

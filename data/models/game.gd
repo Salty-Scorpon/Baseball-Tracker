@@ -1,7 +1,7 @@
 class_name Game
 extends RefCounted
 
-const DateUtils := preload("res://data/date_utils.gd")
+const DateUtils = preload("res://data/date_utils.gd")
 
 var id: String
 var competition_id: String
@@ -34,7 +34,7 @@ func to_dict() -> Dictionary:
 	return {"id": id, "competition_id": competition_id, "home_team_id": home_team_id, "away_team_id": away_team_id, "date": date, "start_time": start_time, "venue": venue, "round": round, "game_number": game_number, "status": status, "notes": notes, "event_ids": event_ids.duplicate()}
 
 static func from_dict(data: Dictionary) -> Game:
-	var game := Game.new(str(data.get("id", "")), str(data.get("competition_id", "")))
+	var game = Game.new(str(data.get("id", "")), str(data.get("competition_id", "")))
 	game.home_team_id = str(data.get("home_team_id", ""))
 	game.away_team_id = str(data.get("away_team_id", ""))
 	game.date = str(data.get("date", ""))
@@ -48,7 +48,7 @@ static func from_dict(data: Dictionary) -> Game:
 	return game
 
 func validate() -> PackedStringArray:
-	var errors := PackedStringArray()
+	var errors = PackedStringArray()
 	if id.strip_edges().is_empty(): errors.append("Game id is required.")
 	if competition_id.strip_edges().is_empty(): errors.append("Game competition_id is required.")
 	if home_team_id.strip_edges().is_empty(): errors.append("Game home_team_id is required.")

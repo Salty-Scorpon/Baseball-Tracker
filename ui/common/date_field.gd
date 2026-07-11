@@ -1,13 +1,13 @@
 class_name DateField
 extends HBoxContainer
 
-const DateUtils := preload("res://data/date_utils.gd")
+const DateUtils = preload("res://data/date_utils.gd")
 
 signal date_changed(date_text: String)
 
-var selected_date := ""
-var display_year := 0
-var display_month := 0
+var selected_date = ""
+var display_year = 0
+var display_month = 0
 
 var date_edit: LineEdit
 var picker_button: Button
@@ -62,13 +62,13 @@ func _build_control() -> void:
 
 	popup = PopupPanel.new()
 	add_child(popup)
-	var panel := VBoxContainer.new()
+	var panel = VBoxContainer.new()
 	panel.custom_minimum_size = Vector2(280, 260)
 	popup.add_child(panel)
 
-	var header := HBoxContainer.new()
+	var header = HBoxContainer.new()
 	panel.add_child(header)
-	var previous := Button.new()
+	var previous = Button.new()
 	previous.text = "‹"
 	previous.pressed.connect(func() -> void: _change_month(-1))
 	header.add_child(previous)
@@ -76,7 +76,7 @@ func _build_control() -> void:
 	month_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	month_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(month_label)
-	var next := Button.new()
+	var next = Button.new()
 	next.text = "›"
 	next.pressed.connect(func() -> void: _change_month(1))
 	header.add_child(next)
@@ -115,19 +115,19 @@ func _refresh_calendar() -> void:
 		child.queue_free()
 	month_label.text = "%s %d" % [DateUtils.MONTH_NAMES[display_month - 1], display_year]
 	for weekday in DateUtils.WEEKDAY_NAMES:
-		var label := Label.new()
+		var label = Label.new()
 		label.text = weekday
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		days_grid.add_child(label)
 	for i in range(DateUtils.first_weekday_of_month(display_year, display_month)):
-		var spacer := Control.new()
+		var spacer = Control.new()
 		spacer.custom_minimum_size = Vector2(36, 28)
 		days_grid.add_child(spacer)
 	for day in range(1, DateUtils.days_in_month(display_year, display_month) + 1):
-		var button := Button.new()
+		var button = Button.new()
 		button.text = str(day)
 		button.custom_minimum_size = Vector2(36, 28)
-		var date_text := DateUtils.format_date(display_year, display_month, day)
+		var date_text = DateUtils.format_date(display_year, display_month, day)
 		button.disabled = false
 		if date_text == selected_date:
 			button.text = "[%d]" % day
@@ -147,7 +147,7 @@ func _set_display_from_today() -> void:
 	_set_display_from_date(DateUtils.today_iso())
 
 func _set_display_from_date(date_text: String) -> void:
-	var parsed := DateUtils.parse_iso_date(date_text)
+	var parsed = DateUtils.parse_iso_date(date_text)
 	if parsed.is_empty():
 		return
 	display_year = int(parsed["year"])
