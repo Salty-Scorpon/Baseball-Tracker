@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://ui/common/placeholder_screen.gd" id="1_placeholder"]
+[ext_resource type="Script" path="res://import_export/import_export.gd" id="1_import"]
 
 [node name="ImportExport" type="Control"]
 layout_mode = 3
@@ -9,37 +9,56 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_placeholder")
-screen_title = "ImportExport"
-description = "Placeholder for data import and export workflows."
+script = ExtResource("1_import")
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
 
-[node name="Content" type="VBoxContainer" parent="CenterContainer"]
+[node name="Content" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/Content"]
-unique_name_in_owner = true
+[node name="TitleLabel" type="Label" parent="MarginContainer/Content"]
 layout_mode = 2
-text = "ImportExport"
+text = "Import / Export"
 horizontal_alignment = 1
 
-[node name="DescriptionLabel" type="Label" parent="CenterContainer/Content"]
-unique_name_in_owner = true
+[node name="HelpLabel" type="Label" parent="MarginContainer/Content"]
 layout_mode = 2
-text = "Placeholder for data import and export workflows."
-horizontal_alignment = 1
+text = "Paste CSV, TSV, or copied spreadsheet rows. Required columns: team_name and player_name. Optional columns include region, jersey_number, position, bats, throws, and grade."
 autowrap_mode = 3
 
-[node name="BackButton" type="Button" parent="CenterContainer/Content"]
+[node name="ImportText" type="TextEdit" parent="MarginContainer/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(720, 260)
+layout_mode = 2
+size_flags_vertical = 3
+placeholder_text = "team_name,region,jersey_number,player_name,position,bats,throws,grade"
+
+[node name="ButtonRow" type="HBoxContainer" parent="MarginContainer/Content"]
+layout_mode = 2
+
+[node name="ImportButton" type="Button" parent="MarginContainer/Content/ButtonRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Import roster"
+
+[node name="BackButton" type="Button" parent="MarginContainer/Content/ButtonRow"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Back to Main Menu"
 
-[connection signal="pressed" from="CenterContainer/Content/BackButton" to="." method="_on_back_button_pressed"]
+[node name="ResultLabel" type="Label" parent="MarginContainer/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+text = "Import results and errors will appear here."
