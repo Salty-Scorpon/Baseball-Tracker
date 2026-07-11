@@ -1195,3 +1195,1606 @@ The finished program should feel like a serious local stat book for baseball.
 It should let the user build a complete tournament database, enter games efficiently, correct mistakes, and compare teams or players without being forced into one rigid format.
 
 The first real-world target is the 108th annual high school boys Japanese baseball tournament, but the underlying system should be flexible enough that the same app can track any baseball competition over any chosen span of time.
+
+
+# README Addendum — Expanded Game Entry Event Templates
+
+## Purpose of This Addendum
+
+This addendum expands the design for **Game Entry Mode**.
+
+The original Game Entry Mode supports basic event recording, such as:
+
+* Event type
+* Runs scored
+* Outs recorded
+* Basic batter/pitcher assignment
+* Basic base state changes
+
+That is not detailed enough for a strong baseball stat tracker.
+
+Game Entry Mode should be upgraded so that each event type has a more specific data-entry template. The user should not merely say “single, one run scored.” The app should optionally capture count, pitch total, runner movement, fielders involved, RBI assignment, errors, pitching responsibility, and substitutions.
+
+The goal is to make Game Entry Mode fast for normal plays but detailed enough for accurate stat calculation.
+
+---
+
+## Core Expansion Principle
+
+Each event type should use a custom event template.
+
+Do not build one giant generic event form for all events.
+
+A **Single** does not need the same fields as a **Pitching Change**.
+A **Sacrifice Fly** does not need the same fields as a **Pinch Runner**.
+A **Caught Stealing** does not need the same fields as a **Home Run**.
+
+Instead, create a reusable event-template system where each event type defines:
+
+* Required fields
+* Optional fields
+* Default stat effects
+* Default runner movement logic
+* UI widgets needed
+* Validation rules
+* Manual override options
+
+Recommended script:
+
+```text
+res://app/EventTemplateRegistry.gd
+```
+
+The registry should define all supported event types and tell Game Entry Mode what fields to show.
+
+---
+
+## Detail Levels
+
+Game Entry Mode should support three levels of detail.
+
+### 1. Quick Entry
+
+Fastest possible entry.
+
+Example:
+
+```text
+Single
+Runner from second scores
+1 RBI
+```
+
+The app fills normal defaults automatically.
+
+### 2. Detailed Entry
+
+Adds useful scoring information.
+
+Example:
+
+```text
+Single
+Count: 1-2
+Line drive to left field
+Runner from second scores
+Runner from first advances to third
+1 RBI
+```
+
+### 3. Advanced Entry
+
+Used for messy plays.
+
+Example:
+
+```text
+Single + throwing error
+Count: 2-1
+Line drive to right
+Runner from second scores
+Batter advances to second on E9
+Runner from first advances to third
+1 RBI
+Error charged to RF
+Earned run status left for manual review
+```
+
+The UI should default to Quick Entry, then allow the user to expand into Detailed or Advanced Entry.
+
+---
+
+## Shared Event Fields
+
+Every event should preserve the following shared structure:
+
+```text
+event_id
+game_id
+sequence
+inning
+half_inning
+offensive_team_id
+defensive_team_id
+event_type
+event_group
+outs_before
+outs_after
+base_state_before
+base_state_after
+score_before
+score_after
+runs_scored
+notes
+manual_override_flags
+```
+
+These fields should exist regardless of event type.
+
+---
+
+## Shared Fields for Pitch-Thrown Events
+
+Any event where a batter faces a pitcher should support pitch-count information.
+
+This includes:
+
+* Hits
+* Walks
+* Hit by pitch
+* Strikeouts
+* Groundouts
+* Flyouts
+* Lineouts
+* Popouts
+* Sacrifices
+* Fielder’s choice
+* Reached on error
+* Interference plays involving a plate appearance
+
+Shared pitch-thrown fields:
+
+```text
+batter_id
+pitcher_id
+count_before
+count_after
+balls_on_final_pitch
+strikes_on_final_pitch
+total_pitches_in_plate_appearance
+called_strikes
+swinging_strikes
+fouls
+balls
+pitch_count_manual_override
+```
+
+Important implementation note:
+
+Do not assume final count equals pitch count.
+
+A strikeout on a 2-2 count could be five pitches or ten pitches because of foul balls.
+
+For the MVP expansion, do not require full pitch-by-pitch tracking. Instead, allow:
+
+* Final count
+* Total pitches in plate appearance
+* Optional pitch breakdown
+
+---
+
+## Recommended Event Groups
+
+Organize event types into these groups:
+
+```text
+hits
+walks_and_free_bases
+strikeouts
+batted_ball_outs
+reached_base_events
+sacrifices
+multi_out_plays
+runner_only_events
+errors_and_defensive_events
+pitching_events
+substitutions
+game_administration
+manual_corrections
+```
+
+The event group should determine which widgets and validation rules are available.
+
+---
+
+# Event Group Specifications
+
+## 1. Hits
+
+Includes:
+
+```text
+single
+double
+triple
+home_run
+inside_the_park_home_run
+```
+
+Required fields:
+
+```text
+batter_id
+pitcher_id
+hit_type
+count
+total_pitches
+base_state_before
+runner_advancements
+runs_scored
+rbi
+base_state_after
+```
+
+Optional fields:
+
+```text
+hit_location
+batted_ball_type
+fielders_involved
+throwing_error
+fielding_error
+advance_on_error
+earned_run_override
+```
+
+Batted ball type options:
+
+```text
+ground_ball
+line_drive
+fly_ball
+pop_up
+bunt
+unknown
+```
+
+Simple hit location options:
+
+```text
+P
+C
+1B
+2B
+3B
+SS
+LF
+CF
+RF
+LCF
+RCF
+unknown
+```
+
+Home run default behavior:
+
+* Batter scores.
+* All runners score.
+* Batter gets a hit.
+* Batter gets total bases.
+* Batter gets RBI for each scored runner unless overridden.
+* Pitcher is charged with runs for runners he is responsible for.
+* Earned run status may require manual override.
+
+---
+
+## 2. Walks and Free Bases
+
+Includes:
+
+```text
+walk
+intentional_walk
+automatic_intentional_walk
+hit_by_pitch
+catcher_interference
+batter_interference
+```
+
+Walk fields:
+
+```text
+batter_id
+pitcher_id
+walk_type
+count
+total_pitches
+runner_advancements
+runs_scored
+rbi
+```
+
+Hit by pitch fields:
+
+```text
+batter_id
+pitcher_id
+count
+total_pitches
+runner_advancements
+runs_scored
+rbi
+body_area_optional
+```
+
+Catcher interference fields:
+
+```text
+batter_id
+catcher_id
+pitcher_id
+count
+batter_awarded_first
+runner_advancements
+errors_or_interference_assignment
+manual_ab_override
+```
+
+Default scoring note:
+
+Catcher interference usually does not count as an at-bat. The app should reflect this by default but allow manual override.
+
+---
+
+## 3. Strikeouts
+
+Includes:
+
+```text
+strikeout_swinging
+strikeout_looking
+strikeout_foul_bunt
+dropped_third_batter_out
+dropped_third_batter_reaches
+strikeout_double_play
+```
+
+Required fields:
+
+```text
+batter_id
+pitcher_id
+strikeout_type
+count
+total_pitches
+outs_added
+base_state_after
+```
+
+Optional fields:
+
+```text
+catcher_id
+putout_fielder_id
+assist_fielder_ids
+runner_advancements
+passed_ball
+wild_pitch
+error
+```
+
+Dropped third strike fields:
+
+```text
+third_strike_not_caught
+batter_reached_first
+reason_batter_reached
+catcher_charged_passed_ball
+pitcher_charged_wild_pitch
+throwing_error_fielder_id
+```
+
+Reason batter reached options:
+
+```text
+wild_pitch
+passed_ball
+catcher_throwing_error
+fielder_error
+manual
+```
+
+Dropped third strike events are important because they can create:
+
+* A strikeout for the pitcher
+* A batter reaching base
+* A wild pitch or passed ball
+* Runner advancement
+* Additional fielding involvement
+
+---
+
+## 4. Batted-Ball Outs
+
+Includes:
+
+```text
+groundout
+flyout
+lineout
+popout
+bunt_out
+tag_out
+force_out
+```
+
+Required fields:
+
+```text
+batter_id
+pitcher_id
+out_type
+count
+total_pitches
+primary_fielder_id
+outs_added
+runner_advancements
+base_state_after
+```
+
+Optional fields:
+
+```text
+assist_fielder_ids
+putout_fielder_id
+batted_ball_type
+hit_location
+runners_advanced
+rbi
+sacrifice_candidate
+```
+
+Groundout-specific fields:
+
+```text
+fielded_by
+throw_to_base
+putout_by
+assist_by
+runner_advancements
+outs_added
+rbi_if_runner_scores
+```
+
+Flyout-specific fields:
+
+```text
+caught_by
+runner_tag_up_advancements
+sacrifice_fly
+rbi
+outs_added
+```
+
+The app should ask whether a flyout with a runner scoring is a sacrifice fly.
+
+---
+
+## 5. Reached-Base Events
+
+Includes:
+
+```text
+reached_on_error
+fielders_choice
+dropped_third_reach
+catcher_interference
+other_reach
+```
+
+Reached on error fields:
+
+```text
+batter_id
+pitcher_id
+count
+total_pitches
+error_fielder_id
+error_type
+batter_end_base
+runner_advancements
+runs_scored
+rbi
+earned_run_override
+```
+
+Error type options:
+
+```text
+fielding
+throwing
+catching
+dropped_fly
+missed_tag
+missed_base
+interference
+unknown
+```
+
+Default reached-on-error scoring:
+
+```text
+PA = yes
+AB = yes
+H = no
+```
+
+Fielder’s choice fields:
+
+```text
+batter_id
+pitcher_id
+count
+total_pitches
+fielder_id
+runner_out_id
+out_base
+batter_end_base
+runner_advancements
+rbi
+outs_added
+```
+
+Default fielder’s choice scoring:
+
+```text
+PA = yes
+AB = yes
+H = no
+```
+
+---
+
+## 6. Sacrifices
+
+Includes:
+
+```text
+sacrifice_bunt
+sacrifice_fly
+```
+
+Sacrifice bunt fields:
+
+```text
+batter_id
+pitcher_id
+count
+total_pitches
+bunt_fielded_by
+putout_fielder_id
+assist_fielder_ids
+runner_advancements
+outs_added
+rbi
+safe_on_error
+```
+
+Default sacrifice bunt scoring:
+
+```text
+PA = yes
+AB = no
+SH = yes
+```
+
+Sacrifice fly fields:
+
+```text
+batter_id
+pitcher_id
+count
+total_pitches
+caught_by
+runner_scored_id
+runner_advancements
+outs_added
+rbi
+```
+
+Default sacrifice fly scoring:
+
+```text
+PA = yes
+AB = no
+SF = yes
+RBI = yes if runner scores, unless overridden
+```
+
+The app should suggest sacrifice fly only when:
+
+* There are fewer than two outs before the play.
+* A runner scores on a caught fly ball.
+
+The user must still be able to override this.
+
+---
+
+## 7. Multi-Out Plays
+
+Includes:
+
+```text
+double_play
+triple_play
+ground_ball_double_play
+line_drive_double_play
+flyout_throwout_double_play
+strikeout_caught_stealing_double_play
+interference_double_play
+manual_double_play
+```
+
+Required fields:
+
+```text
+batter_id
+pitcher_id
+count
+total_pitches
+play_type
+outs_recorded
+out_assignments
+runner_advancements
+base_state_after
+```
+
+Out assignment structure:
+
+```text
+out_number
+runner_or_batter_id
+out_base
+out_type
+putout_fielder_id
+assist_fielder_ids
+```
+
+Out type options:
+
+```text
+force_out
+tag_out
+caught_fly
+strikeout
+runner_interference
+appeal
+lineout
+other
+```
+
+This group should support detailed fielder assignment because double plays and triple plays affect fielding stats.
+
+---
+
+## 8. Runner-Only Events
+
+Includes:
+
+```text
+stolen_base
+caught_stealing
+pickoff
+pickoff_error
+wild_pitch_advance
+passed_ball_advance
+balk_advance
+defensive_indifference
+runner_out_advancing
+advance_on_throw
+advance_on_error
+```
+
+Shared runner event fields:
+
+```text
+runner_id
+start_base
+end_base
+event_reason
+pitcher_id
+catcher_id
+fielder_ids
+outs_added
+run_scored
+base_state_before
+base_state_after
+```
+
+Stolen base fields:
+
+```text
+runner_id
+start_base
+end_base
+pitcher_id
+catcher_id
+throw_made
+fielder_receiving_throw
+safe_or_out
+```
+
+Caught stealing fields:
+
+```text
+runner_id
+start_base
+attempted_base
+pitcher_id
+catcher_id
+putout_fielder_id
+assist_fielder_ids
+outs_added
+```
+
+Pickoff fields:
+
+```text
+runner_id
+base
+pitcher_id
+fielder_receiving_throw
+safe_or_out
+error_on_play
+advance_after_error
+```
+
+Wild pitch / passed ball fields:
+
+```text
+pitcher_id
+catcher_id
+runner_advancements
+runs_scored
+wild_pitch_or_passed_ball
+```
+
+Balk fields:
+
+```text
+pitcher_id
+runner_advancements
+runs_scored
+```
+
+Default scoring:
+
+* Wild pitch is charged to the pitcher.
+* Passed ball is charged to the catcher.
+* Balk is charged to the pitcher.
+
+---
+
+## 9. Errors and Defensive Events
+
+Errors should usually be attached to the event where they occurred.
+
+Example:
+
+```text
+Single, batter advances to second on E9
+```
+
+This should be one event with an error detail, not two disconnected events.
+
+Error fields:
+
+```text
+fielder_id
+error_type
+error_phase
+runner_or_batter_benefited
+extra_base_taken
+runs_scored_due_to_error
+earned_run_effect
+notes
+```
+
+Error phase options:
+
+```text
+fielding_batted_ball
+throwing_after_fielding
+catching_throw
+dropped_fly
+missed_tag
+missed_base
+relay_error
+pickoff_error
+other
+```
+
+---
+
+## 10. Pitching Events
+
+Includes:
+
+```text
+pitching_change
+mound_visit
+pitch_count_adjustment
+manual_pitcher_stat_correction
+```
+
+Pitching change fields:
+
+```text
+defensive_team_id
+outgoing_pitcher_id
+incoming_pitcher_id
+inning
+half_inning
+outs
+base_state
+batting_order_position
+runners_on_base
+runner_responsibility
+new_pitcher_defensive_position
+old_pitcher_new_position
+```
+
+Runner responsibility structure:
+
+```text
+runner_id
+responsible_pitcher_id
+base
+```
+
+This is critical. If a pitcher leaves with runners on base, those runners usually remain charged to the outgoing pitcher if they later score.
+
+Outgoing pitcher options:
+
+```text
+leave_game
+move_to_position
+remain_as_dh_if_ruleset_allows
+unknown
+```
+
+Incoming pitcher options:
+
+```text
+enter_from_bench
+move_from_existing_position
+```
+
+The app must support both.
+
+---
+
+## 11. Substitutions
+
+Includes:
+
+```text
+pinch_hitter
+pinch_runner
+defensive_substitution
+position_change
+batting_order_replacement
+re_entry
+batch_defensive_change
+```
+
+Shared substitution fields:
+
+```text
+team_id
+substitution_type
+player_out_id
+player_in_id
+inning
+half_inning
+batting_order_slot
+old_position
+new_position
+affects_batting_order
+notes
+```
+
+Pinch hitter fields:
+
+```text
+team_id
+player_out_id
+pinch_hitter_id
+batting_order_slot
+replaced_player_position
+pinch_hitter_position_after_half_inning
+```
+
+The pinch hitter should take the replaced player’s batting order slot.
+
+Pinch runner fields:
+
+```text
+team_id
+runner_out_id
+pinch_runner_id
+base
+batting_order_slot
+pinch_runner_position_after_half_inning
+```
+
+The pinch runner should inherit the runner state on base.
+
+Defensive substitution fields:
+
+```text
+team_id
+player_out_id
+player_in_id
+batting_order_slot
+old_position
+new_position
+```
+
+Position change fields:
+
+```text
+team_id
+player_id
+old_position
+new_position
+```
+
+A pure position change should not remove a player from the game.
+
+### Batch Defensive Change Wizard
+
+The UI should eventually support grouped defensive changes.
+
+Example:
+
+```text
+New pitcher enters.
+Old pitcher moves to left field.
+Left fielder leaves game.
+```
+
+This should be entered as one grouped defensive change, not three confusing disconnected events.
+
+Recommended UI feature:
+
+```text
+Defensive Change Wizard
+```
+
+---
+
+## 12. Game Administration Events
+
+Includes:
+
+```text
+start_game
+end_game
+suspended_game
+resume_game
+forfeit
+called_game
+mercy_rule
+weather_delay
+inning_adjustment
+score_correction
+```
+
+Fields:
+
+```text
+admin_event_type
+inning
+half_inning
+score
+reason
+notes
+manual_override
+```
+
+These events should not directly affect player stats unless explicitly marked as a correction.
+
+---
+
+## 13. Manual Correction Events
+
+Manual corrections are required because baseball scoring can involve judgment.
+
+Manual correction types:
+
+```text
+score_correction
+base_state_correction
+out_count_correction
+pitch_count_correction
+stat_correction
+earned_run_correction
+rbi_correction
+fielder_assignment_correction
+```
+
+Required fields:
+
+```text
+correction_type
+affected_team_id
+affected_player_id_optional
+old_value
+new_value
+reason
+notes
+```
+
+Manual corrections should be visible in:
+
+* Event history
+* Stat calculation
+* Export files
+* Debug output
+
+Do not hide manual corrections.
+
+---
+
+# Required Reusable UI Widgets
+
+Game Entry Mode should not create separate hardcoded forms for every event from scratch.
+
+Instead, build reusable widgets.
+
+## Count Entry Widget
+
+Used by pitch-thrown events.
+
+Fields:
+
+```text
+balls
+strikes
+total_pitches
+called_strikes
+swinging_strikes
+fouls
+balls_thrown
+manual_pitch_count_override
+```
+
+Compact UI:
+
+```text
+Balls:   0 1 2 3
+Strikes: 0 1 2
+Total pitches: [   ]
+```
+
+---
+
+## Runner Advancement Grid
+
+Used by any event where runners move.
+
+Example layout:
+
+```text
+Runner        Start     End       Scored?    Out?    RBI?    Reason
+Batter        Home      1B        No         No      No      Batter result
+Runner A      1B        3B        No         No      No      Batter result
+Runner B      2B        Home      Yes        No      Yes     Batter result
+```
+
+Fields per row:
+
+```text
+runner_id
+start_base
+end_base
+scored
+out
+rbi_credit
+advance_reason
+responsible_pitcher_id
+```
+
+Advance reason options:
+
+```text
+batter_result
+throw
+error
+wild_pitch
+passed_ball
+balk
+fielder_choice
+defensive_indifference
+manual
+```
+
+This widget is one of the most important upgrades.
+
+---
+
+## Fielder Assignment Widget
+
+Used by batted-ball outs, sacrifices, errors, and multi-out plays.
+
+Should support common scorekeeping shortcuts.
+
+Groundout examples:
+
+```text
+6-3
+4-3
+5-3
+1-3
+3U
+custom
+```
+
+Flyout examples:
+
+```text
+F7
+F8
+F9
+F6
+custom
+```
+
+Double play examples:
+
+```text
+6-4-3
+4-6-3
+5-4-3
+3-6-3
+1-2-3
+custom
+```
+
+The widget should allow both quick presets and manual fielder selection.
+
+---
+
+## Substitution Widget
+
+Used for:
+
+```text
+pinch_hitter
+pinch_runner
+defensive_substitution
+position_change
+batting_order_replacement
+re_entry
+```
+
+Required behavior:
+
+* Choose team.
+* Choose player leaving, if applicable.
+* Choose player entering, if applicable.
+* Choose batting order slot.
+* Choose old position.
+* Choose new position.
+* Preserve or update base runner state when needed.
+* Update active lineup.
+
+---
+
+## Pitching Change Widget
+
+Required behavior:
+
+* Choose defensive team.
+* Show current pitcher.
+* Choose incoming pitcher.
+* Determine whether incoming pitcher comes from bench or field.
+* Determine whether outgoing pitcher leaves or moves to another position.
+* Preserve runner responsibility for all runners currently on base.
+* Update active pitcher.
+* Update defensive alignment.
+
+---
+
+## Manual Override Panel
+
+Used by advanced event entry.
+
+Should support overrides for:
+
+```text
+rbi
+earned_run
+hit_vs_error
+sacrifice_status
+at_bat_credit
+pitch_count
+fielder_assignment
+winning_pitcher
+losing_pitcher
+save
+base_state
+outs
+score
+```
+
+Manual overrides should be clearly marked in the event log.
+
+---
+
+# Event Summary Before Commit
+
+After entering an event, show a readable summary before committing it.
+
+Example:
+
+```text
+Bot 3rd, 1 out:
+Yamada singles to LF on a 1-2 count.
+Sato scores from 2B.
+Tanaka advances from 1B to 3B.
+RBI: Yamada.
+Score: Osaka Toin 2, Opponent 1.
+```
+
+Buttons:
+
+```text
+Confirm
+Edit
+Cancel
+```
+
+The summary should be generated by a dedicated formatter.
+
+Recommended script:
+
+```text
+res://app/EventSummaryFormatter.gd
+```
+
+---
+
+# Expanded GameEvent Schema
+
+`GameEvent` should support a flexible `details` dictionary so that event-specific data can be stored without bloating the base event class.
+
+Example:
+
+```json
+{
+  "id": "event_023",
+  "game_id": "game_001",
+  "sequence": 23,
+  "inning": 4,
+  "half": "Top",
+  "event_type": "single",
+  "event_group": "hits",
+  "batter_id": "player_012",
+  "pitcher_id": "player_044",
+  "outs_before": 1,
+  "outs_after": 1,
+  "base_state_before": {
+    "first": "player_010",
+    "second": "player_011",
+    "third": null
+  },
+  "base_state_after": {
+    "first": "player_012",
+    "second": null,
+    "third": "player_010"
+  },
+  "runs_scored": [
+    {
+      "runner_id": "player_011",
+      "responsible_pitcher_id": "player_044",
+      "rbi_player_id": "player_012",
+      "earned": null
+    }
+  ],
+  "details": {
+    "count": {
+      "balls": 1,
+      "strikes": 2,
+      "total_pitches": 5,
+      "called_strikes": 1,
+      "swinging_strikes": 1,
+      "fouls": 2,
+      "balls_thrown": 1
+    },
+    "batted_ball": {
+      "type": "line_drive",
+      "location": "LF"
+    },
+    "runner_advancements": [
+      {
+        "runner_id": "player_010",
+        "start_base": "1B",
+        "end_base": "3B",
+        "scored": false,
+        "out": false,
+        "reason": "batter_result"
+      },
+      {
+        "runner_id": "player_011",
+        "start_base": "2B",
+        "end_base": "HOME",
+        "scored": true,
+        "out": false,
+        "reason": "batter_result"
+      }
+    ],
+    "fielders": [],
+    "errors": []
+  },
+  "manual_overrides": {},
+  "notes": ""
+}
+```
+
+The base fields should stay consistent. Event-specific information belongs in `details`.
+
+---
+
+# Event Validation Requirements
+
+Each event template should validate itself before commit.
+
+Examples:
+
+* A home run must score the batter.
+* A strikeout must have a batter and pitcher.
+* A pitching change must have an incoming pitcher.
+* A substitution must identify who entered, who left, or what position changed.
+* A caught stealing event should record an out unless manually overridden.
+* A walk cannot have more than two strikes as the final count.
+* A normal plate appearance event needs a current batter.
+* A batted-ball out needs at least one fielder assignment or an explicit unknown fielder value.
+* A runner cannot occupy two bases after the same event.
+* Two runners cannot end on the same base unless one is out or scored.
+* Outs after an event cannot exceed three unless the event ends a half-inning and replay logic normalizes the state.
+
+Invalid events should not be committed silently. Show a warning and allow the user to fix or manually override where appropriate.
+
+---
+
+# Smart Defaults
+
+The app should fill common assumptions automatically.
+
+Examples:
+
+* Single with bases empty places batter on first.
+* Double with bases empty places batter on second.
+* Triple with bases empty places batter on third.
+* Home run scores batter and all runners.
+* Walk with bases loaded scores the runner from third and credits RBI.
+* Hit by pitch with bases loaded scores the runner from third and credits RBI.
+* Strikeout adds one out.
+* Groundout adds one out.
+* Flyout adds one out.
+* Sacrifice bunt does not count as an at-bat.
+* Sacrifice fly does not count as an at-bat.
+* Reached on error counts as an at-bat but not a hit.
+* Fielder’s choice counts as an at-bat but not a hit.
+* Wild pitch is charged to the pitcher.
+* Passed ball is charged to the catcher.
+* Runners currently on base remain charged to their responsible pitcher after a pitching change.
+
+Every default must be overridable.
+
+---
+
+# Keyboard Shortcuts
+
+Game Entry Mode should eventually support keyboard shortcuts for speed.
+
+Suggested defaults:
+
+```text
+S = Single
+D = Double
+T = Triple
+H = Home run
+W = Walk
+K = Strikeout
+G = Groundout
+F = Flyout
+E = Reached on error
+C = Fielder's choice
+B = Stolen base
+P = Pitching change
+U = Substitution
+Ctrl+Z = Undo
+Ctrl+Y = Redo
+Enter = Confirm event
+Esc = Cancel event
+```
+
+Do not make keyboard shortcuts mandatory for MVP, but design Game Entry Mode so they can be added cleanly.
+
+---
+
+# Implementation Order for This Expansion
+
+Do not implement every event at once.
+
+## Expansion Batch 1 — Common Plate Appearances
+
+Implement detailed templates for:
+
+```text
+single
+double
+triple
+home_run
+walk
+hit_by_pitch
+strikeout
+groundout
+flyout
+```
+
+This batch should include:
+
+* Count Entry Widget
+* Runner Advancement Grid
+* Basic Fielder Assignment Widget
+* Event Summary Formatter
+* Event validation
+* Smart defaults
+
+## Expansion Batch 2 — Scoring Complexity
+
+Implement:
+
+```text
+reached_on_error
+fielders_choice
+sacrifice_bunt
+sacrifice_fly
+stolen_base
+caught_stealing
+wild_pitch
+passed_ball
+balk
+```
+
+This batch should expand:
+
+* Runner movement reasons
+* Error assignment
+* RBI overrides
+* Sacrifice defaults
+* Caught stealing fielder assignments
+
+## Expansion Batch 3 — Lineup and Pitching Management
+
+Implement:
+
+```text
+pitching_change
+pinch_hitter
+pinch_runner
+defensive_substitution
+position_change
+batting_order_replacement
+batch_defensive_change
+```
+
+This batch should include:
+
+* Pitching Change Widget
+* Substitution Widget
+* Defensive Change Wizard
+* Runner responsibility preservation
+* Active lineup updates
+* Defensive alignment updates
+
+## Expansion Batch 4 — Advanced and Rare Events
+
+Implement:
+
+```text
+double_play
+triple_play
+dropped_third_strike
+interference
+pickoff
+pickoff_error
+manual_correction
+earned_run_override
+win_loss_save_assignment
+game_administration_events
+```
+
+This batch should finish the advanced scoring layer.
+
+---
+
+# Codex Agent Instructions for This Expansion
+
+When implementing this expanded Game Entry system:
+
+1. Read the main README first.
+2. Preserve the event log as the source of truth.
+3. Keep UI code separate from stat calculation code.
+4. Add an `EventTemplateRegistry` or equivalent.
+5. Add reusable widgets instead of hardcoding every form.
+6. Keep each event’s custom data inside `GameEvent.details`.
+7. Add validation before committing events.
+8. Generate a readable event summary before commit.
+9. Make smart defaults overridable.
+10. Do not try to perfectly automate rare scoring judgment calls.
+11. Use manual overrides when a play requires scorer judgment.
+12. Do not break existing basic event entry while adding detailed entry.
+13. Do not hardcode the 108th Japanese tournament into event logic.
+14. Keep all formulas and stat effects centralized outside the UI.
+15. Use Godot 4.5-compatible GDScript only.
+
+---
+
+# First Codex Task Recommended From This Addendum
+
+The first implementation task should be:
+
+```text
+Create an EventTemplateRegistry and dynamic event-entry framework for Game Entry Mode.
+
+Support the first expansion batch:
+single, double, triple, home_run, walk, hit_by_pitch, strikeout, groundout, and flyout.
+
+Add reusable widgets for:
+- count entry
+- runner advancement
+- basic fielder assignment
+- manual overrides
+- event summary before commit
+
+Do not implement advanced substitutions, double plays, or rare events yet.
+Do not rewrite unrelated systems.
+Keep the event log canonical.
+```
+
+---
+
+# Final Design Target
+
+The final Game Entry Mode should feel like a fast scoring cockpit.
+
+The ideal flow is:
+
+```text
+1. Choose event type.
+2. App opens the correct event template.
+3. App fills common defaults.
+4. User adjusts count, runners, fielders, substitutions, or overrides.
+5. App shows a readable summary.
+6. User confirms.
+7. Event is committed.
+8. Game state is replayed.
+9. Scoreboard and stats update automatically.
+```
+
+The most important upgrades are:
+
+1. Runner Advancement Grid
+2. Count Entry Widget
+3. Pitching Change Widget
+4. Substitution Widget
+5. Event Summary Formatter
+6. Event validation
+7. Manual override visibility
+
+These systems will turn Game Entry Mode from a simple scoreboard input screen into a usable baseball stat book.
