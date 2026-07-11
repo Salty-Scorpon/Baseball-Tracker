@@ -43,6 +43,16 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"position_change",
 	"batting_order_replacement",
 	"batch_defensive_change",
+	"double_play",
+	"triple_play",
+	"dropped_third_strike",
+	"interference",
+	"pickoff",
+	"pickoff_error",
+	"manual_correction",
+	"earned_run_override",
+	"win_loss_save_assignment",
+	"game_administration_events",
 ]
 
 @onready var title_label: Label = %TitleLabel
@@ -88,6 +98,7 @@ func get_event_payload() -> Dictionary:
 		"pitching_change": _get_widget_data(EventTemplateRegistry.WIDGET_PITCHING_CHANGE),
 		"substitution": _get_widget_data(EventTemplateRegistry.WIDGET_SUBSTITUTION),
 		"defensive_change": _get_widget_data(EventTemplateRegistry.WIDGET_DEFENSIVE_CHANGE_WIZARD),
+		"out_assignments": _out_assignments_from_details(),
 	}
 	return {
 		"event_type": _event_type,
@@ -169,6 +180,14 @@ func _add_widget_for_key(widget_key: String) -> void:
 			_add_widget(widget_key, ManualOverridePanelScene.instantiate())
 		EventTemplateRegistry.WIDGET_EVENT_SUMMARY:
 			_add_summary_section(widget_key)
+		EventTemplateRegistry.WIDGET_OUT_ASSIGNMENTS:
+			_add_detail_section(widget_key)
+		EventTemplateRegistry.WIDGET_ADVANCED_PLAY_DETAILS:
+			_add_detail_section(widget_key)
+		EventTemplateRegistry.WIDGET_MANUAL_CORRECTION_DETAILS:
+			_add_detail_section(widget_key)
+		EventTemplateRegistry.WIDGET_GAME_ADMINISTRATION_DETAILS:
+			_add_detail_section(widget_key)
 		_:
 			_add_detail_section(widget_key)
 
@@ -251,7 +270,56 @@ func _fields_for_detail_widget(widget_key: String) -> Array[String]:
 			return ["runner_id", "start_base", "end_base", "attempted_base", "outs_added"]
 		EventTemplateRegistry.WIDGET_MISC_ADVANCEMENT_DETAILS:
 			return ["pitcher_id", "catcher_id", "runs_scored"]
+		EventTemplateRegistry.WIDGET_OUT_ASSIGNMENTS:
+			return _out_assignment_fields()
+		EventTemplateRegistry.WIDGET_ADVANCED_PLAY_DETAILS:
+			return _advanced_play_fields()
+		EventTemplateRegistry.WIDGET_MANUAL_CORRECTION_DETAILS:
+			return ["correction_type", "affected_team_id", "affected_player_id", "old_value", "new_value", "reason"]
+		EventTemplateRegistry.WIDGET_GAME_ADMINISTRATION_DETAILS:
+			return ["admin_event_type", "score", "reason", "notes", "manual_override"]
 	return []
+
+func _out_assignment_fields() -> Array[String]:
+	var fields: Array[String] = []
+	var count = 3 if _event_type == "triple_play" else 2
+	for out_number in range(1, count + 1):
+		for suffix in ["runner_or_batter_id", "out_base", "out_type", "putout_fielder_id", "assist_fielder_ids"]:
+			fields.append("out_%d_%s" % [out_number, suffix])
+	return fields
+
+func _advanced_play_fields() -> Array[String]:
+	match _event_type:
+		"dropped_third_strike":
+			return ["batter_reached_or_out", "wild_pitch", "passed_ball", "catcher_throwing_error", "advance_after_error"]
+		"interference":
+			return ["interference_type", "interfering_player_id", "benefited_runner_or_batter_id", "ruling", "batter_awarded_base"]
+		"pickoff", "pickoff_error":
+			return ["runner_id", "base", "pitcher_id", "receiving_fielder_id", "safe_or_out", "error_on_play", "advance_after_error"]
+	return []
+
+func _out_assignments_from_details() -> Array[Dictionary]:
+	var section = _as_dictionary(_collect_detail_data().get(EventTemplateRegistry.WIDGET_OUT_ASSIGNMENTS, {}))
+	var assignments: Array[Dictionary] = []
+	var count = 3 if _event_type == "triple_play" else 2 if _event_type == "double_play" else 0
+	for out_number in range(1, count + 1):
+		assignments.append({
+			"out_number": out_number,
+			"runner_or_batter_id": str(section.get("out_%d_runner_or_batter_id" % out_number, "")),
+			"out_base": str(section.get("out_%d_out_base" % out_number, "")),
+			"out_type": str(section.get("out_%d_out_type" % out_number, "")),
+			"putout_fielder_id": str(section.get("out_%d_putout_fielder_id" % out_number, "")),
+			"assist_fielder_ids": _split_csv(str(section.get("out_%d_assist_fielder_ids" % out_number, ""))),
+		})
+	return assignments
+
+func _split_csv(value: String) -> Array[String]:
+	var output: Array[String] = []
+	for part in value.split(",", false):
+		var clean = part.strip_edges()
+		if not clean.is_empty():
+			output.append(clean)
+	return output
 
 func _default_detail_value(field: String) -> String:
 	if field == "sacrifice_bunt" and _event_type == "sacrifice_bunt":
@@ -260,6 +328,10 @@ func _default_detail_value(field: String) -> String:
 		return "true"
 	if field == "outs_added" and _event_type in ["sacrifice_bunt", "sacrifice_fly", "caught_stealing"]:
 		return "1"
+	if field == "outs_added" and _event_type == "double_play":
+		return "2"
+	if field == "outs_added" and _event_type == "triple_play":
+		return "3"
 	if field == "pitcher_id" and _event_type in ["wild_pitch", "balk"]:
 		return str(_game_context.get("pitcher_id", ""))
 	return ""
@@ -296,4 +368,4 @@ func _as_array(value: Variant) -> Array:
 	return value.duplicate(true) if value is Array else []
 
 func _is_runner_only_event(event_type: String) -> bool:
-	return event_type in ["stolen_base", "caught_stealing", "wild_pitch", "passed_ball", "balk"]
+	return event_type in ["stolen_base", "caught_stealing", "wild_pitch", "passed_ball", "balk", "pickoff", "pickoff_error"]
