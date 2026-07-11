@@ -22,6 +22,7 @@ var base_state_after: Dictionary
 var earned_run_override: Variant
 var notes: String
 var manual_override: bool
+var details: Dictionary
 
 func _init(p_id: String = "", p_game_id: String = "") -> void:
 	id = p_id
@@ -45,6 +46,7 @@ func _init(p_id: String = "", p_game_id: String = "") -> void:
 	earned_run_override = null
 	notes = ""
 	manual_override = false
+	details = {}
 
 func to_dict() -> Dictionary:
 	return {
@@ -54,7 +56,7 @@ func to_dict() -> Dictionary:
 		"runner_ids": runner_ids.duplicate(), "event_type": event_type, "result": result, "rbi_count": rbi_count,
 		"outs_added": outs_added, "runs_scored": runs_scored, "base_state_before": base_state_before.duplicate(true),
 		"base_state_after": base_state_after.duplicate(true), "earned_run_override": earned_run_override,
-		"notes": notes, "manual_override": manual_override,
+		"notes": notes, "manual_override": manual_override, "details": details.duplicate(true),
 	}
 
 static func from_dict(data: Dictionary) -> GameEvent:
@@ -78,6 +80,7 @@ static func from_dict(data: Dictionary) -> GameEvent:
 	event.earned_run_override = data.get("earned_run_override", null)
 	event.notes = str(data.get("notes", ""))
 	event.manual_override = bool(data.get("manual_override", false))
+	event.details = Dictionary(data.get("details", {})).duplicate(true)
 	return event
 
 func validate() -> PackedStringArray:
