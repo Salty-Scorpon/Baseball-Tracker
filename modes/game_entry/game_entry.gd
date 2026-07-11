@@ -16,7 +16,8 @@ const OUT_EVENTS := {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bun
 @onready var away_lineup: TextEdit = %AwayLineup
 @onready var home_lineup: TextEdit = %HomeLineup
 @onready var add_player_team: OptionButton = %AddPlayerTeam
-@onready var add_player_name: LineEdit = %AddPlayerName
+@onready var add_player_first_name: LineEdit = %AddPlayerFirstName
+@onready var add_player_last_name: LineEdit = %AddPlayerLastName
 @onready var add_player_jersey: LineEdit = %AddPlayerJersey
 @onready var add_player_positions: LineEdit = %AddPlayerPositions
 @onready var add_player_to_lineup: CheckBox = %AddPlayerToLineup
@@ -133,11 +134,18 @@ func _add_player_to_current_game_team() -> void:
 	if not [selected_game.away_team_id, selected_game.home_team_id].has(team_id):
 		add_player_status.text = "Choose the away or home team for this game."
 		return
-	var display_name := add_player_name.text.strip_edges()
-	if display_name.is_empty():
-		add_player_status.text = "Player name is required."
+	var first_name := add_player_first_name.text.strip_edges()
+	var last_name := add_player_last_name.text.strip_edges()
+	if first_name.is_empty():
+		add_player_status.text = "Player first name is required."
 		return
-	var player := PlayerModel.new(_new_player_id(team_id), team_id, display_name)
+	if last_name.is_empty():
+		add_player_status.text = "Player last name is required."
+		return
+	var display_name := last_name
+	var player := PlayerModel.new(_new_player_id(team_id, display_name), team_id, display_name)
+	player.first_name = first_name
+	player.last_name = last_name
 	player.jersey_number = add_player_jersey.text.strip_edges()
 	player.positions.assign(_csv_to_array(add_player_positions.text))
 	var warnings := player.validate()
@@ -165,7 +173,8 @@ func _after_player_added(player: Player) -> void:
 	_fill_player_options(away_pitcher, _players_for_team(selected_game.away_team_id))
 	_fill_player_options(home_pitcher, _players_for_team(selected_game.home_team_id))
 	_refresh_matchup_options()
-	add_player_name.text = ""
+	add_player_first_name.text = ""
+	add_player_last_name.text = ""
 	add_player_jersey.text = ""
 	add_player_positions.text = ""
 	add_player_status.text = "Added %s to %s." % [_player_label(player), _team_name(player.team_id)]
@@ -318,8 +327,11 @@ func _selected_meta(option: OptionButton) -> String:
 func _offense_team_id() -> String: return selected_game.away_team_id if half_inning == "top" else selected_game.home_team_id
 func _defense_team_id() -> String: return selected_game.home_team_id if half_inning == "top" else selected_game.away_team_id
 func _new_event_id() -> String: return "%s_event_%d" % [selected_game.id, int(Time.get_unix_time_from_system() * 1000) + _game_events().size()]
-func _new_player_id(team_id: String) -> String:
-	var base_id := "%s_player_%d" % [team_id, int(Time.get_unix_time_from_system() * 1000)]
+func _new_player_id(team_id: String, display_name: String) -> String:
+	var team: Team = repository.find_entity_by_id(team_id, "teams")
+	var region := team.region.strip_edges() if team != null else team_id
+	var abbreviation := team.abbreviation.strip_edges() if team != null else team_id
+	var base_id := "%s_%s_%s" % [region, abbreviation, display_name.strip_edges()]
 	var candidate := base_id
 	var suffix := 1
 	while repository.find_entity_by_id(candidate, "players") != null:

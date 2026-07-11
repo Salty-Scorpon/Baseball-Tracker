@@ -79,15 +79,25 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="AddPlayerNameLabel" type="Label" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+[node name="AddPlayerFirstNameLabel" type="Label" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
 layout_mode = 2
-text = "Name"
+text = "First Name"
 
-[node name="AddPlayerName" type="LineEdit" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+[node name="AddPlayerFirstName" type="LineEdit" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-placeholder_text = "Player display name"
+placeholder_text = "Player first name"
+
+[node name="AddPlayerLastNameLabel" type="Label" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+layout_mode = 2
+text = "Last Name"
+
+[node name="AddPlayerLastName" type="LineEdit" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Also used as display name"
 
 [node name="AddPlayerJerseyLabel" type="Label" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
 layout_mode = 2
