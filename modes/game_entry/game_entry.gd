@@ -27,11 +27,12 @@ const EVENT_BUTTONS = [
 	{"label": "PH", "event_type": "pinch_hitter", "legacy_type": "Pinch hitter", "wired": true},
 	{"label": "PR", "event_type": "pinch_runner", "legacy_type": "Pinch runner", "wired": true},
 	{"label": "Def Sub", "event_type": "defensive_substitution", "legacy_type": "Defensive substitution", "wired": true},
+	{"label": "Def Group", "event_type": "batch_defensive_change", "legacy_type": "Batch defensive change", "wired": true},
 	{"label": "Pos Chg", "event_type": "position_change", "legacy_type": "Position change", "wired": true},
 	{"label": "BO Rep", "event_type": "batting_order_replacement", "legacy_type": "Batting order replacement", "wired": true},
 	{"label": "Manual", "event_type": "manual", "legacy_type": "Manual correction", "wired": false},
 ]
-const EVENT_TYPES = ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Pitching change", "Pinch hitter", "Pinch runner", "Defensive substitution", "Position change", "Batting order replacement", "Manual correction"]
+const EVENT_TYPES = ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Pitching change", "Pinch hitter", "Pinch runner", "Defensive substitution", "Position change", "Batting order replacement", "Batch defensive change", "Manual correction"]
 const OUT_EVENTS = {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt": 1, "Sacrifice fly": 1, "Caught stealing": 1}
 
 @onready var game_picker: OptionButton = %GamePicker
@@ -471,6 +472,8 @@ func _history_event_label(event: GameEvent) -> String:
 	if str(event.details.get("event_type", "")) == "pitching_change":
 		var change = Dictionary(event.details.get("pitching_change", {}))
 		return "Pitching change: %s replaces %s" % [_player_or_text(str(change.get("incoming_pitcher_id", event.pitcher_id))), _player_or_text(str(change.get("outgoing_pitcher_id", "")))]
+	if str(event.details.get("event_type", "")) == "batch_defensive_change":
+		return EventSummaryFormatter.summarize({"event_type": "batch_defensive_change", "details": event.details})
 	if _is_substitution_event_type(str(event.details.get("event_type", ""))):
 		var substitution = Dictionary(event.details.get("substitution", {}))
 		return "%s: %s replaces/changes %s" % [str(substitution.get("substitution_type", event.event_type)).replace("_", " ").capitalize(), _player_or_text(str(substitution.get("player_in_id", ""))), _player_or_text(str(substitution.get("player_out_id", "")))]
@@ -479,6 +482,9 @@ func _history_event_label(event: GameEvent) -> String:
 func _apply_substitution_to_lineups(event: GameEvent) -> void:
 	var event_key := str(event.details.get("event_type", ""))
 	if not _is_substitution_event_type(event_key):
+		return
+	if event_key == "batch_defensive_change":
+		_apply_batch_defensive_change_to_lineups(event)
 		return
 	var substitution := Dictionary(event.details.get("substitution", {}))
 	var type := str(substitution.get("substitution_type", event_key))
@@ -502,6 +508,24 @@ func _apply_substitution_to_lineups(event: GameEvent) -> void:
 	elif not lineups[side].has(incoming_label):
 		lineups[side].append(incoming_label)
 
+
+func _apply_batch_defensive_change_to_lineups(event: GameEvent) -> void:
+	var defensive_change := Dictionary(event.details.get("defensive_change", {}))
+	var side := _side_for_team_id(str(defensive_change.get("team_id", "")))
+	if side.is_empty():
+		return
+	for item in Array(defensive_change.get("changes", [])):
+		var change := Dictionary(item)
+		var incoming_id := str(change.get("player_in_id", ""))
+		var slot := int(change.get("batting_order_slot", 0)) - 1
+		if incoming_id.is_empty() or slot < 0:
+			continue
+		var incoming_label := _player_or_text(incoming_id)
+		if slot < lineups[side].size():
+			lineups[side][slot] = incoming_label
+		elif not lineups[side].has(incoming_label):
+			lineups[side].append(incoming_label)
+
 func _replace_runner_on_base(player_out_id: String, player_in_id: String) -> void:
 	if player_out_id.is_empty() or player_in_id.is_empty():
 		return
@@ -510,7 +534,7 @@ func _replace_runner_on_base(player_out_id: String, player_in_id: String) -> voi
 			bases[base] = player_in_id
 
 func _is_substitution_event_type(value: String) -> bool:
-	return value in ["pinch_hitter", "pinch_runner", "defensive_substitution", "position_change", "batting_order_replacement"]
+	return value in ["pinch_hitter", "pinch_runner", "defensive_substitution", "position_change", "batting_order_replacement", "batch_defensive_change"]
 
 func _side_for_team_id(team_id: String) -> String:
 	if selected_game == null:
@@ -604,7 +628,7 @@ func _player_or_text(value: String) -> String:
 func _player_dicts_for_team(team_id: String) -> Array[Dictionary]:
 	var output: Array[Dictionary] = []
 	for player in _players_for_team(team_id):
-		output.append({"id": player.id, "player_id": player.id, "display_name": _player_label(player), "name": _player_label(player)})
+		output.append({"id": player.id, "player_id": player.id, "display_name": _player_label(player), "name": _player_label(player), "positions": player.positions})
 	return output
 
 func _event_type_index(type: String) -> int:

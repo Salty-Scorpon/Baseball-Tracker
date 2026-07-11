@@ -1,0 +1,45 @@
+[gd_scene load_steps=2 format=3 uid="uid://defensivechangewizard"]
+
+[ext_resource type="Script" path="res://modes/game_entry/widgets/DefensiveChangeWizard.gd" id="1_wizard"]
+
+[node name="DefensiveChangeWizard" type="VBoxContainer"]
+custom_minimum_size = Vector2(680, 0)
+theme_override_constants/separation = 8
+script = ExtResource("1_wizard")
+
+[node name="TitleLabel" type="Label" parent="."]
+text = "Defensive Change Wizard"
+
+[node name="ContextLabel" type="Label" parent="."]
+unique_name_in_owner = true
+autowrap_mode = 3
+text = "Build one grouped defensive-change event."
+
+[node name="TeamRow" type="HBoxContainer" parent="."]
+[node name="TeamLabel" type="Label" parent="TeamRow"]
+text = "Defensive team"
+[node name="TeamOption" type="OptionButton" parent="TeamRow"]
+unique_name_in_owner = true
+
+[node name="ButtonRow" type="HBoxContainer" parent="."]
+[node name="AddPositionButton" type="Button" parent="ButtonRow"]
+unique_name_in_owner = true
+text = "Add position move"
+[node name="AddReplacementButton" type="Button" parent="ButtonRow"]
+unique_name_in_owner = true
+text = "Add replacement"
+[node name="AddLeaveButton" type="Button" parent="ButtonRow"]
+unique_name_in_owner = true
+text = "Add leaves game"
+[node name="AddEnterButton" type="Button" parent="ButtonRow"]
+unique_name_in_owner = true
+text = "Add bench entry"
+
+[node name="RowsContainer" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+theme_override_constants/separation = 6
+
+[node name="ValidationLabel" type="Label" parent="."]
+unique_name_in_owner = true
+autowrap_mode = 3
+text = "Alignment validation appears here."
