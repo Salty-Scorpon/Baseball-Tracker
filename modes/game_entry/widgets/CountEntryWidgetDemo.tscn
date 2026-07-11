@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3 uid="uid://countentrywidgetdemo"]
+
+[ext_resource type="PackedScene" path="res://modes/game_entry/widgets/CountEntryWidget.tscn" id="1_widget"]
+
+[node name="CountEntryWidgetDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Content" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Instructions" type="Label" parent="MarginContainer/Content"]
+layout_mode = 2
+text = "Temporary demo: open this scene in Godot, adjust Balls/Strikes/Total pitches, and toggle advanced pitch details."
+autowrap_mode = 3
+
+[node name="CountEntryWidget" parent="MarginContainer/Content" instance=ExtResource("1_widget")]
+layout_mode = 2
