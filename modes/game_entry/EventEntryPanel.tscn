@@ -1,0 +1,33 @@
+[gd_scene load_steps=2 format=3 uid="uid://dynamicevententrypanel"]
+
+[ext_resource type="Script" path="res://modes/game_entry/EventEntryPanel.gd" id="1_panel"]
+
+[node name="EventEntryPanel" type="VBoxContainer"]
+custom_minimum_size = Vector2(760, 0)
+theme_override_constants/separation = 10
+script = ExtResource("1_panel")
+
+[node name="TitleLabel" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Select an event"
+
+[node name="ContextLabel" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Open this panel with open_for_event(event_type, game_context)."
+autowrap_mode = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(760, 420)
+size_flags_vertical = 3
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 2
+
+[node name="SectionsContainer" type="VBoxContainer" parent="ScrollContainer"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="ValidationLabel" type="Label" parent="."]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
