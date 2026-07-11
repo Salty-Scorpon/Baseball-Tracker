@@ -1,0 +1,64 @@
+[gd_scene load_steps=2 format=3 uid="uid://pitchingchangewidget"]
+
+[ext_resource type="Script" path="res://modes/game_entry/widgets/PitchingChangeWidget.gd" id="1_pitching_change"]
+
+[node name="PitchingChangeWidget" type="VBoxContainer"]
+custom_minimum_size = Vector2(520, 0)
+theme_override_constants/separation = 8
+script = ExtResource("1_pitching_change")
+
+[node name="TitleLabel" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Pitching Change"
+
+[node name="ContextLabel" type="Label" parent="."]
+unique_name_in_owner = true
+autowrap_mode = 3
+text = "Select incoming and outgoing pitcher details."
+
+[node name="Grid" type="GridContainer" parent="."]
+unique_name_in_owner = true
+columns = 2
+
+[node name="DefensiveTeamText" type="Label" parent="Grid"]
+text = "Defensive team"
+[node name="DefensiveTeamValue" type="Label" parent="Grid"]
+unique_name_in_owner = true
+text = "—"
+
+[node name="OutgoingText" type="Label" parent="Grid"]
+text = "Outgoing pitcher"
+[node name="OutgoingPitcherOption" type="OptionButton" parent="Grid"]
+unique_name_in_owner = true
+
+[node name="OutgoingActionText" type="Label" parent="Grid"]
+text = "Outgoing action"
+[node name="OutgoingActionOption" type="OptionButton" parent="Grid"]
+unique_name_in_owner = true
+
+[node name="OldPositionText" type="Label" parent="Grid"]
+text = "Old pitcher new position"
+[node name="OldPitcherNewPositionEdit" type="LineEdit" parent="Grid"]
+unique_name_in_owner = true
+placeholder_text = "leave blank unless moving"
+
+[node name="IncomingText" type="Label" parent="Grid"]
+text = "Incoming pitcher"
+[node name="IncomingPitcherOption" type="OptionButton" parent="Grid"]
+unique_name_in_owner = true
+
+[node name="IncomingSourceText" type="Label" parent="Grid"]
+text = "Incoming source"
+[node name="IncomingSourceOption" type="OptionButton" parent="Grid"]
+unique_name_in_owner = true
+
+[node name="NewPositionText" type="Label" parent="Grid"]
+text = "New pitcher defensive position"
+[node name="NewPitcherPositionEdit" type="LineEdit" parent="Grid"]
+unique_name_in_owner = true
+text = "P"
+
+[node name="ResponsibilityLabel" type="Label" parent="."]
+unique_name_in_owner = true
+autowrap_mode = 3
+text = "Runner responsibility: none."
