@@ -23,6 +23,12 @@ const EVENT_BUTTONS = [
 	{"label": "SAC", "event_type": "sacrifice", "legacy_type": "Sacrifice bunt", "wired": false},
 	{"label": "SB", "event_type": "stolen_base", "legacy_type": "Stolen base", "wired": false},
 	{"label": "CS", "event_type": "caught_stealing", "legacy_type": "Caught stealing", "wired": false},
+	{"label": "DP", "event_type": "double_play", "legacy_type": "Double play", "wired": true},
+	{"label": "TP", "event_type": "triple_play", "legacy_type": "Triple play", "wired": true},
+	{"label": "D3K", "event_type": "dropped_third_strike", "legacy_type": "Dropped third strike", "wired": true},
+	{"label": "INT", "event_type": "interference", "legacy_type": "Interference", "wired": true},
+	{"label": "PO", "event_type": "pickoff", "legacy_type": "Pickoff", "wired": true},
+	{"label": "POE", "event_type": "pickoff_error", "legacy_type": "Pickoff error", "wired": true},
 	{"label": "Pitching Change", "event_type": "pitching_change", "legacy_type": "Pitching change", "wired": true},
 	{"label": "PH", "event_type": "pinch_hitter", "legacy_type": "Pinch hitter", "wired": true},
 	{"label": "PR", "event_type": "pinch_runner", "legacy_type": "Pinch runner", "wired": true},
@@ -30,10 +36,13 @@ const EVENT_BUTTONS = [
 	{"label": "Def Group", "event_type": "batch_defensive_change", "legacy_type": "Batch defensive change", "wired": true},
 	{"label": "Pos Chg", "event_type": "position_change", "legacy_type": "Position change", "wired": true},
 	{"label": "BO Rep", "event_type": "batting_order_replacement", "legacy_type": "Batting order replacement", "wired": true},
-	{"label": "Manual", "event_type": "manual", "legacy_type": "Manual correction", "wired": false},
+	{"label": "Manual", "event_type": "manual_correction", "legacy_type": "Manual correction", "wired": true},
+	{"label": "ER Override", "event_type": "earned_run_override", "legacy_type": "Earned run override", "wired": true},
+	{"label": "W/L/S", "event_type": "win_loss_save_assignment", "legacy_type": "Win/loss/save assignment", "wired": true},
+	{"label": "Admin", "event_type": "game_administration_events", "legacy_type": "Game administration events", "wired": true},
 ]
-const EVENT_TYPES = ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Pitching change", "Pinch hitter", "Pinch runner", "Defensive substitution", "Position change", "Batting order replacement", "Batch defensive change", "Manual correction"]
-const OUT_EVENTS = {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt": 1, "Sacrifice fly": 1, "Caught stealing": 1}
+const EVENT_TYPES = ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Double play", "Triple play", "Dropped third strike", "Interference", "Pickoff", "Pickoff error", "Pitching change", "Pinch hitter", "Pinch runner", "Defensive substitution", "Position change", "Batting order replacement", "Batch defensive change", "Manual correction", "Earned run override", "Win/loss/save assignment", "Game administration events"]
+const OUT_EVENTS = {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt": 1, "Sacrifice fly": 1, "Caught stealing": 1, "Double play": 2, "Triple play": 3}
 
 @onready var game_picker: OptionButton = %GamePicker
 @onready var teams_label: Label = %TeamsLabel
@@ -356,6 +365,14 @@ func _add_event_from_pending() -> void:
 		event.outs_after = outs
 		event.runs_scored = 0
 		event.rbi_count = 0
+	elif _is_administrative_event_type(str(event.details["event_type"])):
+		event.batter_id = ""
+		event.pitcher_id = ""
+		event.outs_added = 0
+		event.outs_after = outs
+		event.runs_scored = 0
+		event.rbi_count = 0
+		event.manual_override = true
 	elif _is_substitution_event_type(str(event.details["event_type"])):
 		var substitution = Dictionary(event.details.get("substitution", {}))
 		event.event_type = type
@@ -366,11 +383,13 @@ func _add_event_from_pending() -> void:
 		event.runs_scored = 0
 		event.rbi_count = 0
 		event.notes = str(substitution.get("notes", event.notes))
+	if event.details.has("out_assignments"):
+		event.details["outs_added"] = event.outs_added
 	event.details["summary_preview"] = summary_preview_label.text
 	if manual_override_panel.has_active_overrides():
 		event.details["manual_overrides"] = manual_override_panel.get_overrides()
 		event.manual_overrides = manual_override_panel.get_overrides()
-	event.manual_override = type == "Manual correction" or event.runs_scored > 0 or not event.notes.is_empty() or manual_override_panel.has_active_overrides()
+	event.manual_override = _is_administrative_event_type(str(event.details["event_type"])) or type == "Manual correction" or event.runs_scored > 0 or not event.notes.is_empty() or manual_override_panel.has_active_overrides()
 	repository.add_game_event(event)
 	_replay_events(true)
 	selected_game.status = "In Progress"
@@ -474,6 +493,8 @@ func _history_event_label(event: GameEvent) -> String:
 		return "Pitching change: %s replaces %s" % [_player_or_text(str(change.get("incoming_pitcher_id", event.pitcher_id))), _player_or_text(str(change.get("outgoing_pitcher_id", "")))]
 	if str(event.details.get("event_type", "")) == "batch_defensive_change":
 		return EventSummaryFormatter.summarize({"event_type": "batch_defensive_change", "details": event.details})
+	if _is_administrative_event_type(str(event.details.get("event_type", ""))):
+		return EventSummaryFormatter.summarize({"event_type": str(event.details.get("event_type", event.event_type)), "details": event.details, "notes": event.notes, "manual_override": true})
 	if _is_substitution_event_type(str(event.details.get("event_type", ""))):
 		var substitution = Dictionary(event.details.get("substitution", {}))
 		return "%s: %s replaces/changes %s" % [str(substitution.get("substitution_type", event.event_type)).replace("_", " ").capitalize(), _player_or_text(str(substitution.get("player_in_id", ""))), _player_or_text(str(substitution.get("player_out_id", "")))]
@@ -535,6 +556,9 @@ func _replace_runner_on_base(player_out_id: String, player_in_id: String) -> voi
 
 func _is_substitution_event_type(value: String) -> bool:
 	return value in ["pinch_hitter", "pinch_runner", "defensive_substitution", "position_change", "batting_order_replacement", "batch_defensive_change"]
+
+func _is_administrative_event_type(value: String) -> bool:
+	return value in ["manual_correction", "earned_run_override", "win_loss_save_assignment", "game_administration_events"]
 
 func _side_for_team_id(team_id: String) -> String:
 	if selected_game == null:

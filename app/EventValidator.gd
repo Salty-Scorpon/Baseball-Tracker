@@ -39,6 +39,16 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"position_change",
 	"batting_order_replacement",
 	"batch_defensive_change",
+	"double_play",
+	"triple_play",
+	"dropped_third_strike",
+	"interference",
+	"pickoff",
+	"pickoff_error",
+	"manual_correction",
+	"earned_run_override",
+	"win_loss_save_assignment",
+	"game_administration_events",
 ]
 
 const PITCH_THROWN_EVENT_TYPES = {
@@ -55,6 +65,10 @@ const PITCH_THROWN_EVENT_TYPES = {
 	"fielders_choice": true,
 	"sacrifice_bunt": true,
 	"sacrifice_fly": true,
+	"double_play": true,
+	"triple_play": true,
+	"dropped_third_strike": true,
+	"interference": true,
 }
 
 const BATTED_BALL_OUT_EVENT_TYPES = {
@@ -63,6 +77,8 @@ const BATTED_BALL_OUT_EVENT_TYPES = {
 	"fielders_choice": true,
 	"sacrifice_bunt": true,
 	"sacrifice_fly": true,
+	"double_play": true,
+	"triple_play": true,
 }
 
 const ACTIVE_BASES = {"1B": true, "2B": true, "3B": true}
@@ -82,7 +98,7 @@ static func validate_event_payload(payload: Dictionary) -> Array[Dictionary]:
 	elif not SUPPORTED_EVENT_TYPES.has(event_type):
 		_add_error(messages, "event_type", "Unsupported event type for validation: %s." % event_type)
 
-	if not _is_runner_only_event(event_type) and event_type != "pitching_change" and not _is_substitution_event_type(event_type) and _is_blank(payload.get("batter_id", "")):
+	if not _is_runner_only_event(event_type) and not _is_administrative_event_type(event_type) and event_type != "pitching_change" and not _is_substitution_event_type(event_type) and _is_blank(payload.get("batter_id", "")):
 		_add_error(messages, "batter_id", "A plate appearance event must have a batter_id.")
 	if PITCH_THROWN_EVENT_TYPES.has(event_type) and _is_blank(payload.get("pitcher_id", "")):
 		_add_error(messages, "pitcher_id", "A pitch-thrown event must have a pitcher_id.")
@@ -95,6 +111,7 @@ static func validate_event_payload(payload: Dictionary) -> Array[Dictionary]:
 	_validate_pitching_change(messages, event_type, details)
 	_validate_substitution(messages, event_type, details)
 	_validate_batch_defensive_change(messages, event_type, details)
+	_validate_batch_four_details(messages, event_type, details, advancements, manual_overrides)
 	return messages
 
 static func has_errors(messages: Array) -> bool:
@@ -249,6 +266,28 @@ static func _validate_batch_defensive_change(messages: Array[Dictionary], event_
 				_add_warning(messages, "details.defensive_change.batting_order_slot", "Batting order slot %s appears more than once in the grouped change." % slot)
 			slots[slot] = true
 
+static func _validate_batch_four_details(messages: Array[Dictionary], event_type: String, details: Dictionary, advancements: Array, manual_overrides: Dictionary) -> void:
+	var event_details = _flatten_event_details(_as_dictionary(details.get("event_details", {})))
+	var out_assignments = _as_array(details.get("out_assignments", []))
+	if event_type == "double_play" and out_assignments.size() < 2 and not _has_enabled_override(manual_overrides, "outs"):
+		_add_error(messages, "details.out_assignments", "Double play requires two out assignments unless manually overridden.")
+	if event_type == "triple_play" and out_assignments.size() < 3 and not _has_enabled_override(manual_overrides, "outs"):
+		_add_error(messages, "details.out_assignments", "Triple play requires three out assignments unless manually overridden.")
+	if event_type == "dropped_third_strike" and _is_blank(event_details.get("batter_reached_or_out", "")):
+		_add_warning(messages, "details.event_details.batter_reached_or_out", "Dropped third strike should say whether the batter reached or was out.")
+	if event_type == "interference" and _is_blank(event_details.get("interference_type", "")):
+		_add_warning(messages, "details.event_details.interference_type", "Interference should identify offensive, defensive, catcher, or umpire interference.")
+	if event_type in ["pickoff", "pickoff_error"]:
+		for field in ["runner_id", "base", "pitcher_id", "receiving_fielder_id"]:
+			if _is_blank(event_details.get(field, "")):
+				_add_warning(messages, "details.event_details.%s" % field, "Pickoff should record %s." % field.replace("_", " "))
+		if event_type == "pickoff" and str(event_details.get("safe_or_out", "")).to_lower() == "out" and _outs_from_advancements(advancements) < 1:
+			_add_warning(messages, "details.runner_advancements", "Pickoff marked out should retire the runner in runner advancements.")
+	if event_type in ["manual_correction", "earned_run_override", "win_loss_save_assignment"] and _is_blank(event_details.get("reason", "")):
+		_add_warning(messages, "details.event_details.reason", "Manual correction events should include a scorer reason.")
+	if event_type == "game_administration_events" and _is_blank(event_details.get("admin_event_type", "")):
+		_add_warning(messages, "details.event_details.admin_event_type", "Game administration events should identify the administrative event type.")
+
 static func _validate_error_details(messages: Array[Dictionary], errors: Array) -> void:
 	var valid_types = {"fielding": true, "throwing": true, "catching": true, "dropped_fly": true, "missed_tag": true, "missed_base": true, "interference": true, "unknown": true}
 	var valid_phases = {"fielding_batted_ball": true, "throwing_after_fielding": true, "catching_throw": true, "dropped_fly": true, "missed_tag": true, "missed_base": true, "relay_error": true, "pickoff_error": true, "other": true}
@@ -286,7 +325,10 @@ static func _rbi_count(advancements: Array) -> int:
 	return total
 
 static func _is_runner_only_event(event_type: String) -> bool:
-	return event_type in ["stolen_base", "caught_stealing", "wild_pitch", "passed_ball", "balk"]
+	return event_type in ["stolen_base", "caught_stealing", "wild_pitch", "passed_ball", "balk", "pickoff", "pickoff_error"]
+
+static func _is_administrative_event_type(event_type: String) -> bool:
+	return event_type in ["manual_correction", "earned_run_override", "win_loss_save_assignment", "game_administration_events"]
 
 static func _outs_from_advancements(advancements: Array) -> int:
 	var total = 0

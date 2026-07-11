@@ -18,6 +18,9 @@ const EVENT_GROUP_BASERUNNING = "baserunning"
 const EVENT_GROUP_MISC_ADVANCEMENT = "misc_advancement"
 const EVENT_GROUP_PITCHING = "pitching_events"
 const EVENT_GROUP_SUBSTITUTIONS = "substitutions"
+const EVENT_GROUP_MULTI_OUT_PLAYS = "multi_out_plays"
+const EVENT_GROUP_GAME_ADMINISTRATION = "game_administration"
+const EVENT_GROUP_MANUAL_CORRECTIONS = "manual_corrections"
 
 const WIDGET_COUNT_ENTRY = "count_entry"
 const WIDGET_RUNNER_ADVANCEMENT_GRID = "runner_advancement_grid"
@@ -35,6 +38,10 @@ const WIDGET_MISC_ADVANCEMENT_DETAILS = "misc_advancement_details"
 const WIDGET_PITCHING_CHANGE = "pitching_change"
 const WIDGET_SUBSTITUTION = "substitution"
 const WIDGET_DEFENSIVE_CHANGE_WIZARD = "defensive_change_wizard"
+const WIDGET_ADVANCED_PLAY_DETAILS = "advanced_play_details"
+const WIDGET_OUT_ASSIGNMENTS = "out_assignments"
+const WIDGET_MANUAL_CORRECTION_DETAILS = "manual_correction_details"
+const WIDGET_GAME_ADMINISTRATION_DETAILS = "game_administration_details"
 
 static func get_templates() -> Dictionary:
 	var templates = {}
@@ -45,6 +52,7 @@ static func get_templates() -> Dictionary:
 	_register_batch_two_events(templates)
 	_register_pitching_events(templates)
 	_register_substitution_events(templates)
+	_register_batch_four_events(templates)
 	return templates
 
 static func get_template(event_type: String) -> Dictionary:
@@ -185,6 +193,21 @@ static func _register_substitution_events(templates: Dictionary) -> void:
 		"validation_rules": ["validate_grouped_defensive_alignment"],
 		"allows_manual_overrides": false,
 	})
+
+static func _register_batch_four_events(templates: Dictionary) -> void:
+	_add_template(templates, _plate_appearance_template("double_play", EVENT_GROUP_MULTI_OUT_PLAYS, "Double Play", ["out_assignments"], ["batted_ball_type", "manual_out_correction"], [WIDGET_COUNT_ENTRY, WIDGET_BATTED_BALL_OUT_DETAILS, WIDGET_OUT_ASSIGNMENTS, WIDGET_RUNNER_ADVANCEMENT_GRID, WIDGET_BASIC_FIELDER_ASSIGNMENT, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], {"outs_added": 2, "batter_out": true}, {"plate_appearance": 1, "at_bat": 1, "double_play": 1}, ["requires_current_batter", "requires_current_pitcher", "requires_out_assignments", "outs_added_at_least_two", "validate_unique_occupied_bases_after"]))
+	_add_template(templates, _plate_appearance_template("triple_play", EVENT_GROUP_MULTI_OUT_PLAYS, "Triple Play", ["out_assignments"], ["batted_ball_type", "manual_out_correction"], [WIDGET_COUNT_ENTRY, WIDGET_BATTED_BALL_OUT_DETAILS, WIDGET_OUT_ASSIGNMENTS, WIDGET_RUNNER_ADVANCEMENT_GRID, WIDGET_BASIC_FIELDER_ASSIGNMENT, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], {"outs_added": 3, "batter_out": true}, {"plate_appearance": 1, "at_bat": 1, "triple_play": 1}, ["requires_current_batter", "requires_current_pitcher", "requires_out_assignments", "outs_added_at_least_three", "validate_unique_occupied_bases_after"]))
+	_add_template(templates, _plate_appearance_template("dropped_third_strike", EVENT_GROUP_STRIKEOUTS, "Dropped Third Strike", ["batter_reached_or_out", "dropped_third_strike_reason"], ["wild_pitch", "passed_ball", "catcher_throwing_error", "advance_after_error"], [WIDGET_COUNT_ENTRY, WIDGET_STRIKEOUT_DETAILS, WIDGET_ADVANCED_PLAY_DETAILS, WIDGET_RUNNER_ADVANCEMENT_GRID, WIDGET_BASIC_FIELDER_ASSIGNMENT, WIDGET_ERROR_DETAILS, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], {"strikeout_recorded": true}, {"plate_appearance": 1, "at_bat": 1, "strikeout": 1, "pitcher_strikeout": 1}, ["requires_current_batter", "requires_current_pitcher", "dropped_third_strike_requires_result", "validate_unique_occupied_bases_after"]))
+	_add_template(templates, _plate_appearance_template("interference", EVENT_GROUP_ERRORS, "Interference", ["interference_type", "benefited_runner_or_batter_id"], ["interfering_player_id", "ruling", "batter_awarded_base"], [WIDGET_COUNT_ENTRY, WIDGET_ADVANCED_PLAY_DETAILS, WIDGET_RUNNER_ADVANCEMENT_GRID, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], {"manual_scoring_required": true}, {"plate_appearance": 1}, ["requires_current_batter", "requires_current_pitcher", "interference_requires_type", "validate_unique_occupied_bases_after"]))
+	_add_template(templates, _runner_event_template("pickoff", EVENT_GROUP_BASERUNNING, "Pickoff", ["runner_id", "base", "pitcher_id", "receiving_fielder_id", "safe_or_out"], ["error_on_play", "advance_after_error"], [WIDGET_BASERUNNING_DETAILS, WIDGET_ADVANCED_PLAY_DETAILS, WIDGET_RUNNER_ADVANCEMENT_GRID, WIDGET_BASIC_FIELDER_ASSIGNMENT, WIDGET_ERROR_DETAILS, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], {"runner_only": true, "advance_reason": "pickoff"}, {"pickoff": 1}, ["requires_runner_selection", "pickoff_requires_base_and_fielders"]))
+	_add_template(templates, _runner_event_template("pickoff_error", EVENT_GROUP_ERRORS, "Pickoff Error", ["runner_id", "base", "pitcher_id", "receiving_fielder_id", "error_on_play", "advance_after_error"], ["charged_fielder_id", "error_type"], [WIDGET_BASERUNNING_DETAILS, WIDGET_ADVANCED_PLAY_DETAILS, WIDGET_RUNNER_ADVANCEMENT_GRID, WIDGET_BASIC_FIELDER_ASSIGNMENT, WIDGET_ERROR_DETAILS, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], {"runner_only": true, "advance_reason": "pickoff_error"}, {"pickoff_error": 1}, ["requires_runner_selection", "requires_error_assignment", "validate_unique_occupied_bases_after"]))
+	_add_template(templates, _administrative_template("manual_correction", EVENT_GROUP_MANUAL_CORRECTIONS, "Manual Correction", [WIDGET_MANUAL_CORRECTION_DETAILS, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], ["requires_correction_reason"]))
+	_add_template(templates, _administrative_template("earned_run_override", EVENT_GROUP_MANUAL_CORRECTIONS, "Earned Run Override", [WIDGET_MANUAL_CORRECTION_DETAILS, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], ["requires_correction_reason"]))
+	_add_template(templates, _administrative_template("win_loss_save_assignment", EVENT_GROUP_MANUAL_CORRECTIONS, "Win/Loss/Save Assignment", [WIDGET_MANUAL_CORRECTION_DETAILS, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], ["requires_pitcher_award_assignment"]))
+	_add_template(templates, _administrative_template("game_administration_events", EVENT_GROUP_GAME_ADMINISTRATION, "Game Administration Event", [WIDGET_GAME_ADMINISTRATION_DETAILS, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], ["requires_admin_event_type"]))
+
+static func _administrative_template(event_type: String, event_group: String, display_name: String, widgets_needed: Array, validation_rules: Array) -> Dictionary:
+	return {"event_type": event_type, "event_group": event_group, "display_name": display_name, "required_fields": [], "optional_fields": ["affected_team", "affected_player", "old_value", "new_value", "reason", "notes"], "widgets_needed": widgets_needed, "default_runner_logic": {}, "default_stat_effects": {}, "validation_rules": validation_rules, "allows_manual_overrides": true}
 
 static func _runner_event_template(event_type: String, event_group: String, display_name: String, required_fields: Array, optional_fields: Array, widgets_needed: Array, default_runner_logic: Dictionary, default_stat_effects: Dictionary, validation_rules: Array) -> Dictionary:
 	return {"event_type": event_type, "event_group": event_group, "display_name": display_name, "required_fields": required_fields, "optional_fields": optional_fields, "widgets_needed": widgets_needed, "default_runner_logic": default_runner_logic, "default_stat_effects": default_stat_effects, "validation_rules": validation_rules, "allows_manual_overrides": true}

@@ -34,6 +34,16 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"position_change",
 	"batting_order_replacement",
 	"batch_defensive_change",
+	"double_play",
+	"triple_play",
+	"dropped_third_strike",
+	"interference",
+	"pickoff",
+	"pickoff_error",
+	"manual_correction",
+	"earned_run_override",
+	"win_loss_save_assignment",
+	"game_administration_events",
 ]
 
 const EVENT_LABELS = {
@@ -56,6 +66,16 @@ const EVENT_LABELS = {
 	"passed_ball": "advances on a passed ball",
 	"balk": "advances on a balk",
 	"batch_defensive_change": "records a grouped defensive change",
+	"double_play": "hits into a double play",
+	"triple_play": "hits into a triple play",
+	"dropped_third_strike": "reaches/records a dropped third strike",
+	"interference": "is involved in interference",
+	"pickoff": "is involved in a pickoff",
+	"pickoff_error": "advances on a pickoff error",
+	"manual_correction": "records a manual correction",
+	"earned_run_override": "records an earned run override",
+	"win_loss_save_assignment": "assigns win/loss/save",
+	"game_administration_events": "records a game administration event",
 }
 
 static func summarize(event_payload: Variant) -> String:
@@ -84,6 +104,10 @@ static func summarize(event_payload: Variant) -> String:
 	var fielders = _format_fielder_assignment(details, event)
 	if not fielders.is_empty():
 		parts.append(fielders)
+
+	var advanced = _format_advanced_details(details)
+	if not advanced.is_empty():
+		parts.append(advanced)
 
 	var runners = _format_runner_advancements(_as_array(details.get("runner_advancements", event.get("runner_advancements", []))))
 	if not runners.is_empty():
@@ -197,6 +221,23 @@ static func _format_fielder_assignment(details: Dictionary, event: Dictionary) -
 		if not label.is_empty() and not names.has(label):
 			names.append(label)
 	return "Fielders assigned: %s" % ", ".join(names) if not names.is_empty() else ""
+
+static func _format_advanced_details(details: Dictionary) -> String:
+	var bits: Array[String] = []
+	var event_details = _as_dictionary(details.get("event_details", {}))
+	for section in event_details.values():
+		if section is Dictionary:
+			for key in section.keys():
+				var value = str(section[key]).strip_edges()
+				if not value.is_empty():
+					bits.append("%s: %s" % [_humanize(str(key)), value])
+	var outs: Array[String] = []
+	for assignment in _as_array(details.get("out_assignments", [])):
+		var out = _as_dictionary(assignment)
+		outs.append("out %s %s at %s" % [out.get("out_number", "?"), out.get("runner_or_batter_id", "runner"), out.get("out_base", "?")])
+	if not outs.is_empty():
+		bits.append("Out assignments: %s" % "; ".join(outs))
+	return "Advanced details: %s" % "; ".join(bits) if not bits.is_empty() else ""
 
 static func _format_runner_advancements(advancements: Array) -> String:
 	var labels: Array[String] = []
