@@ -35,6 +35,7 @@ const OUT_EVENTS := {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bun
 @onready var batter_picker: OptionButton = %Batter
 @onready var pitcher_picker: OptionButton = %Pitcher
 @onready var notes: LineEdit = %Notes
+@onready var manual_override_panel: ManualOverridePanel = %ManualOverridePanel
 @onready var add_event_button: Button = %AddEventButton
 @onready var undo_button: Button = %UndoButton
 @onready var finalize_button: Button = %FinalizeButton
@@ -208,12 +209,15 @@ func _add_event() -> void:
 	event.runs_scored = int(runs_spin.value)
 	event.rbi_count = int(rbi_spin.value)
 	event.notes = notes.text.strip_edges()
-	event.manual_override = type == "Manual correction" or event.runs_scored > 0 or not event.notes.is_empty()
+	if manual_override_panel.has_active_overrides():
+		event.details["manual_overrides"] = manual_override_panel.get_overrides()
+	event.manual_override = type == "Manual correction" or event.runs_scored > 0 or not event.notes.is_empty() or manual_override_panel.has_active_overrides()
 	repository.add_game_event(event)
 	_replay_events(true)
 	selected_game.status = "In Progress"
 	SaveManagerScript.save_project(repository)
 	notes.text = ""
+	manual_override_panel.reset()
 	_sync_default_outs()
 	_refresh_all()
 

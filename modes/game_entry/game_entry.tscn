@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
+[ext_resource type="PackedScene" path="res://modes/game_entry/widgets/ManualOverridePanel.tscn" id="2_manual_override"]
 
 [node name="GameEntry" type="Control"]
 layout_mode = 3
@@ -217,6 +218,10 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "Manual override notes / confusing scoring details"
+
+[node name="ManualOverridePanel" parent="Root/Body/ScoringPanel" instance=ExtResource("2_manual_override")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [node name="Buttons" type="HBoxContainer" parent="Root/Body/ScoringPanel"]
 layout_mode = 2
