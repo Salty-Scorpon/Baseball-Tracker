@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3 uid="uid://errorassignmentwidget"]
+
+[ext_resource type="Script" path="res://modes/game_entry/widgets/ErrorAssignmentWidget.gd" id="1_error_assignment"]
+
+[node name="ErrorAssignmentWidget" type="VBoxContainer"]
+custom_minimum_size = Vector2(520, 0)
+theme_override_constants/separation = 6
+script = ExtResource("1_error_assignment")
+
+[node name="Title" type="Label" parent="."]
+text = "Error Assignment"
+
+[node name="HelpLabel" type="Label" parent="."]
+text = "Attach one or more errors to this event. Earned-run effect is stored for later review; no earned-run automation runs here."
+autowrap_mode = 3
+
+[node name="RowsContainer" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+theme_override_constants/separation = 8
+
+[node name="EmptyLabel" type="Label" parent="."]
+unique_name_in_owner = true
+text = "No errors attached."
+
+[node name="AddButton" type="Button" parent="."]
+unique_name_in_owner = true
+text = "Add Error"
+
+[node name="WarningLabel" type="Label" parent="."]
+unique_name_in_owner = true
+autowrap_mode = 3

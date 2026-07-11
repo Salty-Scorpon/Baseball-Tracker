@@ -67,6 +67,7 @@ static func validate_event_payload(payload: Dictionary) -> Array[Dictionary]:
 	var advancements = _as_array(details.get("runner_advancements", []))
 	var count = _as_dictionary(details.get("count", {}))
 	var fielder_assignment = _as_dictionary(details.get("fielder_assignment", {}))
+	var errors = _as_array(details.get("errors", []))
 	var manual_overrides = _as_dictionary(details.get("manual_overrides", payload.get("manual_overrides", {})))
 
 	if event_type.is_empty():
@@ -83,7 +84,7 @@ static func validate_event_payload(payload: Dictionary) -> Array[Dictionary]:
 	_validate_runner_advancements(messages, event_type, str(payload.get("batter_id", "")), advancements)
 	_validate_outs(messages, event_type, payload, advancements, manual_overrides)
 	_validate_fielder_assignment(messages, event_type, fielder_assignment)
-	_validate_batch_two_details(messages, event_type, payload, details, advancements, fielder_assignment)
+	_validate_batch_two_details(messages, event_type, payload, details, advancements, fielder_assignment, errors)
 	return messages
 
 static func has_errors(messages: Array) -> bool:
@@ -160,10 +161,11 @@ static func _validate_fielder_assignment(messages: Array[Dictionary], event_type
 	if not has_fielder:
 		_add_warning(messages, "details.fielder_assignment", "Fielder assignment is unknown for this batted-ball out.")
 
-static func _validate_batch_two_details(messages: Array[Dictionary], event_type: String, payload: Dictionary, details: Dictionary, advancements: Array, fielder_assignment: Dictionary) -> void:
+static func _validate_batch_two_details(messages: Array[Dictionary], event_type: String, payload: Dictionary, details: Dictionary, advancements: Array, fielder_assignment: Dictionary, errors: Array) -> void:
 	var event_details = _flatten_event_details(_as_dictionary(details.get("event_details", {})))
-	if event_type == "reached_on_error" and _is_blank(event_details.get("error_fielder_id", "")) and _is_blank(fielder_assignment.get("primary_fielder_id", "")):
-		_add_warning(messages, "details.event_details.error_fielder_id", "Reached on error should assign the charged fielder or mark it with a manual override.")
+	if event_type == "reached_on_error" and errors.is_empty() and _is_blank(event_details.get("error_fielder_id", "")) and _is_blank(fielder_assignment.get("primary_fielder_id", "")):
+		_add_warning(messages, "details.errors", "Reached on error should attach at least one charged error or mark it with a manual override.")
+	_validate_error_details(messages, errors)
 	if event_type == "fielders_choice" and _outs_from_advancements(advancements) < 1:
 		_add_warning(messages, "details.runner_advancements", "Fielder's choice usually records a runner out; mark the retired runner out or use an override.")
 	if event_type in ["sacrifice_bunt", "sacrifice_fly"] and _outs_from_advancements(advancements) < 1:
@@ -176,6 +178,20 @@ static func _validate_batch_two_details(messages: Array[Dictionary], event_type:
 		_add_warning(messages, "details.event_details.pitcher_id", "%s should identify the pitcher." % event_type.replace("_", " ").capitalize())
 	if event_type == "passed_ball" and _is_blank(event_details.get("catcher_id", "")) and _is_blank(fielder_assignment.get("primary_fielder_id", "")):
 		_add_warning(messages, "details.event_details.catcher_id", "Passed ball should identify the catcher.")
+
+static func _validate_error_details(messages: Array[Dictionary], errors: Array) -> void:
+	var valid_types = {"fielding": true, "throwing": true, "catching": true, "dropped_fly": true, "missed_tag": true, "missed_base": true, "interference": true, "unknown": true}
+	var valid_phases = {"fielding_batted_ball": true, "throwing_after_fielding": true, "catching_throw": true, "dropped_fly": true, "missed_tag": true, "missed_base": true, "relay_error": true, "pickoff_error": true, "other": true}
+	for index in range(errors.size()):
+		var error = _as_dictionary(errors[index])
+		if _is_blank(error.get("fielder_id", "")):
+			_add_warning(messages, "details.errors[%d].fielder_id" % index, "Attached error should identify the fielder or an unknown/manual fielder ID.")
+		if not valid_types.has(str(error.get("error_type", ""))):
+			_add_error(messages, "details.errors[%d].error_type" % index, "Attached error has an invalid error_type.")
+		if not valid_phases.has(str(error.get("error_phase", ""))):
+			_add_error(messages, "details.errors[%d].error_phase" % index, "Attached error has an invalid error_phase.")
+		if int(error.get("runs_scored_due_to_error", 0)) < 0:
+			_add_error(messages, "details.errors[%d].runs_scored_due_to_error" % index, "Runs scored due to error cannot be negative.")
 
 static func _flatten_event_details(event_details: Dictionary) -> Dictionary:
 	var flat = {}

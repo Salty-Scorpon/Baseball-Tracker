@@ -193,6 +193,11 @@ static func _apply_fielding_event(map: Dictionary, seen_games: Dictionary, event
 		var eid = str(error_id)
 		if not eid.is_empty():
 			var err = _ensure_fielding(map, eid); _mark_game(seen_games, err, eid, event.game_id); err.errors += 1
+	for error in _as_array(details.get("errors", [])):
+		var error_data = _as_dictionary(error)
+		var eid = str(error_data.get("fielder_id", ""))
+		if not eid.is_empty():
+			var err = _ensure_fielding(map, eid); _mark_game(seen_games, err, eid, event.game_id); err.errors += 1
 
 static func _is_plate_appearance(event_type: String, event: GameEvent) -> bool:
 	return not _batter_id(event).is_empty() and (HIT_EVENTS.has(event_type) or WALK_EVENTS.has(event_type) or HBP_EVENTS.has(event_type) or STRIKEOUT_EVENTS.has(event_type) or OUT_EVENTS.has(event_type) or event_type == "sacrifice_bunt" or event_type == "sacrifice_fly")
@@ -314,3 +319,6 @@ static func _safe_div(numerator: float, denominator: float) -> float:
 
 static func _as_array(value: Variant) -> Array:
 	return value if value is Array else []
+
+static func _as_dictionary(value: Variant) -> Dictionary:
+	return value if value is Dictionary else {}
