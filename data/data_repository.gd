@@ -1,15 +1,15 @@
 class_name DataRepository
 extends RefCounted
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION = 1
 
-const CompetitionModel := preload("res://data/models/competition.gd")
-const GameModel := preload("res://data/models/game.gd")
-const GameEventModel := preload("res://data/models/game_event.gd")
-const ManualStatEntryModel := preload("res://data/models/manual_stat_entry.gd")
-const PlayerModel := preload("res://data/models/player.gd")
-const RulesetModel := preload("res://data/models/ruleset.gd")
-const TeamModel := preload("res://data/models/team.gd")
+const CompetitionModel = preload("res://data/models/competition.gd")
+const GameModel = preload("res://data/models/game.gd")
+const GameEventModel = preload("res://data/models/game_event.gd")
+const ManualStatEntryModel = preload("res://data/models/manual_stat_entry.gd")
+const PlayerModel = preload("res://data/models/player.gd")
+const RulesetModel = preload("res://data/models/ruleset.gd")
+const TeamModel = preload("res://data/models/team.gd")
 
 var schema_version: int = SCHEMA_VERSION
 var competitions: Array[Competition] = []
@@ -43,7 +43,7 @@ func to_dict() -> Dictionary:
 	}
 
 static func from_dict(data: Dictionary) -> DataRepository:
-	var repository := DataRepository.new()
+	var repository = DataRepository.new()
 	repository.schema_version = int(data.get("schema_version", SCHEMA_VERSION))
 	repository.competitions.assign(_collection_from_dicts(data.get("competitions", []), CompetitionModel))
 	repository.teams.assign(_collection_from_dicts(data.get("teams", []), TeamModel))
@@ -115,7 +115,7 @@ func add_game_event(event: GameEvent) -> bool:
 func find_entity_by_id(entity_id: String, collection_name: String = "") -> Variant:
 	if entity_id.is_empty():
 		return null
-	var collections := _collections_for_lookup(collection_name)
+	var collections = _collections_for_lookup(collection_name)
 	for collection in collections:
 		for entity in collection:
 			if entity.id == entity_id:
@@ -123,7 +123,7 @@ func find_entity_by_id(entity_id: String, collection_name: String = "") -> Varia
 	return null
 
 func validate_broken_references() -> PackedStringArray:
-	var errors := PackedStringArray()
+	var errors = PackedStringArray()
 	for competition in competitions:
 		if not competition.ruleset_id.is_empty() and find_entity_by_id(competition.ruleset_id, "rulesets") == null:
 			errors.append("Competition %s references missing ruleset %s." % [competition.id, competition.ruleset_id])

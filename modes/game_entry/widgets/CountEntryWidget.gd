@@ -7,7 +7,7 @@ class_name CountEntryWidget
 ## should store them in GameEvent.details when creating or editing canonical
 ## game-log events.
 
-const DEFAULT_COUNT_DATA := {
+const DEFAULT_COUNT_DATA = {
 	"balls": 0,
 	"strikes": 0,
 	"total_pitches": 0,
@@ -47,7 +47,7 @@ func get_count_data() -> Dictionary:
 	}
 
 func set_count_data(data: Dictionary) -> void:
-	var merged := DEFAULT_COUNT_DATA.duplicate(true)
+	var merged = DEFAULT_COUNT_DATA.duplicate(true)
 	merged.merge(data, true)
 	balls_spin.value = clampi(int(merged["balls"]), 0, 3)
 	strikes_spin.value = clampi(int(merged["strikes"]), 0, 2)
@@ -63,7 +63,7 @@ func reset() -> void:
 
 func validate() -> Array[String]:
 	var errors: Array[String] = []
-	var count_data := get_count_data()
+	var count_data = get_count_data()
 	if count_data["balls"] < 0 or count_data["balls"] > 3:
 		errors.append("Balls must be between 0 and 3.")
 	if count_data["strikes"] < 0 or count_data["strikes"] > 2:
@@ -72,7 +72,7 @@ func validate() -> Array[String]:
 		if int(count_data[field_name]) < 0:
 			errors.append("%s cannot be negative." % _humanize_field_name(field_name))
 	if not count_data["manual_pitch_count_override"]:
-		var visible_pitch_parts := int(count_data["called_strikes"]) + int(count_data["swinging_strikes"]) + int(count_data["fouls"]) + int(count_data["balls_thrown"])
+		var visible_pitch_parts = int(count_data["called_strikes"]) + int(count_data["swinging_strikes"]) + int(count_data["fouls"]) + int(count_data["balls_thrown"])
 		if visible_pitch_parts > int(count_data["total_pitches"]):
 			errors.append("Advanced pitch details cannot exceed total pitches unless manual override is enabled.")
 	return errors

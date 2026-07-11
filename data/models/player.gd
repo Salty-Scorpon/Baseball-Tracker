@@ -54,7 +54,7 @@ func to_dict() -> Dictionary:
 	}
 
 static func from_dict(data: Dictionary) -> Player:
-	var player := Player.new(str(data.get("id", "")), str(data.get("team_id", "")), str(data.get("display_name", "")))
+	var player = Player.new(str(data.get("id", "")), str(data.get("team_id", "")), str(data.get("display_name", "")))
 	player.first_name = str(data.get("first_name", ""))
 	player.last_name = str(data.get("last_name", ""))
 	player.japanese_name = str(data.get("japanese_name", ""))
@@ -70,7 +70,7 @@ static func from_dict(data: Dictionary) -> Player:
 	return player
 
 func validate() -> PackedStringArray:
-	var errors := PackedStringArray()
+	var errors = PackedStringArray()
 	if id.strip_edges().is_empty(): errors.append("Player id is required.")
 	if team_id.strip_edges().is_empty(): errors.append("Player team_id is required.")
 	if display_name.strip_edges().is_empty() and first_name.strip_edges().is_empty() and last_name.strip_edges().is_empty():

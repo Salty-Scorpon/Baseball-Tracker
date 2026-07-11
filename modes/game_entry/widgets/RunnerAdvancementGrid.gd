@@ -21,14 +21,14 @@ const ADVANCE_REASONS: Array[String] = [
 	"manual",
 ]
 
-const BATTER_RUNNER_ID := "__batter__"
-const BATTER_LABEL := "Batter"
+const BATTER_RUNNER_ID = "__batter__"
+const BATTER_LABEL = "Batter"
 
 @onready var rows_grid: GridContainer = %RowsGrid
 @onready var empty_label: Label = %EmptyLabel
 
 var _rows: Array[Dictionary] = []
-var _batter_id := ""
+var _batter_id = ""
 
 func _ready() -> void:
 	reset()
@@ -51,7 +51,7 @@ func setup_from_base_state(batter_id: String, base_state: Dictionary, player_loo
 		})
 
 	for base in ["1B", "2B", "3B"]:
-		var runner_id := str(base_state.get(base, ""))
+		var runner_id = str(base_state.get(base, ""))
 		if runner_id.strip_edges().is_empty():
 			continue
 		_add_row({
@@ -69,14 +69,14 @@ func setup_from_base_state(batter_id: String, base_state: Dictionary, player_loo
 	_update_empty_state()
 
 func apply_default_for_event(event_type: String) -> void:
-	var normalized := event_type.strip_edges().to_lower().replace(" ", "_").replace("-", "_")
+	var normalized = event_type.strip_edges().to_lower().replace(" ", "_").replace("-", "_")
 	for row in _rows:
 		_set_row_value(row, "advance_reason", "batter_result")
 		_set_row_value(row, "out", false)
 		_set_row_value(row, "scored", false)
 		_set_row_value(row, "rbi_credit", false)
-		var start_base := str(row["start_base"])
-		var is_batter := bool(row.get("is_batter", false))
+		var start_base = str(row["start_base"])
+		var is_batter = bool(row.get("is_batter", false))
 		match normalized:
 			"single":
 				_set_row_value(row, "end_base", "1B" if is_batter else _advance_base(start_base, 1))
@@ -116,7 +116,7 @@ func get_advancements() -> Array:
 	return advancements
 
 func set_advancements(data: Array) -> void:
-	var rows_by_runner := {}
+	var rows_by_runner = {}
 	for row in _rows:
 		rows_by_runner[str(row["runner_id"])] = row
 	for item in data:
@@ -140,12 +140,12 @@ func reset() -> void:
 
 func validate() -> Array[String]:
 	var warnings: Array[String] = []
-	var occupied_after := {}
+	var occupied_after = {}
 	for advancement in get_advancements():
-		var name := str(advancement.get("display_name", advancement.get("runner_id", "Runner")))
-		var end_base := str(advancement.get("end_base", "NONE"))
-		var is_out := bool(advancement.get("out", false))
-		var scored := bool(advancement.get("scored", false))
+		var name = str(advancement.get("display_name", advancement.get("runner_id", "Runner")))
+		var end_base = str(advancement.get("end_base", "NONE"))
+		var is_out = bool(advancement.get("out", false))
+		var scored = bool(advancement.get("scored", false))
 		if end_base == "NONE":
 			warnings.append("%s has no end state." % name)
 		if scored and is_out:
@@ -161,40 +161,40 @@ func validate() -> Array[String]:
 	return warnings
 
 func _add_row(data: Dictionary) -> void:
-	var name_label := Label.new()
+	var name_label = Label.new()
 	name_label.text = str(data["display_name"])
 	_mark_dynamic(name_label)
 	rows_grid.add_child(name_label)
 
-	var start_label := Label.new()
+	var start_label = Label.new()
 	start_label.text = str(data["start_base"])
 	_mark_dynamic(start_label)
 	rows_grid.add_child(start_label)
 
-	var end_base_option := _build_option_button(BASE_VALUES)
+	var end_base_option = _build_option_button(BASE_VALUES)
 	_mark_dynamic(end_base_option)
 	rows_grid.add_child(end_base_option)
 
-	var scored_check := CheckBox.new()
+	var scored_check = CheckBox.new()
 	_mark_dynamic(scored_check)
 	rows_grid.add_child(scored_check)
-	var out_check := CheckBox.new()
+	var out_check = CheckBox.new()
 	_mark_dynamic(out_check)
 	rows_grid.add_child(out_check)
-	var rbi_check := CheckBox.new()
+	var rbi_check = CheckBox.new()
 	_mark_dynamic(rbi_check)
 	rows_grid.add_child(rbi_check)
 
-	var reason_option := _build_option_button(ADVANCE_REASONS)
+	var reason_option = _build_option_button(ADVANCE_REASONS)
 	_mark_dynamic(reason_option)
 	rows_grid.add_child(reason_option)
 
-	var pitcher_edit := LineEdit.new()
+	var pitcher_edit = LineEdit.new()
 	pitcher_edit.placeholder_text = "Pitcher ID"
 	_mark_dynamic(pitcher_edit)
 	rows_grid.add_child(pitcher_edit)
 
-	var row := data.duplicate(true)
+	var row = data.duplicate(true)
 	row.merge({"name_label": name_label, "end_base_option": end_base_option, "scored_check": scored_check, "out_check": out_check, "rbi_check": rbi_check, "reason_option": reason_option, "pitcher_edit": pitcher_edit}, true)
 	_rows.append(row)
 	_set_row_value(row, "end_base", data.get("end_base", "NONE"))
@@ -204,7 +204,7 @@ func _mark_dynamic(control: Control) -> void:
 	control.set_meta("runner_advancement_dynamic", true)
 
 func _build_option_button(values: Array[String]) -> OptionButton:
-	var option := OptionButton.new()
+	var option = OptionButton.new()
 	for value in values:
 		option.add_item(value)
 	return option
@@ -235,7 +235,7 @@ func _selected_option_text(option: OptionButton) -> String:
 	return option.get_item_text(option.selected)
 
 func _advance_base(start_base: String, base_count: int) -> String:
-	var base_index := {"HOME": 0, "1B": 1, "2B": 2, "3B": 3}.get(start_base, 0)
+	var base_index = {"HOME": 0, "1B": 1, "2B": 2, "3B": 3}.get(start_base, 0)
 	var end_index: int = int(base_index) + base_count
 	if end_index >= 4:
 		return "SCORED"

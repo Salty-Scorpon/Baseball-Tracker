@@ -8,23 +8,23 @@ extends RefCounted
 ## values collected from these templates should be stored by callers in
 ## GameEvent.details when that model is expanded.
 
-const EVENT_GROUP_HITS := "hits"
-const EVENT_GROUP_WALKS_AND_FREE_BASES := "walks_and_free_bases"
-const EVENT_GROUP_STRIKEOUTS := "strikeouts"
-const EVENT_GROUP_BATTED_BALL_OUTS := "batted_ball_outs"
+const EVENT_GROUP_HITS = "hits"
+const EVENT_GROUP_WALKS_AND_FREE_BASES = "walks_and_free_bases"
+const EVENT_GROUP_STRIKEOUTS = "strikeouts"
+const EVENT_GROUP_BATTED_BALL_OUTS = "batted_ball_outs"
 
-const WIDGET_COUNT_ENTRY := "count_entry"
-const WIDGET_RUNNER_ADVANCEMENT_GRID := "runner_advancement_grid"
-const WIDGET_BASIC_FIELDER_ASSIGNMENT := "basic_fielder_assignment"
-const WIDGET_EVENT_SUMMARY := "event_summary"
-const WIDGET_MANUAL_OVERRIDES := "manual_overrides"
-const WIDGET_HIT_DETAILS := "hit_details"
-const WIDGET_FREE_BASE_DETAILS := "free_base_details"
-const WIDGET_STRIKEOUT_DETAILS := "strikeout_details"
-const WIDGET_BATTED_BALL_OUT_DETAILS := "batted_ball_out_details"
+const WIDGET_COUNT_ENTRY = "count_entry"
+const WIDGET_RUNNER_ADVANCEMENT_GRID = "runner_advancement_grid"
+const WIDGET_BASIC_FIELDER_ASSIGNMENT = "basic_fielder_assignment"
+const WIDGET_EVENT_SUMMARY = "event_summary"
+const WIDGET_MANUAL_OVERRIDES = "manual_overrides"
+const WIDGET_HIT_DETAILS = "hit_details"
+const WIDGET_FREE_BASE_DETAILS = "free_base_details"
+const WIDGET_STRIKEOUT_DETAILS = "strikeout_details"
+const WIDGET_BATTED_BALL_OUT_DETAILS = "batted_ball_out_details"
 
 static func get_templates() -> Dictionary:
-	var templates := {}
+	var templates = {}
 	_register_hits(templates)
 	_register_walks_and_free_bases(templates)
 	_register_strikeouts(templates)
@@ -38,7 +38,7 @@ static func has_template(event_type: String) -> bool:
 	return get_templates().has(event_type)
 
 static func get_event_types() -> PackedStringArray:
-	var event_types := PackedStringArray()
+	var event_types = PackedStringArray()
 	for event_type in get_templates().keys():
 		event_types.append(str(event_type))
 	event_types.sort()
@@ -56,7 +56,7 @@ static func debug_get_registered_templates() -> Dictionary:
 
 static func debug_print_registered_templates() -> void:
 	for event_type in get_event_types():
-		var template := get_template(event_type)
+		var template = get_template(event_type)
 		print("%s [%s]: %s" % [event_type, template.get("event_group", ""), template.get("display_name", "")])
 
 static func _register_hits(templates: Dictionary) -> void:
@@ -117,7 +117,7 @@ static func _register_batted_ball_outs(templates: Dictionary) -> void:
 	_add_template(templates, _plate_appearance_template("flyout", EVENT_GROUP_BATTED_BALL_OUTS, "Flyout", ["out_type", "primary_fielder_id", "outs_added"], ["caught_by", "runner_tag_up_advancements", "sacrifice_fly", "rbi"], [WIDGET_COUNT_ENTRY, WIDGET_BATTED_BALL_OUT_DETAILS, WIDGET_RUNNER_ADVANCEMENT_GRID, WIDGET_BASIC_FIELDER_ASSIGNMENT, WIDGET_EVENT_SUMMARY, WIDGET_MANUAL_OVERRIDES], {"outs_added": 1, "batter_out": true, "runners_hold_by_default": true, "prompt_sacrifice_fly_when_runner_scores": true}, {"plate_appearance": 1, "at_bat": 1, "flyout": 1, "sacrifice_fly_default": false}, ["requires_current_batter", "requires_current_pitcher", "requires_primary_fielder_or_unknown", "outs_added_at_least_one", "prompt_sacrifice_fly_if_runner_scores", "outs_after_not_over_three_without_override", "validate_unique_occupied_bases_after"]))
 
 static func _plate_appearance_template(event_type: String, event_group: String, display_name: String, extra_required_fields: Array, optional_fields: Array, widgets_needed: Array, default_runner_logic: Dictionary, default_stat_effects: Dictionary, validation_rules: Array) -> Dictionary:
-	var required_fields := ["batter_id", "pitcher_id", "count", "total_pitches", "base_state_before", "runner_advancements", "runs_scored", "rbi", "base_state_after"]
+	var required_fields = ["batter_id", "pitcher_id", "count", "total_pitches", "base_state_before", "runner_advancements", "runs_scored", "rbi", "base_state_after"]
 	for field in extra_required_fields:
 		if not required_fields.has(field):
 			required_fields.append(field)

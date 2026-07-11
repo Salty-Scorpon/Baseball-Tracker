@@ -1,9 +1,9 @@
 extends SceneTree
 
-const Formatter := preload("res://app/EventSummaryFormatter.gd")
+const Formatter = preload("res://app/EventSummaryFormatter.gd")
 
 func _init() -> void:
-	var exit_code := 0
+	var exit_code = 0
 	exit_code = _expect(Formatter.summarize(_sample_single()).contains("Top of the 4th"), "Includes inning context.", exit_code)
 	exit_code = _expect(Formatter.summarize(_sample_single()).contains("Tanaka singles against Sato"), "Includes batter, pitcher, and result.", exit_code)
 	exit_code = _expect(Formatter.summarize(_sample_single()).contains("Runner advances"), "Includes runner advancements.", exit_code)

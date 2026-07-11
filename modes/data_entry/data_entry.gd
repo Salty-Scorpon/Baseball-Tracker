@@ -2,14 +2,14 @@ extends Control
 
 signal navigate_requested(screen_name: StringName)
 
-const SaveManagerScript := preload("res://data/saving/save_manager.gd")
-const CompetitionModel := preload("res://data/models/competition.gd")
-const TeamModel := preload("res://data/models/team.gd")
-const PlayerModel := preload("res://data/models/player.gd")
-const GameModel := preload("res://data/models/game.gd")
-const RulesetModel := preload("res://data/models/ruleset.gd")
-const DateUtils := preload("res://data/date_utils.gd")
-const DateFieldScript := preload("res://ui/common/date_field.gd")
+const SaveManagerScript = preload("res://data/saving/save_manager.gd")
+const CompetitionModel = preload("res://data/models/competition.gd")
+const TeamModel = preload("res://data/models/team.gd")
+const PlayerModel = preload("res://data/models/player.gd")
+const GameModel = preload("res://data/models/game.gd")
+const RulesetModel = preload("res://data/models/ruleset.gd")
+const DateUtils = preload("res://data/date_utils.gd")
+const DateFieldScript = preload("res://ui/common/date_field.gd")
 
 @onready var entity_tabs: TabBar = %EntityTabs
 @onready var search_field: LineEdit = %SearchField
@@ -24,10 +24,10 @@ const DateFieldScript := preload("res://ui/common/date_field.gd")
 @onready var validate_button: Button = %ValidateButton
 
 var repository: DataRepository
-var selected_type := "competitions"
-var selected_id := ""
+var selected_type = "competitions"
+var selected_id = ""
 var fields: Dictionary = {}
-var id_seed := 1
+var id_seed = 1
 
 func _ready() -> void:
 	_load_or_create_repository()
@@ -75,17 +75,17 @@ func _on_new_pressed() -> void:
 
 func _on_save_pressed() -> void:
 	var entity: Variant = _selected_entity()
-	var is_new := false
+	var is_new = false
 	if entity == null:
 		entity = _make_new_entity(selected_type)
 		is_new = true
 	_apply_fields_to_entity(entity)
-	var warnings := _validate_entity(entity)
+	var warnings = _validate_entity(entity)
 	warning_label.text = "\n".join(warnings)
 	if is_new:
 		_add_entity(entity)
 	_rebuild_relationships()
-	var err := SaveManagerScript.save_project(repository)
+	var err = SaveManagerScript.save_project(repository)
 	status_label.text = "Saved." if err == OK else "Save failed: %d" % err
 	selected_id = entity.id
 	_refresh_list()
@@ -103,7 +103,7 @@ func _on_delete_pressed() -> void:
 	status_label.text = "Deleted and saved."
 
 func _on_validate_pressed() -> void:
-	var warnings := PackedStringArray()
+	var warnings = PackedStringArray()
 	for collection in [repository.competitions, repository.teams, repository.players, repository.games]:
 		for entity in collection:
 			warnings.append_array(entity.validate())
@@ -114,9 +114,9 @@ func _on_validate_pressed() -> void:
 
 func _refresh_list() -> void:
 	entity_list.clear()
-	var filter := search_field.text.strip_edges().to_lower()
+	var filter = search_field.text.strip_edges().to_lower()
 	for entity in _current_collection():
-		var label := _entity_label(entity)
+		var label = _entity_label(entity)
 		if filter.is_empty() or label.to_lower().contains(filter) or entity.id.to_lower().contains(filter):
 			entity_list.add_item(label)
 			entity_list.set_item_metadata(entity_list.item_count - 1, entity.id)
@@ -147,23 +147,23 @@ func _show_editor(entity: Variant) -> void:
 	warning_label.text = "\n".join(_validate_entity(entity))
 
 func _add_field(property: String, label_text: String, value: Variant, options: Array = [], editor_type: String = "") -> void:
-	var label := Label.new()
+	var label = Label.new()
 	label.text = label_text
 	form_grid.add_child(label)
 	var control: Control
 	if editor_type == "date":
-		var date_field := DateFieldScript.new()
+		var date_field = DateFieldScript.new()
 		date_field.set_date_text(_stringify_value(value))
 		control = date_field
 	elif not options.is_empty():
-		var option := OptionButton.new()
+		var option = OptionButton.new()
 		option.add_item("")
 		for item in options:
 			option.add_item(item)
 		option.select(max(0, options.find(str(value)) + 1))
 		control = option
 	else:
-		var edit := LineEdit.new()
+		var edit = LineEdit.new()
 		edit.text = _stringify_value(value)
 		control = edit
 	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -180,7 +180,7 @@ func _field_specs(type: String) -> Array:
 
 func _apply_fields_to_entity(entity: Variant) -> void:
 	for property in fields:
-		var value := _field_text(fields[property]).strip_edges()
+		var value = _field_text(fields[property]).strip_edges()
 		match property:
 			"year": entity.set(property, int(value))
 			"colors", "positions": entity.set(property, _csv_to_array(value))
@@ -188,13 +188,13 @@ func _apply_fields_to_entity(entity: Variant) -> void:
 
 func _make_new_entity(type: String) -> Variant:
 	id_seed += 1
-	var id := "%s_%d" % [_singular(type), Time.get_unix_time_from_system() + id_seed]
+	var id = "%s_%d" % [_singular(type), Time.get_unix_time_from_system() + id_seed]
 	match type:
 		"competitions": return CompetitionModel.new(id, "New Competition")
 		"teams": return TeamModel.new(id, _first_id(repository.competitions), "New Team")
 		"players": return PlayerModel.new(id, _first_id(repository.teams), "New Player")
 		"games":
-			var game := GameModel.new(id, _first_id(repository.competitions))
+			var game = GameModel.new(id, _first_id(repository.competitions))
 			if repository.teams.size() > 0: game.home_team_id = repository.teams[0].id
 			if repository.teams.size() > 1: game.away_team_id = repository.teams[1].id
 			return game
@@ -232,16 +232,16 @@ func _rebuild_relationships() -> void:
 			if team != null: team.add_game_id(game.id)
 
 func _manual_validation_warnings() -> PackedStringArray:
-	var warnings := PackedStringArray()
-	var team_names := {}
+	var warnings = PackedStringArray()
+	var team_names = {}
 	for team in repository.teams:
-		var key := "%s|%s" % [team.competition_id, team.name.to_lower()]
+		var key = "%s|%s" % [team.competition_id, team.name.to_lower()]
 		if team_names.has(key): warnings.append("Duplicate team name '%s' in competition %s." % [team.name, team.competition_id])
 		team_names[key] = true
-	var jerseys := {}
+	var jerseys = {}
 	for player in repository.players:
 		if player.jersey_number.strip_edges().is_empty(): continue
-		var key := "%s|%s" % [player.team_id, player.jersey_number]
+		var key = "%s|%s" % [player.team_id, player.jersey_number]
 		if jerseys.has(key): warnings.append("Duplicate jersey #%s on team %s." % [player.jersey_number, player.team_id])
 		jerseys[key] = true
 	for game in repository.games:

@@ -108,7 +108,7 @@ func to_dict() -> Dictionary:
 	}
 
 static func from_dict(data: Dictionary) -> GameEvent:
-	var event := GameEvent.new(str(data.get("id", "")), str(data.get("game_id", "")))
+	var event = GameEvent.new(str(data.get("id", "")), str(data.get("game_id", "")))
 	event.sequence = int(data.get("sequence", data.get("sequence_number", 0)))
 	event.sequence_number = int(data.get("sequence_number", event.sequence))
 	event.inning = int(data.get("inning", 1))
@@ -144,7 +144,7 @@ static func from_dict(data: Dictionary) -> GameEvent:
 
 func validate() -> PackedStringArray:
 	_sync_standard_fields_from_legacy_fields()
-	var errors := PackedStringArray()
+	var errors = PackedStringArray()
 	if id.strip_edges().is_empty(): errors.append("GameEvent id is required.")
 	if game_id.strip_edges().is_empty(): errors.append("GameEvent game_id is required.")
 	if sequence < 0: errors.append("GameEvent sequence cannot be negative.")

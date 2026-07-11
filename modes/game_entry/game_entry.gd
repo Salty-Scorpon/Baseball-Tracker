@@ -2,13 +2,13 @@ extends Control
 
 signal navigate_requested(screen_name: StringName)
 
-const SaveManagerScript := preload("res://data/saving/save_manager.gd")
-const SampleDataFactory := preload("res://data/sample_data_factory.gd")
-const GameEventModel := preload("res://data/models/game_event.gd")
-const PlayerModel := preload("res://data/models/player.gd")
-const GameReplay := preload("res://data/game_replay.gd")
+const SaveManagerScript = preload("res://data/saving/save_manager.gd")
+const SampleDataFactory = preload("res://data/sample_data_factory.gd")
+const GameEventModel = preload("res://data/models/game_event.gd")
+const PlayerModel = preload("res://data/models/player.gd")
+const GameReplay = preload("res://data/game_replay.gd")
 
-const EVENT_BUTTONS := [
+const EVENT_BUTTONS = [
 	{"label": "1B", "event_type": "single", "legacy_type": "Single", "wired": true},
 	{"label": "2B", "event_type": "double", "legacy_type": "Double", "wired": true},
 	{"label": "3B", "event_type": "triple", "legacy_type": "Triple", "wired": true},
@@ -27,8 +27,8 @@ const EVENT_BUTTONS := [
 	{"label": "Substitution", "event_type": "substitution", "legacy_type": "Substitution", "wired": false},
 	{"label": "Manual", "event_type": "manual", "legacy_type": "Manual correction", "wired": false},
 ]
-const EVENT_TYPES := ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Pitching change", "Substitution", "Manual correction"]
-const OUT_EVENTS := {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt": 1, "Sacrifice fly": 1, "Caught stealing": 1}
+const EVENT_TYPES = ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Pitching change", "Substitution", "Manual correction"]
+const OUT_EVENTS = {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt": 1, "Sacrifice fly": 1, "Caught stealing": 1}
 
 @onready var game_picker: OptionButton = %GamePicker
 @onready var teams_label: Label = %TeamsLabel
@@ -81,13 +81,13 @@ const OUT_EVENTS := {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bun
 
 var repository: DataRepository
 var selected_game: Game
-var current_inning := 1
-var half_inning := "top"
-var outs := 0
-var score := {"away": 0, "home": 0}
-var bases := {"1B": "", "2B": "", "3B": ""}
-var lineups := {"away": [], "home": []}
-var starting_pitchers := {"away": "", "home": ""}
+var current_inning = 1
+var half_inning = "top"
+var outs = 0
+var score = {"away": 0, "home": 0}
+var bases = {"1B": "", "2B": "", "3B": ""}
+var lineups = {"away": [], "home": []}
+var starting_pitchers = {"away": "", "home": ""}
 var pending_event_button: Dictionary = {}
 var pending_payload: Dictionary = {}
 
@@ -116,7 +116,7 @@ func _load_repository() -> void:
 	repository = SaveManagerScript.load_project()
 	if repository == null:
 		repository = SaveManagerScript.new_project()
-		var sample := SampleDataFactory.create_sample_competition()
+		var sample = SampleDataFactory.create_sample_competition()
 		repository.add_ruleset(sample["rulesets"][0])
 		repository.add_competition(sample["competition"])
 		for team in sample["teams"]: repository.add_team(team)
@@ -135,12 +135,12 @@ func _build_event_buttons() -> void:
 	for child in event_buttons_grid.get_children():
 		child.queue_free()
 	for config in EVENT_BUTTONS:
-		var button := Button.new()
+		var button = Button.new()
 		button.text = str(config["label"])
 		button.tooltip_text = str(config["legacy_type"]) if bool(config["wired"]) else "%s not implemented yet" % str(config["legacy_type"])
 		button.disabled = not bool(config["wired"])
 		if bool(config["wired"]):
-			button.pressed.connect(func(c := config) -> void: _open_event_template(c))
+			button.pressed.connect(func(c = config) -> void: _open_event_template(c))
 		event_buttons_grid.add_child(button)
 
 func _open_event_template(config: Dictionary) -> void:
@@ -163,8 +163,8 @@ func _refresh_pending_preview() -> void:
 	pending_payload["outs_after"] = outs + int(manual_outs_spin.value)
 	pending_payload["batter_name"] = _player_or_text(str(pending_payload.get("batter_id", "")))
 	pending_payload["pitcher_name"] = _player_or_text(str(pending_payload.get("pitcher_id", "")))
-	var issues := event_entry_panel.validate()
-	var summary := EventSummaryFormatter.summarize(pending_payload)
+	var issues = event_entry_panel.validate()
+	var summary = EventSummaryFormatter.summarize(pending_payload)
 	if not issues.is_empty():
 		summary += "\nNeeds review: " + "; ".join(issues)
 	summary_preview_label.text = summary
@@ -219,8 +219,8 @@ func _select_game(index: int) -> void:
 	_refresh_all()
 
 func _build_setup_from_game() -> void:
-	var away_players := _players_for_team(selected_game.away_team_id)
-	var home_players := _players_for_team(selected_game.home_team_id)
+	var away_players = _players_for_team(selected_game.away_team_id)
+	var home_players = _players_for_team(selected_game.home_team_id)
 	away_lineup.text = "\n".join(_player_labels(away_players))
 	home_lineup.text = "\n".join(_player_labels(home_players))
 	_fill_player_options(away_pitcher, away_players)
@@ -244,32 +244,32 @@ func _add_player_to_current_game_team() -> void:
 	if selected_game == null:
 		add_player_status.text = "Select a game first."
 		return
-	var team_id := _selected_meta(add_player_team)
+	var team_id = _selected_meta(add_player_team)
 	if not [selected_game.away_team_id, selected_game.home_team_id].has(team_id):
 		add_player_status.text = "Choose the away or home team for this game."
 		return
-	var first_name := add_player_first_name.text.strip_edges()
-	var last_name := add_player_last_name.text.strip_edges()
+	var first_name = add_player_first_name.text.strip_edges()
+	var last_name = add_player_last_name.text.strip_edges()
 	if first_name.is_empty():
 		add_player_status.text = "Player first name is required."
 		return
 	if last_name.is_empty():
 		add_player_status.text = "Player last name is required."
 		return
-	var display_name := last_name
-	var player := PlayerModel.new(_new_player_id(team_id, display_name), team_id, display_name)
+	var display_name = last_name
+	var player = PlayerModel.new(_new_player_id(team_id, display_name), team_id, display_name)
 	player.first_name = first_name
 	player.last_name = last_name
 	player.jersey_number = add_player_jersey.text.strip_edges()
 	player.positions.assign(_csv_to_array(add_player_positions.text))
-	var warnings := player.validate()
+	var warnings = player.validate()
 	if not warnings.is_empty():
 		add_player_status.text = "\n".join(warnings)
 		return
 	if not repository.add_player(player):
 		add_player_status.text = "Could not add player. Try again."
 		return
-	var err := SaveManagerScript.save_project(repository)
+	var err = SaveManagerScript.save_project(repository)
 	if err != OK:
 		add_player_status.text = "Player added, but save failed: %d" % err
 		return
@@ -277,9 +277,9 @@ func _add_player_to_current_game_team() -> void:
 
 func _after_player_added(player: Player) -> void:
 	if add_player_to_lineup.button_pressed:
-		var lineup_edit := away_lineup if player.team_id == selected_game.away_team_id else home_lineup
-		var label := _player_label(player)
-		var existing := _text_lines(lineup_edit.text)
+		var lineup_edit = away_lineup if player.team_id == selected_game.away_team_id else home_lineup
+		var label = _player_label(player)
+		var existing = _text_lines(lineup_edit.text)
 		if not existing.has(label):
 			lineup_edit.text = label if lineup_edit.text.strip_edges().is_empty() else "%s\n%s" % [lineup_edit.text, label]
 	lineups["away"] = _text_lines(away_lineup.text)
@@ -316,8 +316,8 @@ func _add_event() -> void:
 func _add_event_from_pending() -> void:
 	if selected_game == null:
 		return
-	var type := str(pending_event_button.get("legacy_type", event_type.get_item_text(event_type.selected)))
-	var event := GameEventModel.new(_new_event_id(), selected_game.id)
+	var type = str(pending_event_button.get("legacy_type", event_type.get_item_text(event_type.selected)))
+	var event = GameEventModel.new(_new_event_id(), selected_game.id)
 	event.sequence_number = _game_events().size() + 1
 	event.sequence = event.sequence_number
 	event.inning = current_inning
@@ -364,7 +364,7 @@ func _apply_replay_state(replay_state: GameReplayState) -> void:
 	bases = replay_state.bases.duplicate(true)
 
 func _undo_last_event() -> void:
-	var events := _game_events()
+	var events = _game_events()
 	if events.is_empty(): return
 	var event: GameEvent = events[-1]
 	repository.game_events.erase(event)
@@ -384,10 +384,10 @@ func _refresh_all() -> void:
 	_refresh_history()
 
 func _refresh_matchup_options() -> void:
-	var offensive_side := "away" if half_inning == "top" else "home"
-	var offensive_team := selected_game.away_team_id if offensive_side == "away" else selected_game.home_team_id
+	var offensive_side = "away" if half_inning == "top" else "home"
+	var offensive_team = selected_game.away_team_id if offensive_side == "away" else selected_game.home_team_id
 	_fill_lineup_options(batter_picker, lineups[offensive_side], offensive_team)
-	var defensive_team := selected_game.home_team_id if half_inning == "top" else selected_game.away_team_id
+	var defensive_team = selected_game.home_team_id if half_inning == "top" else selected_game.away_team_id
 	_fill_player_options(pitcher_picker, _players_for_team(defensive_team))
 
 func _refresh_state_labels() -> void:
@@ -401,12 +401,12 @@ func _refresh_state_labels() -> void:
 
 func _refresh_lineup_and_defense() -> void:
 	lineup_list.clear()
-	var offensive_side := "away" if half_inning == "top" else "home"
+	var offensive_side = "away" if half_inning == "top" else "home"
 	for name in lineups[offensive_side]:
 		lineup_list.add_item(str(name))
-	var batter_text := batter_picker.get_item_text(batter_picker.selected) if batter_picker.selected >= 0 else "—"
+	var batter_text = batter_picker.get_item_text(batter_picker.selected) if batter_picker.selected >= 0 else "—"
 	current_batter_label.text = "Current batter: %s" % batter_text
-	var next_index := min(batter_picker.selected + 1, batter_picker.item_count - 1)
+	var next_index = min(batter_picker.selected + 1, batter_picker.item_count - 1)
 	on_deck_label.text = "On deck: %s" % (batter_picker.get_item_text(next_index) if next_index >= 0 and batter_picker.item_count > 1 else "—")
 	defense_label.text = "Defensive team: %s" % _team_name(_defense_team_id())
 	current_pitcher_label.text = "Current pitcher: %s" % (pitcher_picker.get_item_text(pitcher_picker.selected) if pitcher_picker.selected >= 0 else "—")
@@ -433,7 +433,7 @@ func _sync_default_outs() -> void:
 	rbi_spin.value = 0
 
 func _game_events() -> Array:
-	var events := repository.game_events.filter(func(e: GameEvent) -> bool: return selected_game != null and e.game_id == selected_game.id)
+	var events = repository.game_events.filter(func(e: GameEvent) -> bool: return selected_game != null and e.game_id == selected_game.id)
 	events.sort_custom(func(a: GameEvent, b: GameEvent) -> bool: return a.sequence_number < b.sequence_number)
 	return events
 
@@ -446,7 +446,7 @@ func _fill_player_options(option: OptionButton, players: Array) -> void:
 func _fill_lineup_options(option: OptionButton, names: Array, team_id: String) -> void:
 	option.clear()
 	for name in names:
-		var label := str(name)
+		var label = str(name)
 		option.add_item(label)
 		option.set_item_metadata(option.item_count - 1, _player_id_for_label(label, team_id))
 	if option.item_count == 0:
@@ -457,7 +457,7 @@ func _players_for_team(team_id: String) -> Array:
 	return repository.players.filter(func(p: Player) -> bool: return p.team_id == team_id)
 
 func _player_labels(players: Array) -> PackedStringArray:
-	var labels := PackedStringArray()
+	var labels = PackedStringArray()
 	for player in players:
 		labels.append(_player_label(player))
 	return labels
@@ -469,16 +469,16 @@ func _player_id_for_label(label: String, team_id: String) -> String:
 	return label
 
 func _text_lines(text: String) -> Array:
-	var output := []
+	var output = []
 	for line in text.split("\n"):
-		var trimmed := line.strip_edges()
+		var trimmed = line.strip_edges()
 		if not trimmed.is_empty(): output.append(trimmed)
 	return output
 
 func _csv_to_array(value: String) -> Array[String]:
 	var output: Array[String] = []
 	for item in value.split(","):
-		var trimmed := item.strip_edges()
+		var trimmed = item.strip_edges()
 		if not trimmed.is_empty(): output.append(trimmed)
 	return output
 
@@ -490,11 +490,11 @@ func _defense_team_id() -> String: return selected_game.home_team_id if half_inn
 func _new_event_id() -> String: return "%s_event_%d" % [selected_game.id, int(Time.get_unix_time_from_system() * 1000) + _game_events().size()]
 func _new_player_id(team_id: String, display_name: String) -> String:
 	var team: Team = repository.find_entity_by_id(team_id, "teams")
-	var region := team.region.strip_edges() if team != null else team_id
-	var abbreviation := team.abbreviation.strip_edges() if team != null else team_id
-	var base_id := "%s_%s_%s" % [region, abbreviation, display_name.strip_edges()]
-	var candidate := base_id
-	var suffix := 1
+	var region = team.region.strip_edges() if team != null else team_id
+	var abbreviation = team.abbreviation.strip_edges() if team != null else team_id
+	var base_id = "%s_%s_%s" % [region, abbreviation, display_name.strip_edges()]
+	var candidate = base_id
+	var suffix = 1
 	while repository.find_entity_by_id(candidate, "players") != null:
 		suffix += 1
 		candidate = "%s_%d" % [base_id, suffix]

@@ -26,7 +26,7 @@ func reset() -> void:
 	applied_event_ids = []
 
 func duplicate_state() -> GameReplayState:
-	var copy := GameReplayState.new()
+	var copy = GameReplayState.new()
 	copy.inning = inning
 	copy.half_inning = half_inning
 	copy.outs = outs

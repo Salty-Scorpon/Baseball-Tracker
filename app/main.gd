@@ -1,7 +1,7 @@
 extends Control
 
-const MAIN_MENU_SCENE := preload("res://modes/main_menu/main_menu.tscn")
-const SCENES := {
+const MAIN_MENU_SCENE = preload("res://modes/main_menu/main_menu.tscn")
+const SCENES = {
 	&"main_menu": preload("res://modes/main_menu/main_menu.tscn"),
 	&"data_entry": preload("res://modes/data_entry/data_entry.tscn"),
 	&"game_entry": preload("res://modes/game_entry/game_entry.tscn"),
