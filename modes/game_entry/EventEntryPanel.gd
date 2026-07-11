@@ -98,18 +98,17 @@ func reset() -> void:
 
 func validate() -> Array[String]:
 	var issues: Array[String] = []
-	if _event_type.is_empty():
-		issues.append("No event type selected.")
-	elif not SUPPORTED_EVENT_TYPES.has(_event_type):
-		issues.append("Unsupported event type: %s." % _event_type)
-	if str(_game_context.get("batter_id", "")).strip_edges().is_empty():
-		issues.append("Current batter is required.")
-	if str(_game_context.get("pitcher_id", "")).strip_edges().is_empty():
-		issues.append("Current pitcher is required.")
+	for message in validate_payload():
+		issues.append("%s: %s" % [str(message.get("severity", "warning")).capitalize(), str(message.get("message", ""))])
 	for widget in _widget_instances.values():
 		if widget.has_method("validate"):
 			issues.append_array(widget.validate())
 	return issues
+
+func validate_payload() -> Array[Dictionary]:
+	if _event_type.is_empty():
+		return [{"severity": "error", "field": "event_type", "message": "No event type selected."}]
+	return EventValidator.validate_event_payload(get_event_payload())
 
 func _add_widget_for_key(widget_key: String) -> void:
 	match widget_key:
