@@ -12,6 +12,7 @@ const CountEntryWidgetScene = preload("res://modes/game_entry/widgets/CountEntry
 const RunnerAdvancementGridScene = preload("res://modes/game_entry/widgets/RunnerAdvancementGrid.tscn")
 const FielderAssignmentWidgetScene = preload("res://modes/game_entry/widgets/FielderAssignmentWidget.tscn")
 const ManualOverridePanelScene = preload("res://modes/game_entry/widgets/ManualOverridePanel.tscn")
+const ErrorAssignmentWidgetScene = preload("res://modes/game_entry/widgets/ErrorAssignmentWidget.tscn")
 
 const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"single",
@@ -71,6 +72,7 @@ func get_event_payload() -> Dictionary:
 		"count": _get_widget_data(EventTemplateRegistry.WIDGET_COUNT_ENTRY),
 		"runner_advancements": _get_widget_data(EventTemplateRegistry.WIDGET_RUNNER_ADVANCEMENT_GRID),
 		"fielder_assignment": _get_widget_data(EventTemplateRegistry.WIDGET_BASIC_FIELDER_ASSIGNMENT),
+		"errors": _get_widget_data(EventTemplateRegistry.WIDGET_ERROR_DETAILS),
 		"event_details": _collect_detail_data(),
 		"manual_overrides": _get_widget_data(EventTemplateRegistry.WIDGET_MANUAL_OVERRIDES),
 	}
@@ -134,6 +136,10 @@ func _add_widget_for_key(widget_key: String) -> void:
 			_add_widget(widget_key, fielder_widget)
 			fielder_widget.setup_defense(_as_array(_game_context.get("defensive_players", [])))
 			fielder_widget.set_context(_event_type)
+		EventTemplateRegistry.WIDGET_ERROR_DETAILS:
+			var error_widget = ErrorAssignmentWidgetScene.instantiate()
+			_add_widget(widget_key, error_widget)
+			error_widget.setup_defense(_as_array(_game_context.get("defensive_players", [])))
 		EventTemplateRegistry.WIDGET_MANUAL_OVERRIDES:
 			_add_widget(widget_key, ManualOverridePanelScene.instantiate())
 		EventTemplateRegistry.WIDGET_EVENT_SUMMARY:
@@ -173,7 +179,7 @@ func _add_summary_section(widget_key: String) -> void:
 func _get_widget_data(widget_key: String) -> Variant:
 	var widget: Variant = _widget_instances.get(widget_key)
 	if widget == null:
-		return {} if widget_key != EventTemplateRegistry.WIDGET_RUNNER_ADVANCEMENT_GRID else []
+		return [] if widget_key in [EventTemplateRegistry.WIDGET_RUNNER_ADVANCEMENT_GRID, EventTemplateRegistry.WIDGET_ERROR_DETAILS] else {}
 	match widget_key:
 		EventTemplateRegistry.WIDGET_COUNT_ENTRY:
 			return widget.get_count_data()
@@ -181,6 +187,8 @@ func _get_widget_data(widget_key: String) -> Variant:
 			return widget.get_advancements()
 		EventTemplateRegistry.WIDGET_BASIC_FIELDER_ASSIGNMENT:
 			return widget.get_fielder_data()
+		EventTemplateRegistry.WIDGET_ERROR_DETAILS:
+			return widget.get_errors()
 		EventTemplateRegistry.WIDGET_MANUAL_OVERRIDES:
 			return widget.get_overrides()
 	return {}
@@ -206,8 +214,6 @@ func _fields_for_detail_widget(widget_key: String) -> Array[String]:
 			if _event_type == "fielders_choice":
 				return ["out_type", "outs_added", "runner_out_id", "throw_to_base"]
 			return ["out_type", "outs_added"]
-		EventTemplateRegistry.WIDGET_ERROR_DETAILS:
-			return ["error_fielder_id", "error_type", "error_notes"]
 		EventTemplateRegistry.WIDGET_SACRIFICE_DETAILS:
 			return ["sacrifice_bunt", "sacrifice_fly", "outs_added", "rbi"]
 		EventTemplateRegistry.WIDGET_BASERUNNING_DETAILS:
