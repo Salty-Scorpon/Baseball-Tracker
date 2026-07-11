@@ -8,6 +8,25 @@ const GameEventModel := preload("res://data/models/game_event.gd")
 const PlayerModel := preload("res://data/models/player.gd")
 const GameReplay := preload("res://data/game_replay.gd")
 
+const EVENT_BUTTONS := [
+	{"label": "1B", "event_type": "single", "legacy_type": "Single", "wired": true},
+	{"label": "2B", "event_type": "double", "legacy_type": "Double", "wired": true},
+	{"label": "3B", "event_type": "triple", "legacy_type": "Triple", "wired": true},
+	{"label": "HR", "event_type": "home_run", "legacy_type": "Home run", "wired": true},
+	{"label": "BB", "event_type": "walk", "legacy_type": "Walk", "wired": true},
+	{"label": "HBP", "event_type": "hit_by_pitch", "legacy_type": "Hit by pitch", "wired": true},
+	{"label": "K", "event_type": "strikeout", "legacy_type": "Strikeout", "wired": true},
+	{"label": "GO", "event_type": "groundout", "legacy_type": "Groundout", "wired": true},
+	{"label": "FO", "event_type": "flyout", "legacy_type": "Flyout", "wired": true},
+	{"label": "E", "event_type": "reached_on_error", "legacy_type": "Reached on error", "wired": false},
+	{"label": "FC", "event_type": "fielders_choice", "legacy_type": "Fielder's choice", "wired": false},
+	{"label": "SAC", "event_type": "sacrifice", "legacy_type": "Sacrifice bunt", "wired": false},
+	{"label": "SB", "event_type": "stolen_base", "legacy_type": "Stolen base", "wired": false},
+	{"label": "CS", "event_type": "caught_stealing", "legacy_type": "Caught stealing", "wired": false},
+	{"label": "Pitching Change", "event_type": "pitching_change", "legacy_type": "Pitching change", "wired": false},
+	{"label": "Substitution", "event_type": "substitution", "legacy_type": "Substitution", "wired": false},
+	{"label": "Manual", "event_type": "manual", "legacy_type": "Manual correction", "wired": false},
+]
 const EVENT_TYPES := ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Pitching change", "Substitution", "Manual correction"]
 const OUT_EVENTS := {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt": 1, "Sacrifice fly": 1, "Caught stealing": 1}
 
@@ -26,7 +45,11 @@ const OUT_EVENTS := {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bun
 @onready var away_pitcher: OptionButton = %AwayPitcher
 @onready var home_pitcher: OptionButton = %HomePitcher
 @onready var apply_setup_button: Button = %ApplySetupButton
-@onready var state_label: Label = %StateLabel
+@onready var score_label: Label = %ScoreLabel
+@onready var inning_label: Label = %InningLabel
+@onready var half_label: Label = %HalfLabel
+@onready var outs_label: Label = %OutsLabel
+@onready var count_label: Label = %CountLabel
 @onready var bases_label: Label = %BasesLabel
 @onready var event_type: OptionButton = %EventType
 @onready var runs_spin: SpinBox = %RunsSpin
@@ -36,6 +59,20 @@ const OUT_EVENTS := {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bun
 @onready var pitcher_picker: OptionButton = %Pitcher
 @onready var notes: LineEdit = %Notes
 @onready var manual_override_panel: ManualOverridePanel = %ManualOverridePanel
+@onready var event_entry_panel: DynamicEventEntryPanel = %EventEntryPanel
+@onready var event_buttons_grid: GridContainer = %EventButtonsGrid
+@onready var lineup_list: ItemList = %LineupList
+@onready var current_batter_label: Label = %CurrentBatterLabel
+@onready var on_deck_label: Label = %OnDeckLabel
+@onready var defense_label: Label = %DefenseLabel
+@onready var current_pitcher_label: Label = %CurrentPitcherLabel
+@onready var alignment_label: Label = %AlignmentLabel
+@onready var defense_list: ItemList = %DefenseList
+@onready var base_diamond: Label = %BaseDiamond
+@onready var summary_preview_label: Label = %SummaryPreviewLabel
+@onready var confirm_event_button: Button = %ConfirmEventButton
+@onready var edit_event_button: Button = %EditEventButton
+@onready var cancel_event_button: Button = %CancelEventButton
 @onready var add_event_button: Button = %AddEventButton
 @onready var undo_button: Button = %UndoButton
 @onready var finalize_button: Button = %FinalizeButton
@@ -51,12 +88,15 @@ var score := {"away": 0, "home": 0}
 var bases := {"1B": "", "2B": "", "3B": ""}
 var lineups := {"away": [], "home": []}
 var starting_pitchers := {"away": "", "home": ""}
+var pending_event_button: Dictionary = {}
+var pending_payload: Dictionary = {}
 
 func _ready() -> void:
 	_load_repository()
 	_connect_signals()
 	_populate_static_options()
 	_populate_games()
+	_build_event_buttons()
 	_select_game(0)
 
 func _connect_signals() -> void:
@@ -67,6 +107,9 @@ func _connect_signals() -> void:
 	add_event_button.pressed.connect(_add_event)
 	undo_button.pressed.connect(_undo_last_event)
 	finalize_button.pressed.connect(_finalize_game)
+	confirm_event_button.pressed.connect(_confirm_pending_event)
+	edit_event_button.pressed.connect(_refresh_pending_preview)
+	cancel_event_button.pressed.connect(_cancel_pending_event)
 	event_type.item_selected.connect(func(_i: int) -> void: _sync_default_outs())
 
 func _load_repository() -> void:
@@ -86,6 +129,76 @@ func _populate_static_options() -> void:
 	for type in EVENT_TYPES:
 		event_type.add_item(type)
 	_sync_default_outs()
+
+
+func _build_event_buttons() -> void:
+	for child in event_buttons_grid.get_children():
+		child.queue_free()
+	for config in EVENT_BUTTONS:
+		var button := Button.new()
+		button.text = str(config["label"])
+		button.tooltip_text = str(config["legacy_type"]) if bool(config["wired"]) else "%s not implemented yet" % str(config["legacy_type"])
+		button.disabled = not bool(config["wired"])
+		if bool(config["wired"]):
+			button.pressed.connect(func(c := config) -> void: _open_event_template(c))
+		event_buttons_grid.add_child(button)
+
+func _open_event_template(config: Dictionary) -> void:
+	pending_event_button = config.duplicate(true)
+	event_type.select(_event_type_index(str(config["legacy_type"])))
+	_sync_default_outs()
+	event_entry_panel.open_for_event(str(config["event_type"]), _current_game_context())
+	_refresh_pending_preview()
+	confirm_event_button.disabled = false
+	edit_event_button.disabled = false
+	cancel_event_button.disabled = false
+
+func _refresh_pending_preview() -> void:
+	if pending_event_button.is_empty():
+		return
+	pending_payload = event_entry_panel.get_event_payload()
+	pending_payload["result"] = pending_event_button.get("legacy_type", pending_payload.get("event_type", ""))
+	pending_payload["runs_scored"] = int(runs_spin.value)
+	pending_payload["rbi_count"] = int(rbi_spin.value)
+	pending_payload["outs_after"] = outs + int(manual_outs_spin.value)
+	pending_payload["batter_name"] = _player_or_text(str(pending_payload.get("batter_id", "")))
+	pending_payload["pitcher_name"] = _player_or_text(str(pending_payload.get("pitcher_id", "")))
+	var issues := event_entry_panel.validate()
+	var summary := EventSummaryFormatter.summarize(pending_payload)
+	if not issues.is_empty():
+		summary += "\nNeeds review: " + "; ".join(issues)
+	summary_preview_label.text = summary
+
+func _cancel_pending_event() -> void:
+	pending_event_button.clear()
+	pending_payload.clear()
+	event_entry_panel.reset()
+	summary_preview_label.text = "Choose an event button to preview the entry."
+	confirm_event_button.disabled = true
+	edit_event_button.disabled = true
+	cancel_event_button.disabled = true
+
+func _confirm_pending_event() -> void:
+	if pending_event_button.is_empty():
+		return
+	_refresh_pending_preview()
+	_add_event_from_pending()
+
+func _current_game_context() -> Dictionary:
+	return {
+		"game_id": selected_game.id if selected_game != null else "",
+		"inning": current_inning,
+		"half": half_inning,
+		"outs": outs,
+		"score": score.duplicate(true),
+		"base_state": bases.duplicate(true),
+		"offense_team_id": _offense_team_id() if selected_game != null else "",
+		"defense_team_id": _defense_team_id() if selected_game != null else "",
+		"batter_id": _selected_meta(batter_picker),
+		"pitcher_id": _selected_meta(pitcher_picker),
+		"offensive_lineup": _player_dicts_for_team(_offense_team_id()) if selected_game != null else [],
+		"defensive_players": _player_dicts_for_team(_defense_team_id()) if selected_game != null else [],
+	}
 
 func _populate_games() -> void:
 	game_picker.clear()
@@ -174,6 +287,7 @@ func _after_player_added(player: Player) -> void:
 	_fill_player_options(away_pitcher, _players_for_team(selected_game.away_team_id))
 	_fill_player_options(home_pitcher, _players_for_team(selected_game.home_team_id))
 	_refresh_matchup_options()
+	_refresh_lineup_and_defense()
 	add_player_first_name.text = ""
 	add_player_last_name.text = ""
 	add_player_jersey.text = ""
@@ -189,28 +303,48 @@ func _apply_setup() -> void:
 	SaveManagerScript.save_project(repository)
 	_refresh_matchup_options()
 	_refresh_state_labels()
+	_refresh_lineup_and_defense()
 	status_label.text = "Setup confirmed. Away bats in the top half; home bats in the bottom half."
 
 func _add_event() -> void:
-	if selected_game == null: return
-	var type := event_type.get_item_text(event_type.selected)
+	if selected_game == null:
+		return
+	pending_event_button = {"legacy_type": event_type.get_item_text(event_type.selected), "event_type": _normalize_event_type(event_type.get_item_text(event_type.selected)), "wired": true}
+	pending_payload = {"details": {}}
+	_add_event_from_pending()
+
+func _add_event_from_pending() -> void:
+	if selected_game == null:
+		return
+	var type := str(pending_event_button.get("legacy_type", event_type.get_item_text(event_type.selected)))
 	var event := GameEventModel.new(_new_event_id(), selected_game.id)
 	event.sequence_number = _game_events().size() + 1
+	event.sequence = event.sequence_number
 	event.inning = current_inning
+	event.half = half_inning
 	event.half_inning = half_inning
-	event.offensive_team_id = _offense_team_id()
-	event.defensive_team_id = _defense_team_id()
+	event.offense_team_id = _offense_team_id()
+	event.offensive_team_id = event.offense_team_id
+	event.defense_team_id = _defense_team_id()
+	event.defensive_team_id = event.defense_team_id
 	event.batter_id = _selected_meta(batter_picker)
 	event.pitcher_id = _selected_meta(pitcher_picker)
 	event.event_type = type
 	event.result = type
 	event.base_state_before = bases.duplicate(true)
+	event.score_before = score.duplicate(true)
+	event.outs_before = outs
 	event.outs_added = int(manual_outs_spin.value)
+	event.outs_after = outs + event.outs_added
 	event.runs_scored = int(runs_spin.value)
 	event.rbi_count = int(rbi_spin.value)
 	event.notes = notes.text.strip_edges()
+	event.details = Dictionary(pending_payload.get("details", {})).duplicate(true)
+	event.details["event_type"] = pending_event_button.get("event_type", _normalize_event_type(type))
+	event.details["summary_preview"] = summary_preview_label.text
 	if manual_override_panel.has_active_overrides():
 		event.details["manual_overrides"] = manual_override_panel.get_overrides()
+		event.manual_overrides = manual_override_panel.get_overrides()
 	event.manual_override = type == "Manual correction" or event.runs_scored > 0 or not event.notes.is_empty() or manual_override_panel.has_active_overrides()
 	repository.add_game_event(event)
 	_replay_events(true)
@@ -218,6 +352,7 @@ func _add_event() -> void:
 	SaveManagerScript.save_project(repository)
 	notes.text = ""
 	manual_override_panel.reset()
+	_cancel_pending_event()
 	_sync_default_outs()
 	_refresh_all()
 
@@ -245,6 +380,7 @@ func _replay_events(mutate_events: bool = false) -> void:
 func _refresh_all() -> void:
 	_refresh_matchup_options()
 	_refresh_state_labels()
+	_refresh_lineup_and_defense()
 	_refresh_history()
 
 func _refresh_matchup_options() -> void:
@@ -255,8 +391,29 @@ func _refresh_matchup_options() -> void:
 	_fill_player_options(pitcher_picker, _players_for_team(defensive_team))
 
 func _refresh_state_labels() -> void:
-	state_label.text = "%s %d | Outs: %d | Score %s %d - %s %d" % [half_inning.capitalize(), current_inning, outs, _team_name(selected_game.away_team_id), score["away"], _team_name(selected_game.home_team_id), score["home"]]
+	score_label.text = "%s %d  —  %s %d" % [_team_name(selected_game.away_team_id), score["away"], _team_name(selected_game.home_team_id), score["home"]]
+	inning_label.text = "Inning: %d" % current_inning
+	half_label.text = "Half: %s" % half_inning.capitalize()
+	outs_label.text = "Outs: %d" % outs
+	count_label.text = "Count: use event panel"
 	bases_label.text = "Bases: 1B=%s, 2B=%s, 3B=%s" % [_runner_name(bases["1B"]), _runner_name(bases["2B"]), _runner_name(bases["3B"])]
+	base_diamond.text = "      2B: %s\n\n3B: %s          1B: %s\n\n      HP" % [_runner_name(bases["2B"]), _runner_name(bases["3B"]), _runner_name(bases["1B"])]
+
+func _refresh_lineup_and_defense() -> void:
+	lineup_list.clear()
+	var offensive_side := "away" if half_inning == "top" else "home"
+	for name in lineups[offensive_side]:
+		lineup_list.add_item(str(name))
+	var batter_text := batter_picker.get_item_text(batter_picker.selected) if batter_picker.selected >= 0 else "—"
+	current_batter_label.text = "Current batter: %s" % batter_text
+	var next_index := min(batter_picker.selected + 1, batter_picker.item_count - 1)
+	on_deck_label.text = "On deck: %s" % (batter_picker.get_item_text(next_index) if next_index >= 0 and batter_picker.item_count > 1 else "—")
+	defense_label.text = "Defensive team: %s" % _team_name(_defense_team_id())
+	current_pitcher_label.text = "Current pitcher: %s" % (pitcher_picker.get_item_text(pitcher_picker.selected) if pitcher_picker.selected >= 0 else "—")
+	defense_list.clear()
+	for player in _players_for_team(_defense_team_id()):
+		defense_list.add_item(_player_label(player))
+	alignment_label.text = "Defensive alignment: available roster"
 
 func _refresh_history() -> void:
 	history.clear()
@@ -352,3 +509,19 @@ func _runner_name(value: String) -> String: return "empty" if value.is_empty() e
 func _player_or_text(value: String) -> String:
 	var player: Player = repository.find_entity_by_id(value, "players")
 	return _player_label(player) if player != null else value
+
+
+func _player_dicts_for_team(team_id: String) -> Array[Dictionary]:
+	var output: Array[Dictionary] = []
+	for player in _players_for_team(team_id):
+		output.append({"id": player.id, "player_id": player.id, "display_name": _player_label(player), "name": _player_label(player)})
+	return output
+
+func _event_type_index(type: String) -> int:
+	for index in range(event_type.item_count):
+		if event_type.get_item_text(index) == type:
+			return index
+	return 0
+
+func _normalize_event_type(type: String) -> String:
+	return type.strip_edges().to_lower().replace(" ", "_").replace("-", "_").replace("'", "")
