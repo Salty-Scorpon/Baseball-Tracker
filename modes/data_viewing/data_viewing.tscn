@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://ui/common/placeholder_screen.gd" id="1_placeholder"]
+[ext_resource type="Script" path="res://modes/data_viewing/data_viewing.gd" id="1_data_viewing"]
 
 [node name="DataViewing" type="Control"]
 layout_mode = 3
@@ -9,37 +9,194 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_placeholder")
-screen_title = "DataViewing"
-description = "Placeholder for team, player, and competition data viewing tools."
+script = ExtResource("1_data_viewing")
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
 
-[node name="Content" type="VBoxContainer" parent="CenterContainer"]
+[node name="Content" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/Content"]
+[node name="Header" type="HBoxContainer" parent="MarginContainer/Content"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Stats Browser"
+
+[node name="BackButton" type="Button" parent="MarginContainer/Content/Header"]
 unique_name_in_owner = true
-layout_mode = 2
-text = "DataViewing"
-horizontal_alignment = 1
-
-[node name="DescriptionLabel" type="Label" parent="CenterContainer/Content"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Placeholder for team, player, and competition data viewing tools."
-horizontal_alignment = 1
-autowrap_mode = 3
-
-[node name="BackButton" type="Button" parent="CenterContainer/Content"]
 layout_mode = 2
 text = "Back to Main Menu"
 
-[connection signal="pressed" from="CenterContainer/Content/BackButton" to="." method="_on_back_button_pressed"]
+[node name="StatusLabel" type="Label" parent="MarginContainer/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Filters" type="GridContainer" parent="MarginContainer/Content"]
+layout_mode = 2
+columns = 6
+
+[node name="CompetitionLabel" type="Label" parent="MarginContainer/Content/Filters"]
+layout_mode = 2
+text = "Competition"
+[node name="CompetitionOption" type="OptionButton" parent="MarginContainer/Content/Filters"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TeamLabel" type="Label" parent="MarginContainer/Content/Filters"]
+layout_mode = 2
+text = "Team"
+[node name="TeamOption" type="OptionButton" parent="MarginContainer/Content/Filters"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PlayerLabel" type="Label" parent="MarginContainer/Content/Filters"]
+layout_mode = 2
+text = "Player"
+[node name="PlayerOption" type="OptionButton" parent="MarginContainer/Content/Filters"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PositionLabel" type="Label" parent="MarginContainer/Content/Filters"]
+layout_mode = 2
+text = "Position"
+[node name="PositionOption" type="OptionButton" parent="MarginContainer/Content/Filters"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="GradeLabel" type="Label" parent="MarginContainer/Content/Filters"]
+layout_mode = 2
+text = "Grade"
+[node name="GradeOption" type="OptionButton" parent="MarginContainer/Content/Filters"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MinPALabel" type="Label" parent="MarginContainer/Content/Filters"]
+layout_mode = 2
+text = "Min PA"
+[node name="MinPASpin" type="SpinBox" parent="MarginContainer/Content/Filters"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 9999.0
+
+[node name="MinIPLabel" type="Label" parent="MarginContainer/Content/Filters"]
+layout_mode = 2
+text = "Min IP"
+[node name="MinIPSpin" type="SpinBox" parent="MarginContainer/Content/Filters"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 9999.0
+step = 0.1
+
+[node name="StartDateLabel" type="Label" parent="MarginContainer/Content/Filters"]
+layout_mode = 2
+text = "Start date"
+[node name="StartDateEdit" type="LineEdit" parent="MarginContainer/Content/Filters"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "YYYY-MM-DD"
+
+[node name="EndDateLabel" type="Label" parent="MarginContainer/Content/Filters"]
+layout_mode = 2
+text = "End date"
+[node name="EndDateEdit" type="LineEdit" parent="MarginContainer/Content/Filters"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "YYYY-MM-DD"
+
+[node name="ApplyFiltersButton" type="Button" parent="MarginContainer/Content/Filters"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Apply Filters"
+
+[node name="Views" type="TabContainer" parent="MarginContainer/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Team Stats" type="MarginContainer" parent="MarginContainer/Content/Views"]
+layout_mode = 2
+[node name="TeamStatsTree" type="Tree" parent="MarginContainer/Content/Views/Team Stats"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Player Batting" type="MarginContainer" parent="MarginContainer/Content/Views"]
+layout_mode = 2
+[node name="PlayerBattingTree" type="Tree" parent="MarginContainer/Content/Views/Player Batting"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Player Pitching" type="MarginContainer" parent="MarginContainer/Content/Views"]
+layout_mode = 2
+[node name="PlayerPitchingTree" type="Tree" parent="MarginContainer/Content/Views/Player Pitching"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Player Comparison" type="VBoxContainer" parent="MarginContainer/Content/Views"]
+layout_mode = 2
+[node name="PlayerCompareControls" type="HBoxContainer" parent="MarginContainer/Content/Views/Player Comparison"]
+layout_mode = 2
+[node name="PlayerALabel" type="Label" parent="MarginContainer/Content/Views/Player Comparison/PlayerCompareControls"]
+layout_mode = 2
+text = "Player A"
+[node name="PlayerAOption" type="OptionButton" parent="MarginContainer/Content/Views/Player Comparison/PlayerCompareControls"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+[node name="PlayerBLabel" type="Label" parent="MarginContainer/Content/Views/Player Comparison/PlayerCompareControls"]
+layout_mode = 2
+text = "Player B"
+[node name="PlayerBOption" type="OptionButton" parent="MarginContainer/Content/Views/Player Comparison/PlayerCompareControls"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+[node name="PlayerCompareTree" type="Tree" parent="MarginContainer/Content/Views/Player Comparison"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Team Comparison" type="VBoxContainer" parent="MarginContainer/Content/Views"]
+layout_mode = 2
+[node name="TeamCompareControls" type="HBoxContainer" parent="MarginContainer/Content/Views/Team Comparison"]
+layout_mode = 2
+[node name="TeamALabel" type="Label" parent="MarginContainer/Content/Views/Team Comparison/TeamCompareControls"]
+layout_mode = 2
+text = "Team A"
+[node name="TeamAOption" type="OptionButton" parent="MarginContainer/Content/Views/Team Comparison/TeamCompareControls"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+[node name="TeamBLabel" type="Label" parent="MarginContainer/Content/Views/Team Comparison/TeamCompareControls"]
+layout_mode = 2
+text = "Team B"
+[node name="TeamBOption" type="OptionButton" parent="MarginContainer/Content/Views/Team Comparison/TeamCompareControls"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+[node name="TeamCompareTree" type="Tree" parent="MarginContainer/Content/Views/Team Comparison"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Leaderboards" type="MarginContainer" parent="MarginContainer/Content/Views"]
+layout_mode = 2
+[node name="LeaderboardsTree" type="Tree" parent="MarginContainer/Content/Views/Leaderboards"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
