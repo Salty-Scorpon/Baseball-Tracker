@@ -1,0 +1,47 @@
+[gd_scene load_steps=2 format=3 uid="uid://runneradvancementgrid"]
+
+[ext_resource type="Script" path="res://modes/game_entry/widgets/RunnerAdvancementGrid.gd" id="1_runner_grid"]
+
+[node name="RunnerAdvancementGrid" type="VBoxContainer"]
+custom_minimum_size = Vector2(720, 0)
+script = ExtResource("1_runner_grid")
+
+[node name="Title" type="Label" parent="."]
+text = "Runner Advancement"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(720, 160)
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 2
+
+[node name="RowsGrid" type="GridContainer" parent="ScrollContainer"]
+unique_name_in_owner = true
+columns = 8
+
+[node name="RunnerHeader" type="Label" parent="ScrollContainer/RowsGrid"]
+text = "Runner"
+
+[node name="StartHeader" type="Label" parent="ScrollContainer/RowsGrid"]
+text = "Start"
+
+[node name="EndHeader" type="Label" parent="ScrollContainer/RowsGrid"]
+text = "End"
+
+[node name="ScoredHeader" type="Label" parent="ScrollContainer/RowsGrid"]
+text = "Scored?"
+
+[node name="OutHeader" type="Label" parent="ScrollContainer/RowsGrid"]
+text = "Out?"
+
+[node name="RBIHeader" type="Label" parent="ScrollContainer/RowsGrid"]
+text = "RBI?"
+
+[node name="ReasonHeader" type="Label" parent="ScrollContainer/RowsGrid"]
+text = "Reason"
+
+[node name="PitcherHeader" type="Label" parent="ScrollContainer/RowsGrid"]
+text = "Responsible Pitcher"
+
+[node name="EmptyLabel" type="Label" parent="."]
+unique_name_in_owner = true
+text = "No batter or runners loaded."
