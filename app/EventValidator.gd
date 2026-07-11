@@ -23,6 +23,15 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"strikeout",
 	"groundout",
 	"flyout",
+	"reached_on_error",
+	"fielders_choice",
+	"sacrifice_bunt",
+	"sacrifice_fly",
+	"stolen_base",
+	"caught_stealing",
+	"wild_pitch",
+	"passed_ball",
+	"balk",
 ]
 
 const PITCH_THROWN_EVENT_TYPES = {
@@ -35,11 +44,18 @@ const PITCH_THROWN_EVENT_TYPES = {
 	"strikeout": true,
 	"groundout": true,
 	"flyout": true,
+	"reached_on_error": true,
+	"fielders_choice": true,
+	"sacrifice_bunt": true,
+	"sacrifice_fly": true,
 }
 
 const BATTED_BALL_OUT_EVENT_TYPES = {
 	"groundout": true,
 	"flyout": true,
+	"fielders_choice": true,
+	"sacrifice_bunt": true,
+	"sacrifice_fly": true,
 }
 
 const ACTIVE_BASES = {"1B": true, "2B": true, "3B": true}
@@ -56,9 +72,9 @@ static func validate_event_payload(payload: Dictionary) -> Array[Dictionary]:
 	if event_type.is_empty():
 		_add_error(messages, "event_type", "Event type is required.")
 	elif not SUPPORTED_EVENT_TYPES.has(event_type):
-		_add_error(messages, "event_type", "Unsupported event type for first-batch validation: %s." % event_type)
+		_add_error(messages, "event_type", "Unsupported event type for validation: %s." % event_type)
 
-	if _is_blank(payload.get("batter_id", "")):
+	if not _is_runner_only_event(event_type) and _is_blank(payload.get("batter_id", "")):
 		_add_error(messages, "batter_id", "A plate appearance event must have a batter_id.")
 	if PITCH_THROWN_EVENT_TYPES.has(event_type) and _is_blank(payload.get("pitcher_id", "")):
 		_add_error(messages, "pitcher_id", "A pitch-thrown event must have a pitcher_id.")
@@ -67,6 +83,7 @@ static func validate_event_payload(payload: Dictionary) -> Array[Dictionary]:
 	_validate_runner_advancements(messages, event_type, str(payload.get("batter_id", "")), advancements)
 	_validate_outs(messages, event_type, payload, advancements, manual_overrides)
 	_validate_fielder_assignment(messages, event_type, fielder_assignment)
+	_validate_batch_two_details(messages, event_type, payload, details, advancements, fielder_assignment)
 	return messages
 
 static func has_errors(messages: Array) -> bool:
@@ -120,6 +137,8 @@ static func _validate_runner_advancements(messages: Array[Dictionary], event_typ
 				occupied_after[end_base] = runner_id
 	if event_type == "home_run" and (not saw_batter or not batter_scored):
 		_add_error(messages, "details.runner_advancements", "A home run must score the batter.")
+	if event_type == "caught_stealing" and _outs_from_advancements(advancements) < 1:
+		_add_error(messages, "details.runner_advancements", "Caught stealing must mark a runner out.")
 
 static func _validate_outs(messages: Array[Dictionary], event_type: String, payload: Dictionary, advancements: Array, manual_overrides: Dictionary) -> void:
 	var outs_before = int(payload.get("outs_before", 0))
@@ -127,6 +146,8 @@ static func _validate_outs(messages: Array[Dictionary], event_type: String, payl
 	var outs_added = max(0, outs_after - outs_before)
 	if event_type == "strikeout" and outs_added < 1 and not _has_enabled_override(manual_overrides, "outs"):
 		_add_warning(messages, "outs_after", "A strikeout should add at least one out unless manually overridden.")
+	if event_type == "caught_stealing" and outs_added < 1 and not _has_enabled_override(manual_overrides, "outs"):
+		_add_error(messages, "outs_after", "Caught stealing must add an out.")
 	if BATTED_BALL_OUT_EVENT_TYPES.has(event_type) and outs_added < 1 and not _has_enabled_override(manual_overrides, "outs"):
 		_add_warning(messages, "outs_after", "A normal batted-ball out should add at least one out.")
 	if outs_after > 3 and not _has_enabled_override(manual_overrides, "outs"):
@@ -138,6 +159,48 @@ static func _validate_fielder_assignment(messages: Array[Dictionary], event_type
 	var has_fielder = not _is_blank(fielder_assignment.get("primary_fielder_id", "")) or not _is_blank(fielder_assignment.get("putout_fielder_id", "")) or not _as_array(fielder_assignment.get("assist_fielder_ids", [])).is_empty()
 	if not has_fielder:
 		_add_warning(messages, "details.fielder_assignment", "Fielder assignment is unknown for this batted-ball out.")
+
+static func _validate_batch_two_details(messages: Array[Dictionary], event_type: String, payload: Dictionary, details: Dictionary, advancements: Array, fielder_assignment: Dictionary) -> void:
+	var event_details = _flatten_event_details(_as_dictionary(details.get("event_details", {})))
+	if event_type == "reached_on_error" and _is_blank(event_details.get("error_fielder_id", "")) and _is_blank(fielder_assignment.get("primary_fielder_id", "")):
+		_add_warning(messages, "details.event_details.error_fielder_id", "Reached on error should assign the charged fielder or mark it with a manual override.")
+	if event_type == "fielders_choice" and _outs_from_advancements(advancements) < 1:
+		_add_warning(messages, "details.runner_advancements", "Fielder's choice usually records a runner out; mark the retired runner out or use an override.")
+	if event_type in ["sacrifice_bunt", "sacrifice_fly"] and _outs_from_advancements(advancements) < 1:
+		_add_warning(messages, "details.runner_advancements", "%s should record the batter out by default." % event_type.replace("_", " ").capitalize())
+	if event_type == "sacrifice_fly" and _scored_runner_count(advancements) > 0 and _rbi_count(advancements) == 0:
+		_add_warning(messages, "details.runner_advancements", "Sacrifice fly defaults to RBI credit for scoring runners unless overridden.")
+	if event_type == "stolen_base" and advancements.is_empty():
+		_add_error(messages, "details.runner_advancements", "Stolen base requires a runner advancement row.")
+	if event_type in ["wild_pitch", "balk"] and _is_blank(event_details.get("pitcher_id", "")) and _is_blank(payload.get("pitcher_id", "")):
+		_add_warning(messages, "details.event_details.pitcher_id", "%s should identify the pitcher." % event_type.replace("_", " ").capitalize())
+	if event_type == "passed_ball" and _is_blank(event_details.get("catcher_id", "")) and _is_blank(fielder_assignment.get("primary_fielder_id", "")):
+		_add_warning(messages, "details.event_details.catcher_id", "Passed ball should identify the catcher.")
+
+static func _flatten_event_details(event_details: Dictionary) -> Dictionary:
+	var flat = {}
+	for value in event_details.values():
+		if value is Dictionary:
+			flat.merge(value, true)
+	return flat
+
+static func _scored_runner_count(advancements: Array) -> int:
+	var total = 0
+	for item in advancements:
+		var advancement = _as_dictionary(item)
+		if bool(advancement.get("scored", false)) or str(advancement.get("end_base", "")).to_upper() == "SCORED":
+			total += 1
+	return total
+
+static func _rbi_count(advancements: Array) -> int:
+	var total = 0
+	for item in advancements:
+		if bool(_as_dictionary(item).get("rbi_credit", false)):
+			total += 1
+	return total
+
+static func _is_runner_only_event(event_type: String) -> bool:
+	return event_type in ["stolen_base", "caught_stealing", "wild_pitch", "passed_ball", "balk"]
 
 static func _outs_from_advancements(advancements: Array) -> int:
 	var total = 0

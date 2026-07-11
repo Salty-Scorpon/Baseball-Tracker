@@ -23,6 +23,15 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"strikeout",
 	"groundout",
 	"flyout",
+	"reached_on_error",
+	"fielders_choice",
+	"sacrifice_bunt",
+	"sacrifice_fly",
+	"stolen_base",
+	"caught_stealing",
+	"wild_pitch",
+	"passed_ball",
+	"balk",
 ]
 
 @onready var title_label: Label = %TitleLabel
@@ -44,7 +53,7 @@ func open_for_event(event_type: String, game_context: Dictionary) -> void:
 	_event_type = _normalize_event_type(event_type)
 	_game_context = game_context.duplicate(true)
 	if not SUPPORTED_EVENT_TYPES.has(_event_type):
-		_show_panel_error("Unsupported first-batch event type: %s" % event_type)
+		_show_panel_error("Unsupported event type: %s" % event_type)
 		return
 	_template = EventTemplateRegistry.get_template(_event_type)
 	if _template.is_empty():
@@ -117,7 +126,8 @@ func _add_widget_for_key(widget_key: String) -> void:
 		EventTemplateRegistry.WIDGET_RUNNER_ADVANCEMENT_GRID:
 			var runner_grid = RunnerAdvancementGridScene.instantiate()
 			_add_widget(widget_key, runner_grid)
-			runner_grid.setup_from_base_state(str(_game_context.get("batter_id", "")), _as_dictionary(_game_context.get("base_state", {})), Callable(self, "_lookup_offensive_player_name"))
+			var runner_batter_id = "" if _is_runner_only_event(_event_type) else str(_game_context.get("batter_id", ""))
+			runner_grid.setup_from_base_state(runner_batter_id, _as_dictionary(_game_context.get("base_state", {})), Callable(self, "_lookup_offensive_player_name"))
 			runner_grid.apply_default_for_event(_event_type)
 		EventTemplateRegistry.WIDGET_BASIC_FIELDER_ASSIGNMENT:
 			var fielder_widget = FielderAssignmentWidgetScene.instantiate()
@@ -147,6 +157,7 @@ func _add_detail_section(widget_key: String) -> void:
 	for field in fields:
 		var edit = LineEdit.new()
 		edit.placeholder_text = str(field).replace("_", " ").capitalize()
+		edit.text = _default_detail_value(str(field))
 		box.add_child(edit)
 		controls[str(field)] = edit
 	_detail_controls[widget_key] = controls
@@ -192,8 +203,30 @@ func _fields_for_detail_widget(widget_key: String) -> Array[String]:
 		EventTemplateRegistry.WIDGET_STRIKEOUT_DETAILS:
 			return ["strikeout_type", "outs_added"]
 		EventTemplateRegistry.WIDGET_BATTED_BALL_OUT_DETAILS:
+			if _event_type == "fielders_choice":
+				return ["out_type", "outs_added", "runner_out_id", "throw_to_base"]
 			return ["out_type", "outs_added"]
+		EventTemplateRegistry.WIDGET_ERROR_DETAILS:
+			return ["error_fielder_id", "error_type", "error_notes"]
+		EventTemplateRegistry.WIDGET_SACRIFICE_DETAILS:
+			return ["sacrifice_bunt", "sacrifice_fly", "outs_added", "rbi"]
+		EventTemplateRegistry.WIDGET_BASERUNNING_DETAILS:
+			return ["runner_id", "start_base", "end_base", "attempted_base", "outs_added"]
+		EventTemplateRegistry.WIDGET_MISC_ADVANCEMENT_DETAILS:
+			return ["pitcher_id", "catcher_id", "runs_scored"]
 	return []
+
+func _default_detail_value(field: String) -> String:
+	if field == "sacrifice_bunt" and _event_type == "sacrifice_bunt":
+		return "true"
+	if field == "sacrifice_fly" and _event_type == "sacrifice_fly":
+		return "true"
+	if field == "outs_added" and _event_type in ["sacrifice_bunt", "sacrifice_fly", "caught_stealing"]:
+		return "1"
+	if field == "pitcher_id" and _event_type in ["wild_pitch", "balk"]:
+		return str(_game_context.get("pitcher_id", ""))
+	return ""
+
 
 func _lookup_offensive_player_name(player_id: String) -> String:
 	for player in _as_array(_game_context.get("offensive_lineup", [])):
@@ -224,3 +257,6 @@ func _as_dictionary(value: Variant) -> Dictionary:
 
 func _as_array(value: Variant) -> Array:
 	return value.duplicate(true) if value is Array else []
+
+func _is_runner_only_event(event_type: String) -> bool:
+	return event_type in ["stolen_base", "caught_stealing", "wild_pitch", "passed_ball", "balk"]

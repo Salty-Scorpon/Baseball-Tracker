@@ -96,6 +96,35 @@ func apply_default_for_event(event_type: String) -> void:
 					_set_row_value(row, "out", true)
 				else:
 					_set_row_value(row, "end_base", start_base)
+			"sacrifice_bunt":
+				if is_batter:
+					_set_row_value(row, "end_base", "OUT")
+					_set_row_value(row, "out", true)
+				else:
+					_set_row_value(row, "end_base", _advance_base(start_base, 1))
+			"sacrifice_fly":
+				if is_batter:
+					_set_row_value(row, "end_base", "OUT")
+					_set_row_value(row, "out", true)
+				elif start_base == "3B":
+					_set_row_value(row, "end_base", "SCORED")
+					_set_row_value(row, "scored", true)
+					_set_row_value(row, "rbi_credit", true)
+				else:
+					_set_row_value(row, "end_base", start_base)
+			"reached_on_error", "fielders_choice":
+				_set_row_value(row, "end_base", "1B" if is_batter else start_base)
+				_set_row_value(row, "advance_reason", "error" if normalized == "reached_on_error" else "fielder_choice")
+			"stolen_base":
+				_set_row_value(row, "end_base", _advance_base(start_base, 1))
+				_set_row_value(row, "advance_reason", "manual")
+			"caught_stealing":
+				_set_row_value(row, "end_base", "OUT")
+				_set_row_value(row, "out", true)
+				_set_row_value(row, "advance_reason", "manual")
+			"wild_pitch", "passed_ball", "balk":
+				_set_row_value(row, "end_base", _advance_base(start_base, 1))
+				_set_row_value(row, "advance_reason", normalized)
 			_:
 				_set_row_value(row, "end_base", "NONE")
 
