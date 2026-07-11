@@ -1,0 +1,90 @@
+[gd_scene load_steps=2 format=3 uid="uid://substitutionwidget"]
+
+[ext_resource type="Script" path="res://modes/game_entry/widgets/SubstitutionWidget.gd" id="1_substitution"]
+
+[node name="SubstitutionWidget" type="VBoxContainer"]
+custom_minimum_size = Vector2(520, 0)
+theme_override_constants/separation = 8
+script = ExtResource("1_substitution")
+
+[node name="TitleLabel" type="Label" parent="."]
+text = "Substitution"
+
+[node name="ContextLabel" type="Label" parent="."]
+unique_name_in_owner = true
+autowrap_mode = 3
+text = "Select substitution details."
+
+[node name="Grid" type="GridContainer" parent="."]
+columns = 2
+
+[node name="TeamText" type="Label" parent="Grid"]
+text = "Team"
+[node name="TeamOption" type="OptionButton" parent="Grid"]
+unique_name_in_owner = true
+
+[node name="SubstitutionTypeText" type="Label" parent="Grid"]
+text = "Substitution type"
+[node name="SubstitutionTypeOption" type="OptionButton" parent="Grid"]
+unique_name_in_owner = true
+
+[node name="PlayerOutText" type="Label" parent="Grid"]
+text = "Player out / changed"
+[node name="PlayerOutOption" type="OptionButton" parent="Grid"]
+unique_name_in_owner = true
+
+[node name="PlayerInText" type="Label" parent="Grid"]
+text = "Player in"
+[node name="PlayerInOption" type="OptionButton" parent="Grid"]
+unique_name_in_owner = true
+
+[node name="InningText" type="Label" parent="Grid"]
+text = "Inning"
+[node name="InningSpin" type="SpinBox" parent="Grid"]
+unique_name_in_owner = true
+min_value = 1.0
+max_value = 99.0
+value = 1.0
+
+[node name="HalfText" type="Label" parent="Grid"]
+text = "Half inning"
+[node name="HalfOption" type="OptionButton" parent="Grid"]
+unique_name_in_owner = true
+
+[node name="SlotText" type="Label" parent="Grid"]
+text = "Batting order slot"
+[node name="BattingOrderSlotSpin" type="SpinBox" parent="Grid"]
+unique_name_in_owner = true
+min_value = 1.0
+max_value = 99.0
+value = 1.0
+
+[node name="OldPositionText" type="Label" parent="Grid"]
+text = "Old position"
+[node name="OldPositionEdit" type="LineEdit" parent="Grid"]
+unique_name_in_owner = true
+placeholder_text = "e.g. LF"
+
+[node name="NewPositionText" type="Label" parent="Grid"]
+text = "New position"
+[node name="NewPositionEdit" type="LineEdit" parent="Grid"]
+unique_name_in_owner = true
+placeholder_text = "e.g. 3B"
+
+[node name="AffectsBattingOrderText" type="Label" parent="Grid"]
+text = "Affects batting order"
+[node name="AffectsBattingOrderCheck" type="CheckBox" parent="Grid"]
+unique_name_in_owner = true
+button_pressed = true
+
+[node name="InheritedRunnerLabel" type="Label" parent="."]
+unique_name_in_owner = true
+autowrap_mode = 3
+text = "Pinch runner base inheritance: none"
+
+[node name="NotesLabel" type="Label" parent="."]
+text = "Notes"
+[node name="NotesEdit" type="TextEdit" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+placeholder_text = "Optional scorer notes"

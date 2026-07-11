@@ -28,6 +28,7 @@ static func apply_event(state: GameReplayState, event: GameEvent, mutate_event: 
 		event.base_state_before = state.bases.duplicate(true)
 	_record_batter(state, event)
 	_record_pitcher(state, event)
+	_apply_runner_substitution(state, event)
 	if ADVANCE_EVENTS.has(event.event_type):
 		_advance_runners(state, int(ADVANCE_EVENTS[event.event_type]), event.batter_id, event.event_type == "Home run")
 	elif event.event_type == "Stolen base":
@@ -87,6 +88,18 @@ static func _steal_one_base(state: GameReplayState) -> void:
 	elif not str(state.bases["1B"]).is_empty() and str(state.bases["2B"]).is_empty():
 		state.bases["2B"] = state.bases["1B"]
 		state.bases["1B"] = ""
+
+static func _apply_runner_substitution(state: GameReplayState, event: GameEvent) -> void:
+	if _normalized_event_type(event) != "pinch_runner":
+		return
+	var substitution := Dictionary(event.details.get("substitution", {}))
+	var player_out_id := str(substitution.get("player_out_id", ""))
+	var player_in_id := str(substitution.get("player_in_id", ""))
+	if player_out_id.is_empty() or player_in_id.is_empty():
+		return
+	for base in ["1B", "2B", "3B"]:
+		if str(state.bases.get(base, "")) == player_out_id:
+			state.bases[base] = player_in_id
 
 static func _add_runs(state: GameReplayState, count: int) -> void:
 	state.score[_side_for_half(state.half_inning)] += count

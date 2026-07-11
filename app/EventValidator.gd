@@ -33,6 +33,11 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"passed_ball",
 	"balk",
 	"pitching_change",
+	"pinch_hitter",
+	"pinch_runner",
+	"defensive_substitution",
+	"position_change",
+	"batting_order_replacement",
 ]
 
 const PITCH_THROWN_EVENT_TYPES = {
@@ -76,7 +81,7 @@ static func validate_event_payload(payload: Dictionary) -> Array[Dictionary]:
 	elif not SUPPORTED_EVENT_TYPES.has(event_type):
 		_add_error(messages, "event_type", "Unsupported event type for validation: %s." % event_type)
 
-	if not _is_runner_only_event(event_type) and event_type != "pitching_change" and _is_blank(payload.get("batter_id", "")):
+	if not _is_runner_only_event(event_type) and event_type != "pitching_change" and not _is_substitution_event_type(event_type) and _is_blank(payload.get("batter_id", "")):
 		_add_error(messages, "batter_id", "A plate appearance event must have a batter_id.")
 	if PITCH_THROWN_EVENT_TYPES.has(event_type) and _is_blank(payload.get("pitcher_id", "")):
 		_add_error(messages, "pitcher_id", "A pitch-thrown event must have a pitcher_id.")
@@ -87,6 +92,7 @@ static func validate_event_payload(payload: Dictionary) -> Array[Dictionary]:
 	_validate_fielder_assignment(messages, event_type, fielder_assignment)
 	_validate_batch_two_details(messages, event_type, payload, details, advancements, fielder_assignment, errors)
 	_validate_pitching_change(messages, event_type, details)
+	_validate_substitution(messages, event_type, details)
 	return messages
 
 static func has_errors(messages: Array) -> bool:
@@ -193,6 +199,24 @@ static func _validate_pitching_change(messages: Array[Dictionary], event_type: S
 		var entry = _as_dictionary(_as_array(pitching_change.get("runner_responsibility", []))[index])
 		if _is_blank(entry.get("runner_id", "")) or _is_blank(entry.get("responsible_pitcher_id", "")) or _is_blank(entry.get("base", "")):
 			_add_error(messages, "details.pitching_change.runner_responsibility[%d]" % index, "Runner responsibility requires runner_id, responsible_pitcher_id, and base.")
+
+static func _validate_substitution(messages: Array[Dictionary], event_type: String, details: Dictionary) -> void:
+	if not _is_substitution_event_type(event_type):
+		return
+	var substitution = _as_dictionary(details.get("substitution", {}))
+	if _is_blank(substitution.get("team_id", "")):
+		_add_error(messages, "details.substitution.team_id", "A substitution must identify the team.")
+	if _is_blank(substitution.get("substitution_type", "")):
+		_add_error(messages, "details.substitution.substitution_type", "A substitution must identify its type.")
+	if event_type != "position_change" and _is_blank(substitution.get("player_in_id", "")):
+		_add_error(messages, "details.substitution.player_in_id", "A substitution must identify the player entering.")
+	if event_type != "position_change" and _is_blank(substitution.get("player_out_id", "")):
+		_add_error(messages, "details.substitution.player_out_id", "A substitution must identify the player leaving or being replaced.")
+	if event_type in ["defensive_substitution", "position_change"] and _is_blank(substitution.get("new_position", "")):
+		_add_warning(messages, "details.substitution.new_position", "Defensive substitutions and position changes should record the new position.")
+
+static func _is_substitution_event_type(event_type: String) -> bool:
+	return event_type in ["pinch_hitter", "pinch_runner", "defensive_substitution", "position_change", "batting_order_replacement"]
 
 static func _validate_error_details(messages: Array[Dictionary], errors: Array) -> void:
 	var valid_types = {"fielding": true, "throwing": true, "catching": true, "dropped_fly": true, "missed_tag": true, "missed_base": true, "interference": true, "unknown": true}

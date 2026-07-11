@@ -24,10 +24,14 @@ const EVENT_BUTTONS = [
 	{"label": "SB", "event_type": "stolen_base", "legacy_type": "Stolen base", "wired": false},
 	{"label": "CS", "event_type": "caught_stealing", "legacy_type": "Caught stealing", "wired": false},
 	{"label": "Pitching Change", "event_type": "pitching_change", "legacy_type": "Pitching change", "wired": true},
-	{"label": "Substitution", "event_type": "substitution", "legacy_type": "Substitution", "wired": false},
+	{"label": "PH", "event_type": "pinch_hitter", "legacy_type": "Pinch hitter", "wired": true},
+	{"label": "PR", "event_type": "pinch_runner", "legacy_type": "Pinch runner", "wired": true},
+	{"label": "Def Sub", "event_type": "defensive_substitution", "legacy_type": "Defensive substitution", "wired": true},
+	{"label": "Pos Chg", "event_type": "position_change", "legacy_type": "Position change", "wired": true},
+	{"label": "BO Rep", "event_type": "batting_order_replacement", "legacy_type": "Batting order replacement", "wired": true},
 	{"label": "Manual", "event_type": "manual", "legacy_type": "Manual correction", "wired": false},
 ]
-const EVENT_TYPES = ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Pitching change", "Substitution", "Manual correction"]
+const EVENT_TYPES = ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Pitching change", "Pinch hitter", "Pinch runner", "Defensive substitution", "Position change", "Batting order replacement", "Manual correction"]
 const OUT_EVENTS = {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt": 1, "Sacrifice fly": 1, "Caught stealing": 1}
 
 @onready var game_picker: OptionButton = %GamePicker
@@ -351,6 +355,16 @@ func _add_event_from_pending() -> void:
 		event.outs_after = outs
 		event.runs_scored = 0
 		event.rbi_count = 0
+	elif _is_substitution_event_type(str(event.details["event_type"])):
+		var substitution = Dictionary(event.details.get("substitution", {}))
+		event.event_type = type
+		event.batter_id = ""
+		event.pitcher_id = _selected_meta(pitcher_picker)
+		event.outs_added = 0
+		event.outs_after = outs
+		event.runs_scored = 0
+		event.rbi_count = 0
+		event.notes = str(substitution.get("notes", event.notes))
 	event.details["summary_preview"] = summary_preview_label.text
 	if manual_override_panel.has_active_overrides():
 		event.details["manual_overrides"] = manual_override_panel.get_overrides()
@@ -386,7 +400,11 @@ func _undo_last_event() -> void:
 	status_label.text = "Removed the most recent event and replayed game state."
 
 func _replay_events(mutate_events: bool = false) -> void:
+	lineups["away"] = _text_lines(away_lineup.text)
+	lineups["home"] = _text_lines(home_lineup.text)
 	_apply_replay_state(GameReplay.replay(_game_events(), starting_pitchers, mutate_events))
+	for event in _game_events():
+		_apply_substitution_to_lineups(event)
 
 func _refresh_all() -> void:
 	_refresh_matchup_options()
@@ -453,7 +471,55 @@ func _history_event_label(event: GameEvent) -> String:
 	if str(event.details.get("event_type", "")) == "pitching_change":
 		var change = Dictionary(event.details.get("pitching_change", {}))
 		return "Pitching change: %s replaces %s" % [_player_or_text(str(change.get("incoming_pitcher_id", event.pitcher_id))), _player_or_text(str(change.get("outgoing_pitcher_id", "")))]
+	if _is_substitution_event_type(str(event.details.get("event_type", ""))):
+		var substitution = Dictionary(event.details.get("substitution", {}))
+		return "%s: %s replaces/changes %s" % [str(substitution.get("substitution_type", event.event_type)).replace("_", " ").capitalize(), _player_or_text(str(substitution.get("player_in_id", ""))), _player_or_text(str(substitution.get("player_out_id", "")))]
 	return "%s: %s, runs %d, outs %d" % [_player_or_text(event.batter_id), event.event_type, event.runs_scored, event.outs_added]
+
+func _apply_substitution_to_lineups(event: GameEvent) -> void:
+	var event_key := str(event.details.get("event_type", ""))
+	if not _is_substitution_event_type(event_key):
+		return
+	var substitution := Dictionary(event.details.get("substitution", {}))
+	var type := str(substitution.get("substitution_type", event_key))
+	var team_id := str(substitution.get("team_id", ""))
+	var side := _side_for_team_id(team_id)
+	if side.is_empty():
+		return
+	if type == "pinch_runner":
+		_replace_runner_on_base(str(substitution.get("player_out_id", "")), str(substitution.get("player_in_id", "")))
+	if type == "position_change":
+		return
+	if not bool(substitution.get("affects_batting_order", true)):
+		return
+	var slot := int(substitution.get("batting_order_slot", 0)) - 1
+	var incoming_id := str(substitution.get("player_in_id", ""))
+	if incoming_id.is_empty():
+		return
+	var incoming_label := _player_or_text(incoming_id)
+	if slot >= 0 and slot < lineups[side].size():
+		lineups[side][slot] = incoming_label
+	elif not lineups[side].has(incoming_label):
+		lineups[side].append(incoming_label)
+
+func _replace_runner_on_base(player_out_id: String, player_in_id: String) -> void:
+	if player_out_id.is_empty() or player_in_id.is_empty():
+		return
+	for base in ["1B", "2B", "3B"]:
+		if str(bases.get(base, "")) == player_out_id:
+			bases[base] = player_in_id
+
+func _is_substitution_event_type(value: String) -> bool:
+	return value in ["pinch_hitter", "pinch_runner", "defensive_substitution", "position_change", "batting_order_replacement"]
+
+func _side_for_team_id(team_id: String) -> String:
+	if selected_game == null:
+		return ""
+	if team_id == selected_game.away_team_id:
+		return "away"
+	if team_id == selected_game.home_team_id:
+		return "home"
+	return ""
 
 func _select_option_by_meta(option: OptionButton, value: String) -> void:
 	for index in range(option.item_count):

@@ -14,6 +14,7 @@ const FielderAssignmentWidgetScene = preload("res://modes/game_entry/widgets/Fie
 const ManualOverridePanelScene = preload("res://modes/game_entry/widgets/ManualOverridePanel.tscn")
 const ErrorAssignmentWidgetScene = preload("res://modes/game_entry/widgets/ErrorAssignmentWidget.tscn")
 const PitchingChangeWidgetScene = preload("res://modes/game_entry/widgets/PitchingChangeWidget.tscn")
+const SubstitutionWidgetScene = preload("res://modes/game_entry/widgets/SubstitutionWidget.tscn")
 
 const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"single",
@@ -35,6 +36,11 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"passed_ball",
 	"balk",
 	"pitching_change",
+	"pinch_hitter",
+	"pinch_runner",
+	"defensive_substitution",
+	"position_change",
+	"batting_order_replacement",
 ]
 
 @onready var title_label: Label = %TitleLabel
@@ -78,6 +84,7 @@ func get_event_payload() -> Dictionary:
 		"event_details": _collect_detail_data(),
 		"manual_overrides": _get_widget_data(EventTemplateRegistry.WIDGET_MANUAL_OVERRIDES),
 		"pitching_change": _get_widget_data(EventTemplateRegistry.WIDGET_PITCHING_CHANGE),
+		"substitution": _get_widget_data(EventTemplateRegistry.WIDGET_SUBSTITUTION),
 	}
 	return {
 		"event_type": _event_type,
@@ -132,6 +139,10 @@ func _add_widget_for_key(widget_key: String) -> void:
 			var pitching_widget = PitchingChangeWidgetScene.instantiate()
 			_add_widget(widget_key, pitching_widget)
 			pitching_widget.setup_context(_game_context)
+		EventTemplateRegistry.WIDGET_SUBSTITUTION:
+			var substitution_widget = SubstitutionWidgetScene.instantiate()
+			_add_widget(widget_key, substitution_widget)
+			substitution_widget.setup_context(_game_context)
 		EventTemplateRegistry.WIDGET_RUNNER_ADVANCEMENT_GRID:
 			var runner_grid = RunnerAdvancementGridScene.instantiate()
 			_add_widget(widget_key, runner_grid)
@@ -200,6 +211,8 @@ func _get_widget_data(widget_key: String) -> Variant:
 			return widget.get_overrides()
 		EventTemplateRegistry.WIDGET_PITCHING_CHANGE:
 			return widget.get_pitching_change_data()
+		EventTemplateRegistry.WIDGET_SUBSTITUTION:
+			return widget.get_substitution_data()
 	return {}
 
 func _collect_detail_data() -> Dictionary:
