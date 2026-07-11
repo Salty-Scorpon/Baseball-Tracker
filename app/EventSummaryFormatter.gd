@@ -18,6 +18,15 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"strikeout",
 	"groundout",
 	"flyout",
+	"reached_on_error",
+	"fielders_choice",
+	"sacrifice_bunt",
+	"sacrifice_fly",
+	"stolen_base",
+	"caught_stealing",
+	"wild_pitch",
+	"passed_ball",
+	"balk",
 ]
 
 const EVENT_LABELS = {
@@ -30,6 +39,15 @@ const EVENT_LABELS = {
 	"strikeout": "strikes out",
 	"groundout": "grounds out",
 	"flyout": "flies out",
+	"reached_on_error": "reaches on an error",
+	"fielders_choice": "reaches on a fielder's choice",
+	"sacrifice_bunt": "lays down a sacrifice bunt",
+	"sacrifice_fly": "hits a sacrifice fly",
+	"stolen_base": "steals a base",
+	"caught_stealing": "is caught stealing",
+	"wild_pitch": "advances on a wild pitch",
+	"passed_ball": "advances on a passed ball",
+	"balk": "advances on a balk",
 }
 
 static func summarize(event_payload: Variant) -> String:
