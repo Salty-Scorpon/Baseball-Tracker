@@ -58,6 +58,73 @@ unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 3
 
+[node name="AddPlayerPanel" type="VBoxContainer" parent="Root/Body/SetupPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="AddPlayerLabel" type="Label" parent="Root/Body/SetupPanel/AddPlayerPanel"]
+layout_mode = 2
+text = "Add Player to This Game"
+
+[node name="AddPlayerGrid" type="GridContainer" parent="Root/Body/SetupPanel/AddPlayerPanel"]
+layout_mode = 2
+columns = 2
+
+[node name="AddPlayerTeamLabel" type="Label" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+layout_mode = 2
+text = "Team"
+
+[node name="AddPlayerTeam" type="OptionButton" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AddPlayerNameLabel" type="Label" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+layout_mode = 2
+text = "Name"
+
+[node name="AddPlayerName" type="LineEdit" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Player display name"
+
+[node name="AddPlayerJerseyLabel" type="Label" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+layout_mode = 2
+text = "Jersey #"
+
+[node name="AddPlayerJersey" type="LineEdit" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Optional"
+
+[node name="AddPlayerPositionsLabel" type="Label" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+layout_mode = 2
+text = "Positions"
+
+[node name="AddPlayerPositions" type="LineEdit" parent="Root/Body/SetupPanel/AddPlayerPanel/AddPlayerGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Optional, comma separated"
+
+[node name="AddPlayerToLineup" type="CheckBox" parent="Root/Body/SetupPanel/AddPlayerPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+text = "Add to lineup now"
+
+[node name="AddPlayerButton" type="Button" parent="Root/Body/SetupPanel/AddPlayerPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add Player"
+
+[node name="AddPlayerStatus" type="Label" parent="Root/Body/SetupPanel/AddPlayerPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
 [node name="LineupGrid" type="GridContainer" parent="Root/Body/SetupPanel"]
 unique_name_in_owner = true
 layout_mode = 2

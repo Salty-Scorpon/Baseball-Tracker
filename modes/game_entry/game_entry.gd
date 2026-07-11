@@ -5,6 +5,7 @@ signal navigate_requested(screen_name: StringName)
 const SaveManagerScript := preload("res://data/saving/save_manager.gd")
 const SampleDataFactory := preload("res://data/sample_data_factory.gd")
 const GameEventModel := preload("res://data/models/game_event.gd")
+const PlayerModel := preload("res://data/models/player.gd")
 const GameReplay := preload("res://data/game_replay.gd")
 
 const EVENT_TYPES := ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Pitching change", "Substitution", "Manual correction"]
@@ -14,6 +15,13 @@ const OUT_EVENTS := {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bun
 @onready var teams_label: Label = %TeamsLabel
 @onready var away_lineup: TextEdit = %AwayLineup
 @onready var home_lineup: TextEdit = %HomeLineup
+@onready var add_player_team: OptionButton = %AddPlayerTeam
+@onready var add_player_name: LineEdit = %AddPlayerName
+@onready var add_player_jersey: LineEdit = %AddPlayerJersey
+@onready var add_player_positions: LineEdit = %AddPlayerPositions
+@onready var add_player_to_lineup: CheckBox = %AddPlayerToLineup
+@onready var add_player_button: Button = %AddPlayerButton
+@onready var add_player_status: Label = %AddPlayerStatus
 @onready var away_pitcher: OptionButton = %AwayPitcher
 @onready var home_pitcher: OptionButton = %HomePitcher
 @onready var apply_setup_button: Button = %ApplySetupButton
@@ -53,6 +61,7 @@ func _connect_signals() -> void:
 	$Root/Header/BackButton.pressed.connect(func() -> void: navigate_requested.emit(&"main_menu"))
 	game_picker.item_selected.connect(_select_game)
 	apply_setup_button.pressed.connect(_apply_setup)
+	add_player_button.pressed.connect(_add_player_to_current_game_team)
 	add_event_button.pressed.connect(_add_event)
 	undo_button.pressed.connect(_undo_last_event)
 	finalize_button.pressed.connect(_finalize_game)
@@ -86,9 +95,11 @@ func _select_game(index: int) -> void:
 	if game_picker.item_count == 0:
 		selected_game = null
 		teams_label.text = "No games available. Create a game in Data Entry first."
+		_refresh_add_player_team_options()
 		return
 	selected_game = repository.find_entity_by_id(str(game_picker.get_item_metadata(index)), "games")
 	_build_setup_from_game()
+	_refresh_add_player_team_options()
 	_replay_events()
 	_refresh_all()
 
@@ -102,6 +113,62 @@ func _build_setup_from_game() -> void:
 	lineups["away"] = _text_lines(away_lineup.text)
 	lineups["home"] = _text_lines(home_lineup.text)
 	teams_label.text = "Away: %s\nHome: %s" % [_team_name(selected_game.away_team_id), _team_name(selected_game.home_team_id)]
+
+func _refresh_add_player_team_options() -> void:
+	add_player_team.clear()
+	if selected_game == null:
+		add_player_button.disabled = true
+		return
+	add_player_team.add_item("Away: %s" % _team_name(selected_game.away_team_id))
+	add_player_team.set_item_metadata(add_player_team.item_count - 1, selected_game.away_team_id)
+	add_player_team.add_item("Home: %s" % _team_name(selected_game.home_team_id))
+	add_player_team.set_item_metadata(add_player_team.item_count - 1, selected_game.home_team_id)
+	add_player_button.disabled = false
+
+func _add_player_to_current_game_team() -> void:
+	if selected_game == null:
+		add_player_status.text = "Select a game first."
+		return
+	var team_id := _selected_meta(add_player_team)
+	if not [selected_game.away_team_id, selected_game.home_team_id].has(team_id):
+		add_player_status.text = "Choose the away or home team for this game."
+		return
+	var display_name := add_player_name.text.strip_edges()
+	if display_name.is_empty():
+		add_player_status.text = "Player name is required."
+		return
+	var player := PlayerModel.new(_new_player_id(team_id), team_id, display_name)
+	player.jersey_number = add_player_jersey.text.strip_edges()
+	player.positions.assign(_csv_to_array(add_player_positions.text))
+	var warnings := player.validate()
+	if not warnings.is_empty():
+		add_player_status.text = "\n".join(warnings)
+		return
+	if not repository.add_player(player):
+		add_player_status.text = "Could not add player. Try again."
+		return
+	var err := SaveManagerScript.save_project(repository)
+	if err != OK:
+		add_player_status.text = "Player added, but save failed: %d" % err
+		return
+	_after_player_added(player)
+
+func _after_player_added(player: Player) -> void:
+	if add_player_to_lineup.button_pressed:
+		var lineup_edit := away_lineup if player.team_id == selected_game.away_team_id else home_lineup
+		var label := _player_label(player)
+		var existing := _text_lines(lineup_edit.text)
+		if not existing.has(label):
+			lineup_edit.text = label if lineup_edit.text.strip_edges().is_empty() else "%s\n%s" % [lineup_edit.text, label]
+	lineups["away"] = _text_lines(away_lineup.text)
+	lineups["home"] = _text_lines(home_lineup.text)
+	_fill_player_options(away_pitcher, _players_for_team(selected_game.away_team_id))
+	_fill_player_options(home_pitcher, _players_for_team(selected_game.home_team_id))
+	_refresh_matchup_options()
+	add_player_name.text = ""
+	add_player_jersey.text = ""
+	add_player_positions.text = ""
+	add_player_status.text = "Added %s to %s." % [_player_label(player), _team_name(player.team_id)]
 
 func _apply_setup() -> void:
 	lineups["away"] = _text_lines(away_lineup.text)
@@ -168,7 +235,9 @@ func _refresh_all() -> void:
 	_refresh_history()
 
 func _refresh_matchup_options() -> void:
-	_fill_lineup_options(batter_picker, lineups["away"] if half_inning == "top" else lineups["home"])
+	var offensive_side := "away" if half_inning == "top" else "home"
+	var offensive_team := selected_game.away_team_id if offensive_side == "away" else selected_game.home_team_id
+	_fill_lineup_options(batter_picker, lineups[offensive_side], offensive_team)
 	var defensive_team := selected_game.home_team_id if half_inning == "top" else selected_game.away_team_id
 	_fill_player_options(pitcher_picker, _players_for_team(defensive_team))
 
@@ -204,12 +273,15 @@ func _fill_player_options(option: OptionButton, players: Array) -> void:
 	for player in players:
 		option.add_item(_player_label(player)); option.set_item_metadata(option.item_count - 1, player.id)
 
-func _fill_lineup_options(option: OptionButton, names: Array) -> void:
+func _fill_lineup_options(option: OptionButton, names: Array, team_id: String) -> void:
 	option.clear()
 	for name in names:
-		option.add_item(str(name)); option.set_item_metadata(option.item_count - 1, str(name))
+		var label := str(name)
+		option.add_item(label)
+		option.set_item_metadata(option.item_count - 1, _player_id_for_label(label, team_id))
 	if option.item_count == 0:
-		option.add_item("Manual batter"); option.set_item_metadata(0, "")
+		option.add_item("Manual batter")
+		option.set_item_metadata(0, "")
 
 func _players_for_team(team_id: String) -> Array:
 	return repository.players.filter(func(p: Player) -> bool: return p.team_id == team_id)
@@ -220,10 +292,23 @@ func _player_labels(players: Array) -> PackedStringArray:
 		labels.append(_player_label(player))
 	return labels
 
+func _player_id_for_label(label: String, team_id: String) -> String:
+	for player in _players_for_team(team_id):
+		if _player_label(player) == label or player.display_name == label:
+			return player.id
+	return label
+
 func _text_lines(text: String) -> Array:
 	var output := []
 	for line in text.split("\n"):
 		var trimmed := line.strip_edges()
+		if not trimmed.is_empty(): output.append(trimmed)
+	return output
+
+func _csv_to_array(value: String) -> Array[String]:
+	var output: Array[String] = []
+	for item in value.split(","):
+		var trimmed := item.strip_edges()
 		if not trimmed.is_empty(): output.append(trimmed)
 	return output
 
@@ -233,6 +318,15 @@ func _selected_meta(option: OptionButton) -> String:
 func _offense_team_id() -> String: return selected_game.away_team_id if half_inning == "top" else selected_game.home_team_id
 func _defense_team_id() -> String: return selected_game.home_team_id if half_inning == "top" else selected_game.away_team_id
 func _new_event_id() -> String: return "%s_event_%d" % [selected_game.id, int(Time.get_unix_time_from_system() * 1000) + _game_events().size()]
+func _new_player_id(team_id: String) -> String:
+	var base_id := "%s_player_%d" % [team_id, int(Time.get_unix_time_from_system() * 1000)]
+	var candidate := base_id
+	var suffix := 1
+	while repository.find_entity_by_id(candidate, "players") != null:
+		suffix += 1
+		candidate = "%s_%d" % [base_id, suffix]
+	return candidate
+
 func _game_label(game: Game) -> String: return "%s at %s — %s" % [_team_name(game.away_team_id), _team_name(game.home_team_id), game.date]
 func _team_name(team_id: String) -> String:
 	var team: Team = repository.find_entity_by_id(team_id, "teams")
