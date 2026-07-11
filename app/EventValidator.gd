@@ -38,6 +38,7 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"defensive_substitution",
 	"position_change",
 	"batting_order_replacement",
+	"batch_defensive_change",
 ]
 
 const PITCH_THROWN_EVENT_TYPES = {
@@ -93,6 +94,7 @@ static func validate_event_payload(payload: Dictionary) -> Array[Dictionary]:
 	_validate_batch_two_details(messages, event_type, payload, details, advancements, fielder_assignment, errors)
 	_validate_pitching_change(messages, event_type, details)
 	_validate_substitution(messages, event_type, details)
+	_validate_batch_defensive_change(messages, event_type, details)
 	return messages
 
 static func has_errors(messages: Array) -> bool:
@@ -201,7 +203,7 @@ static func _validate_pitching_change(messages: Array[Dictionary], event_type: S
 			_add_error(messages, "details.pitching_change.runner_responsibility[%d]" % index, "Runner responsibility requires runner_id, responsible_pitcher_id, and base.")
 
 static func _validate_substitution(messages: Array[Dictionary], event_type: String, details: Dictionary) -> void:
-	if not _is_substitution_event_type(event_type):
+	if not _is_substitution_event_type(event_type) or event_type == "batch_defensive_change":
 		return
 	var substitution = _as_dictionary(details.get("substitution", {}))
 	if _is_blank(substitution.get("team_id", "")):
@@ -216,7 +218,36 @@ static func _validate_substitution(messages: Array[Dictionary], event_type: Stri
 		_add_warning(messages, "details.substitution.new_position", "Defensive substitutions and position changes should record the new position.")
 
 static func _is_substitution_event_type(event_type: String) -> bool:
-	return event_type in ["pinch_hitter", "pinch_runner", "defensive_substitution", "position_change", "batting_order_replacement"]
+	return event_type in ["pinch_hitter", "pinch_runner", "defensive_substitution", "position_change", "batting_order_replacement", "batch_defensive_change"]
+
+static func _validate_batch_defensive_change(messages: Array[Dictionary], event_type: String, details: Dictionary) -> void:
+	if event_type != "batch_defensive_change":
+		return
+	var defensive_change = _as_dictionary(details.get("defensive_change", {}))
+	if _is_blank(defensive_change.get("team_id", "")):
+		_add_error(messages, "details.defensive_change.team_id", "A grouped defensive change must identify the team.")
+	var changes = _as_array(defensive_change.get("changes", []))
+	if changes.is_empty():
+		_add_error(messages, "details.defensive_change.changes", "A grouped defensive change must include at least one change.")
+	var slots := {}
+	for index in range(changes.size()):
+		var change = _as_dictionary(changes[index])
+		var type := str(change.get("change_type", ""))
+		if _is_blank(type):
+			_add_error(messages, "details.defensive_change.changes[%d].change_type" % index, "Each defensive change needs a change_type.")
+		if type == "position_change" and _is_blank(change.get("player_id", "")):
+			_add_error(messages, "details.defensive_change.changes[%d].player_id" % index, "A position change needs a player_id.")
+		if type in ["player_replacement", "bench_player_enters"] and _is_blank(change.get("player_in_id", "")):
+			_add_error(messages, "details.defensive_change.changes[%d].player_in_id" % index, "A replacement or bench entry needs a player_in_id.")
+		if type in ["player_replacement", "player_leaves_game"] and _is_blank(change.get("player_out_id", "")):
+			_add_error(messages, "details.defensive_change.changes[%d].player_out_id" % index, "A replacement or player-leaves-game change needs a player_out_id.")
+		if type != "player_leaves_game" and _is_blank(change.get("new_position", "")):
+			_add_warning(messages, "details.defensive_change.changes[%d].new_position" % index, "This defensive change should record the new position.")
+		var slot := str(change.get("batting_order_slot", "")).strip_edges()
+		if not slot.is_empty() and slot != "0":
+			if slots.has(slot):
+				_add_warning(messages, "details.defensive_change.batting_order_slot", "Batting order slot %s appears more than once in the grouped change." % slot)
+			slots[slot] = true
 
 static func _validate_error_details(messages: Array[Dictionary], errors: Array) -> void:
 	var valid_types = {"fielding": true, "throwing": true, "catching": true, "dropped_fly": true, "missed_tag": true, "missed_base": true, "interference": true, "unknown": true}

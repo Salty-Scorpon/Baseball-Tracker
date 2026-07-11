@@ -34,6 +34,7 @@ const WIDGET_BASERUNNING_DETAILS = "baserunning_details"
 const WIDGET_MISC_ADVANCEMENT_DETAILS = "misc_advancement_details"
 const WIDGET_PITCHING_CHANGE = "pitching_change"
 const WIDGET_SUBSTITUTION = "substitution"
+const WIDGET_DEFENSIVE_CHANGE_WIZARD = "defensive_change_wizard"
 
 static func get_templates() -> Dictionary:
 	var templates = {}
@@ -171,6 +172,19 @@ static func _register_substitution_events(templates: Dictionary) -> void:
 			"validation_rules": ["requires_substitution_details"],
 			"allows_manual_overrides": false,
 		})
+
+	_add_template(templates, {
+		"event_type": "batch_defensive_change",
+		"event_group": EVENT_GROUP_SUBSTITUTIONS,
+		"display_name": "Batch Defensive Change",
+		"required_fields": ["team_id", "changes", "inning", "half_inning"],
+		"optional_fields": ["batting_order_slot", "old_position", "new_position", "notes"],
+		"widgets_needed": [WIDGET_DEFENSIVE_CHANGE_WIZARD, WIDGET_EVENT_SUMMARY],
+		"default_runner_logic": {},
+		"default_stat_effects": {},
+		"validation_rules": ["validate_grouped_defensive_alignment"],
+		"allows_manual_overrides": false,
+	})
 
 static func _runner_event_template(event_type: String, event_group: String, display_name: String, required_fields: Array, optional_fields: Array, widgets_needed: Array, default_runner_logic: Dictionary, default_stat_effects: Dictionary, validation_rules: Array) -> Dictionary:
 	return {"event_type": event_type, "event_group": event_group, "display_name": display_name, "required_fields": required_fields, "optional_fields": optional_fields, "widgets_needed": widgets_needed, "default_runner_logic": default_runner_logic, "default_stat_effects": default_stat_effects, "validation_rules": validation_rules, "allows_manual_overrides": true}

@@ -27,6 +27,13 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"wild_pitch",
 	"passed_ball",
 	"balk",
+	"pitching_change",
+	"pinch_hitter",
+	"pinch_runner",
+	"defensive_substitution",
+	"position_change",
+	"batting_order_replacement",
+	"batch_defensive_change",
 ]
 
 const EVENT_LABELS = {
@@ -48,6 +55,7 @@ const EVENT_LABELS = {
 	"wild_pitch": "advances on a wild pitch",
 	"passed_ball": "advances on a passed ball",
 	"balk": "advances on a balk",
+	"batch_defensive_change": "records a grouped defensive change",
 }
 
 static func summarize(event_payload: Variant) -> String:
@@ -59,7 +67,11 @@ static func summarize(event_payload: Variant) -> String:
 	if not context.is_empty():
 		parts.append(context)
 
-	parts.append(_format_matchup_and_result(event, details))
+	var substitution_summary = _format_substitution_summary(event, details)
+	if not substitution_summary.is_empty():
+		parts.append(substitution_summary)
+	else:
+		parts.append(_format_matchup_and_result(event, details))
 
 	var count = _format_count(_as_dictionary(details.get("count", event.get("count", {}))))
 	if not count.is_empty():
@@ -125,6 +137,31 @@ static func _format_matchup_and_result(event: Dictionary, details: Dictionary) -
 	if not pitcher.is_empty():
 		text += " against " + pitcher
 	return text
+
+static func _format_substitution_summary(event: Dictionary, details: Dictionary) -> String:
+	var event_type = str(event.get("event_type", details.get("event_type", ""))).to_lower()
+	if event_type == "batch_defensive_change":
+		var defensive_change = _as_dictionary(details.get("defensive_change", {}))
+		var pieces: Array[String] = []
+		for item in _as_array(defensive_change.get("changes", [])):
+			var change = _as_dictionary(item)
+			var type := str(change.get("change_type", ""))
+			match type:
+				"position_change":
+					pieces.append("%s moves from %s to %s" % [change.get("player_name", change.get("player_id", "player")), change.get("old_position", "?"), change.get("new_position", "?")])
+				"player_replacement":
+					pieces.append("%s replaces %s in slot %s at %s" % [change.get("player_in_name", change.get("player_in_id", "player in")), change.get("player_out_name", change.get("player_out_id", "player out")), change.get("batting_order_slot", "?"), change.get("new_position", "?")])
+				"player_leaves_game":
+					pieces.append("%s leaves %s" % [change.get("player_out_name", change.get("player_out_id", "player")), change.get("old_position", "the game")])
+				"bench_player_enters":
+					pieces.append("%s enters at %s in slot %s" % [change.get("player_in_name", change.get("player_in_id", "player")), change.get("new_position", "?"), change.get("batting_order_slot", "?")])
+				_:
+					pieces.append(_humanize(type))
+		return "Grouped defensive change for %s: %s" % [defensive_change.get("team_id", "defense"), "; ".join(pieces)] if not pieces.is_empty() else "Grouped defensive change"
+	var substitution = _as_dictionary(details.get("substitution", {}))
+	if substitution.is_empty():
+		return ""
+	return "%s: %s replaces/changes %s" % [str(substitution.get("substitution_type", event_type)).replace("_", " ").capitalize(), substitution.get("player_in_id", ""), substitution.get("player_out_id", "")]
 
 static func _format_count(count: Dictionary) -> String:
 	if count.is_empty():
