@@ -1,0 +1,84 @@
+[gd_scene load_steps=2 format=3 uid="uid://countentrywidget"]
+
+[ext_resource type="Script" path="res://modes/game_entry/widgets/CountEntryWidget.gd" id="1_count"]
+
+[node name="CountEntryWidget" type="VBoxContainer"]
+custom_minimum_size = Vector2(320, 0)
+script = ExtResource("1_count")
+
+[node name="Title" type="Label" parent="."]
+text = "Count / Pitch Entry"
+
+[node name="CoreFields" type="GridContainer" parent="."]
+columns = 2
+
+[node name="BallsLabel" type="Label" parent="CoreFields"]
+text = "Balls"
+
+[node name="BallsSpin" type="SpinBox" parent="CoreFields"]
+unique_name_in_owner = true
+max_value = 3.0
+rounded = true
+
+[node name="StrikesLabel" type="Label" parent="CoreFields"]
+text = "Strikes"
+
+[node name="StrikesSpin" type="SpinBox" parent="CoreFields"]
+unique_name_in_owner = true
+max_value = 2.0
+rounded = true
+
+[node name="TotalPitchesLabel" type="Label" parent="CoreFields"]
+text = "Total pitches"
+
+[node name="TotalPitchesSpin" type="SpinBox" parent="CoreFields"]
+unique_name_in_owner = true
+max_value = 999.0
+rounded = true
+
+[node name="AdvancedToggle" type="CheckButton" parent="."]
+unique_name_in_owner = true
+text = "Show advanced pitch details"
+
+[node name="AdvancedFields" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+
+[node name="AdvancedGrid" type="GridContainer" parent="AdvancedFields"]
+columns = 2
+
+[node name="CalledStrikesLabel" type="Label" parent="AdvancedFields/AdvancedGrid"]
+text = "Called strikes"
+
+[node name="CalledStrikesSpin" type="SpinBox" parent="AdvancedFields/AdvancedGrid"]
+unique_name_in_owner = true
+max_value = 999.0
+rounded = true
+
+[node name="SwingingStrikesLabel" type="Label" parent="AdvancedFields/AdvancedGrid"]
+text = "Swinging strikes"
+
+[node name="SwingingStrikesSpin" type="SpinBox" parent="AdvancedFields/AdvancedGrid"]
+unique_name_in_owner = true
+max_value = 999.0
+rounded = true
+
+[node name="FoulsLabel" type="Label" parent="AdvancedFields/AdvancedGrid"]
+text = "Fouls"
+
+[node name="FoulsSpin" type="SpinBox" parent="AdvancedFields/AdvancedGrid"]
+unique_name_in_owner = true
+max_value = 999.0
+rounded = true
+
+[node name="BallsThrownLabel" type="Label" parent="AdvancedFields/AdvancedGrid"]
+text = "Balls thrown"
+
+[node name="BallsThrownSpin" type="SpinBox" parent="AdvancedFields/AdvancedGrid"]
+unique_name_in_owner = true
+max_value = 999.0
+rounded = true
+
+[node name="ManualPitchCountOverrideCheck" type="CheckBox" parent="AdvancedFields"]
+unique_name_in_owner = true
+text = "Manual pitch count override"
