@@ -17,6 +17,7 @@ const EVENT_GROUP_SACRIFICES = "sacrifices"
 const EVENT_GROUP_BASERUNNING = "baserunning"
 const EVENT_GROUP_MISC_ADVANCEMENT = "misc_advancement"
 const EVENT_GROUP_PITCHING = "pitching_events"
+const EVENT_GROUP_SUBSTITUTIONS = "substitutions"
 
 const WIDGET_COUNT_ENTRY = "count_entry"
 const WIDGET_RUNNER_ADVANCEMENT_GRID = "runner_advancement_grid"
@@ -32,6 +33,7 @@ const WIDGET_SACRIFICE_DETAILS = "sacrifice_details"
 const WIDGET_BASERUNNING_DETAILS = "baserunning_details"
 const WIDGET_MISC_ADVANCEMENT_DETAILS = "misc_advancement_details"
 const WIDGET_PITCHING_CHANGE = "pitching_change"
+const WIDGET_SUBSTITUTION = "substitution"
 
 static func get_templates() -> Dictionary:
 	var templates = {}
@@ -41,6 +43,7 @@ static func get_templates() -> Dictionary:
 	_register_batted_ball_outs(templates)
 	_register_batch_two_events(templates)
 	_register_pitching_events(templates)
+	_register_substitution_events(templates)
 	return templates
 
 static func get_template(event_type: String) -> Dictionary:
@@ -152,6 +155,22 @@ static func _register_pitching_events(templates: Dictionary) -> void:
 		"validation_rules": ["requires_incoming_pitcher", "preserve_runner_responsibility"],
 		"allows_manual_overrides": false,
 	})
+
+
+static func _register_substitution_events(templates: Dictionary) -> void:
+	for substitution_type in ["pinch_hitter", "pinch_runner", "defensive_substitution", "position_change", "batting_order_replacement"]:
+		_add_template(templates, {
+			"event_type": substitution_type,
+			"event_group": EVENT_GROUP_SUBSTITUTIONS,
+			"display_name": substitution_type.replace("_", " ").capitalize(),
+			"required_fields": ["team_id", "substitution_type", "inning", "half_inning"],
+			"optional_fields": ["player_out_id", "player_in_id", "batting_order_slot", "old_position", "new_position", "affects_batting_order", "notes"],
+			"widgets_needed": [WIDGET_SUBSTITUTION, WIDGET_EVENT_SUMMARY],
+			"default_runner_logic": {"pinch_runner_inherits_base": substitution_type == "pinch_runner"},
+			"default_stat_effects": {},
+			"validation_rules": ["requires_substitution_details"],
+			"allows_manual_overrides": false,
+		})
 
 static func _runner_event_template(event_type: String, event_group: String, display_name: String, required_fields: Array, optional_fields: Array, widgets_needed: Array, default_runner_logic: Dictionary, default_stat_effects: Dictionary, validation_rules: Array) -> Dictionary:
 	return {"event_type": event_type, "event_group": event_group, "display_name": display_name, "required_fields": required_fields, "optional_fields": optional_fields, "widgets_needed": widgets_needed, "default_runner_logic": default_runner_logic, "default_stat_effects": default_stat_effects, "validation_rules": validation_rules, "allows_manual_overrides": true}
