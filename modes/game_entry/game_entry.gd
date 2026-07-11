@@ -23,7 +23,7 @@ const EVENT_BUTTONS = [
 	{"label": "SAC", "event_type": "sacrifice", "legacy_type": "Sacrifice bunt", "wired": false},
 	{"label": "SB", "event_type": "stolen_base", "legacy_type": "Stolen base", "wired": false},
 	{"label": "CS", "event_type": "caught_stealing", "legacy_type": "Caught stealing", "wired": false},
-	{"label": "Pitching Change", "event_type": "pitching_change", "legacy_type": "Pitching change", "wired": false},
+	{"label": "Pitching Change", "event_type": "pitching_change", "legacy_type": "Pitching change", "wired": true},
 	{"label": "Substitution", "event_type": "substitution", "legacy_type": "Substitution", "wired": false},
 	{"label": "Manual", "event_type": "manual", "legacy_type": "Manual correction", "wired": false},
 ]
@@ -88,6 +88,7 @@ var score = {"away": 0, "home": 0}
 var bases = {"1B": "", "2B": "", "3B": ""}
 var lineups = {"away": [], "home": []}
 var starting_pitchers = {"away": "", "home": ""}
+var current_pitchers = {"away": "", "home": ""}
 var pending_event_button: Dictionary = {}
 var pending_payload: Dictionary = {}
 
@@ -196,6 +197,7 @@ func _current_game_context() -> Dictionary:
 		"defense_team_id": _defense_team_id() if selected_game != null else "",
 		"batter_id": _selected_meta(batter_picker),
 		"pitcher_id": _selected_meta(pitcher_picker),
+		"outgoing_pitcher_id": _selected_meta(pitcher_picker),
 		"offensive_lineup": _player_dicts_for_team(_offense_team_id()) if selected_game != null else [],
 		"defensive_players": _player_dicts_for_team(_defense_team_id()) if selected_game != null else [],
 	}
@@ -341,6 +343,14 @@ func _add_event_from_pending() -> void:
 	event.notes = notes.text.strip_edges()
 	event.details = Dictionary(pending_payload.get("details", {})).duplicate(true)
 	event.details["event_type"] = pending_event_button.get("event_type", _normalize_event_type(type))
+	if event.details["event_type"] == "pitching_change":
+		var pitching_change = Dictionary(event.details.get("pitching_change", {}))
+		event.pitcher_id = str(pitching_change.get("incoming_pitcher_id", event.pitcher_id))
+		event.batter_id = ""
+		event.outs_added = 0
+		event.outs_after = outs
+		event.runs_scored = 0
+		event.rbi_count = 0
 	event.details["summary_preview"] = summary_preview_label.text
 	if manual_override_panel.has_active_overrides():
 		event.details["manual_overrides"] = manual_override_panel.get_overrides()
@@ -362,6 +372,7 @@ func _apply_replay_state(replay_state: GameReplayState) -> void:
 	outs = replay_state.outs
 	score = replay_state.score.duplicate(true)
 	bases = replay_state.bases.duplicate(true)
+	current_pitchers = replay_state.current_pitchers.duplicate(true)
 
 func _undo_last_event() -> void:
 	var events = _game_events()
@@ -389,6 +400,7 @@ func _refresh_matchup_options() -> void:
 	_fill_lineup_options(batter_picker, lineups[offensive_side], offensive_team)
 	var defensive_team = selected_game.home_team_id if half_inning == "top" else selected_game.away_team_id
 	_fill_player_options(pitcher_picker, _players_for_team(defensive_team))
+	_select_option_by_meta(pitcher_picker, str(current_pitchers.get("home" if half_inning == "top" else "away", "")))
 
 func _refresh_state_labels() -> void:
 	score_label.text = "%s %d  —  %s %d" % [_team_name(selected_game.away_team_id), score["away"], _team_name(selected_game.home_team_id), score["home"]]
@@ -418,7 +430,7 @@ func _refresh_lineup_and_defense() -> void:
 func _refresh_history() -> void:
 	history.clear()
 	for event in _game_events():
-		history.add_item("#%d %s %d %s: %s, runs %d, outs %d" % [event.sequence_number, event.half_inning.capitalize(), event.inning, _player_or_text(event.batter_id), event.event_type, event.runs_scored, event.outs_added])
+		history.add_item("#%d %s %d %s" % [event.sequence_number, event.half_inning.capitalize(), event.inning, _history_event_label(event)])
 
 func _finalize_game() -> void:
 	if selected_game == null: return
@@ -436,6 +448,18 @@ func _game_events() -> Array:
 	var events = repository.game_events.filter(func(e: GameEvent) -> bool: return selected_game != null and e.game_id == selected_game.id)
 	events.sort_custom(func(a: GameEvent, b: GameEvent) -> bool: return a.sequence_number < b.sequence_number)
 	return events
+
+func _history_event_label(event: GameEvent) -> String:
+	if str(event.details.get("event_type", "")) == "pitching_change":
+		var change = Dictionary(event.details.get("pitching_change", {}))
+		return "Pitching change: %s replaces %s" % [_player_or_text(str(change.get("incoming_pitcher_id", event.pitcher_id))), _player_or_text(str(change.get("outgoing_pitcher_id", "")))]
+	return "%s: %s, runs %d, outs %d" % [_player_or_text(event.batter_id), event.event_type, event.runs_scored, event.outs_added]
+
+func _select_option_by_meta(option: OptionButton, value: String) -> void:
+	for index in range(option.item_count):
+		if str(option.get_item_metadata(index)) == value:
+			option.select(index)
+			return
 
 func _fill_player_options(option: OptionButton, players: Array) -> void:
 	option.clear()

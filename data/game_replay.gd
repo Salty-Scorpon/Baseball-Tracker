@@ -61,8 +61,11 @@ static func _record_pitcher(state: GameReplayState, event: GameEvent) -> void:
 	var defense_side = "home" if event.half_inning == "top" else "away"
 	if not event.pitcher_id.is_empty():
 		state.current_pitchers[defense_side] = event.pitcher_id
-	if event.event_type == "Pitching change" and not event.pitcher_id.is_empty():
+	if _normalized_event_type(event) == "pitching_change" and not event.pitcher_id.is_empty():
 		state.pitcher_assignments.append({"sequence_number": event.sequence_number, "half_inning": event.half_inning, "inning": event.inning, "team_side": defense_side, "pitcher_id": event.pitcher_id})
+
+static func _normalized_event_type(event: GameEvent) -> String:
+	return str(event.details.get("event_type", event.event_type)).strip_edges().to_lower().replace(" ", "_").replace("-", "_")
 
 static func _advance_runners(state: GameReplayState, bases_to_advance: int, batter_id: String, clear_bases: bool = false) -> void:
 	var old_bases = state.bases.duplicate(true)

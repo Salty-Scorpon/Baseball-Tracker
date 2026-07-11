@@ -13,6 +13,7 @@ const RunnerAdvancementGridScene = preload("res://modes/game_entry/widgets/Runne
 const FielderAssignmentWidgetScene = preload("res://modes/game_entry/widgets/FielderAssignmentWidget.tscn")
 const ManualOverridePanelScene = preload("res://modes/game_entry/widgets/ManualOverridePanel.tscn")
 const ErrorAssignmentWidgetScene = preload("res://modes/game_entry/widgets/ErrorAssignmentWidget.tscn")
+const PitchingChangeWidgetScene = preload("res://modes/game_entry/widgets/PitchingChangeWidget.tscn")
 
 const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"single",
@@ -33,6 +34,7 @@ const SUPPORTED_EVENT_TYPES: Array[String] = [
 	"wild_pitch",
 	"passed_ball",
 	"balk",
+	"pitching_change",
 ]
 
 @onready var title_label: Label = %TitleLabel
@@ -75,6 +77,7 @@ func get_event_payload() -> Dictionary:
 		"errors": _get_widget_data(EventTemplateRegistry.WIDGET_ERROR_DETAILS),
 		"event_details": _collect_detail_data(),
 		"manual_overrides": _get_widget_data(EventTemplateRegistry.WIDGET_MANUAL_OVERRIDES),
+		"pitching_change": _get_widget_data(EventTemplateRegistry.WIDGET_PITCHING_CHANGE),
 	}
 	return {
 		"event_type": _event_type,
@@ -125,6 +128,10 @@ func _add_widget_for_key(widget_key: String) -> void:
 	match widget_key:
 		EventTemplateRegistry.WIDGET_COUNT_ENTRY:
 			_add_widget(widget_key, CountEntryWidgetScene.instantiate())
+		EventTemplateRegistry.WIDGET_PITCHING_CHANGE:
+			var pitching_widget = PitchingChangeWidgetScene.instantiate()
+			_add_widget(widget_key, pitching_widget)
+			pitching_widget.setup_context(_game_context)
 		EventTemplateRegistry.WIDGET_RUNNER_ADVANCEMENT_GRID:
 			var runner_grid = RunnerAdvancementGridScene.instantiate()
 			_add_widget(widget_key, runner_grid)
@@ -191,6 +198,8 @@ func _get_widget_data(widget_key: String) -> Variant:
 			return widget.get_errors()
 		EventTemplateRegistry.WIDGET_MANUAL_OVERRIDES:
 			return widget.get_overrides()
+		EventTemplateRegistry.WIDGET_PITCHING_CHANGE:
+			return widget.get_pitching_change_data()
 	return {}
 
 func _collect_detail_data() -> Dictionary:
