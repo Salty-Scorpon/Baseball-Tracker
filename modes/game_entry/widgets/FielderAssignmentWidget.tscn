@@ -1,0 +1,71 @@
+[gd_scene load_steps=2 format=3 uid="uid://fielderassignmentwidget"]
+
+[ext_resource type="Script" path="res://modes/game_entry/widgets/FielderAssignmentWidget.gd" id="1_fielder"]
+
+[node name="FielderAssignmentWidget" type="VBoxContainer"]
+custom_minimum_size = Vector2(520, 0)
+script = ExtResource("1_fielder")
+
+[node name="Title" type="Label" parent="."]
+text = "Fielder Assignment"
+
+[node name="ContextLabel" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Context: Groundout"
+
+[node name="PresetRow" type="HBoxContainer" parent="."]
+
+[node name="PresetLabel" type="Label" parent="PresetRow"]
+text = "Preset"
+
+[node name="PresetOption" type="OptionButton" parent="PresetRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+
+[node name="FieldsGrid" type="GridContainer" parent="."]
+columns = 3
+
+[node name="PrimaryLabel" type="Label" parent="FieldsGrid"]
+text = "Primary fielder"
+
+[node name="PrimaryFielderOption" type="OptionButton" parent="FieldsGrid"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+
+[node name="PrimaryManualEdit" type="LineEdit" parent="FieldsGrid"]
+unique_name_in_owner = true
+placeholder_text = "Manual/unknown ID"
+
+[node name="PutoutLabel" type="Label" parent="FieldsGrid"]
+text = "Putout fielder"
+
+[node name="PutoutFielderOption" type="OptionButton" parent="FieldsGrid"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+
+[node name="PutoutManualEdit" type="LineEdit" parent="FieldsGrid"]
+unique_name_in_owner = true
+placeholder_text = "Manual/unknown ID"
+
+[node name="AssistLabel" type="Label" parent="."]
+text = "Assist fielders"
+
+[node name="AssistOptionsContainer" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+
+[node name="AssistManualEdit" type="LineEdit" parent="."]
+unique_name_in_owner = true
+placeholder_text = "Additional/manual assist IDs, comma-separated"
+
+[node name="NotesLabel" type="Label" parent="."]
+text = "Fielding notes"
+
+[node name="NotesEdit" type="TextEdit" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+placeholder_text = "Optional scorer notes"
+
+[node name="WarningLabel" type="Label" parent="."]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
