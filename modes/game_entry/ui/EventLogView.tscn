@@ -1,0 +1,38 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://modes/game_entry/ui/EventLogView.gd" id="1_event_log_view"]
+
+[node name="EventLogView" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 260)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_event_log_view")
+
+[node name="EventLogMargin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="EventLogScroll" type="ScrollContainer" parent="EventLogMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="EventEntriesBox" type="VBoxContainer" parent="EventLogMargin/EventLogScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="EmptyStateLabel" type="Label" parent="EventLogMargin/EventLogScroll/EventEntriesBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "No events have been recorded yet. The narrative game log will appear here during review mode."
+autowrap_mode = 3
