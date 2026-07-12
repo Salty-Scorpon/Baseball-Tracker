@@ -23,7 +23,7 @@ func set_events(events: Array, context: Dictionary = {}) -> void:
 	_context = context.duplicate(true)
 	_render_rows()
 	if not _selected_event_id.is_empty():
-		select_event(_selected_event_id)
+		select_event_silent(_selected_event_id)
 
 func select_event_silent(event_id: String) -> void:
 	if event_id.is_empty() or not _buttons_by_event_id.has(event_id):

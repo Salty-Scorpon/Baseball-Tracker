@@ -43,6 +43,7 @@ var _selected_event_id := ""
 var _current_payload: Dictionary = {}
 var _current_validation_messages: Array = []
 var _editing_event_id := ""
+var _syncing_event_selection := false
 
 func _ready() -> void:
 	_apply_style()
@@ -156,17 +157,28 @@ func _on_workspace_event_payload_changed(payload: Dictionary) -> void:
 	event_summary_panel.set_active(not EventValidatorScript.has_errors(_current_validation_messages))
 
 func _on_skinny_event_history_selected(event_id: String) -> void:
-	_selected_event_id = event_id
-	workspace_panel.show_review_mode()
-	workspace_panel.scroll_to_event(event_id)
-	event_summary_panel.set_selected_event_summary(_summary_for_event(event_id))
-	compact_scoreboard_panel.set_state(_scoreboard_state_for_event(event_id))
+	_select_event(event_id, "skinny_history")
 
 func _on_workspace_event_selected(event_id: String) -> void:
+	_select_event(event_id, "event_log")
+
+func _select_event(event_id: String, source: String = "") -> void:
+	if _syncing_event_selection or event_id.strip_edges().is_empty():
+		return
+	_syncing_event_selection = true
 	_selected_event_id = event_id
-	skinny_event_history_panel.select_event(event_id)
+	workspace_panel.show_review_mode()
+	match source:
+		"skinny_history":
+			workspace_panel.scroll_to_event(event_id, false)
+		"event_log":
+			skinny_event_history_panel.select_event_silent(event_id)
+		_:
+			workspace_panel.scroll_to_event(event_id, false)
+			skinny_event_history_panel.select_event_silent(event_id)
 	event_summary_panel.set_selected_event_summary(_summary_for_event(event_id))
 	compact_scoreboard_panel.set_state(_scoreboard_state_for_event(event_id))
+	_syncing_event_selection = false
 
 func _on_workspace_event_edit_requested(event_id: String) -> void:
 	if _is_current_game_finalized():
@@ -223,10 +235,7 @@ func _on_event_summary_confirm_requested() -> void:
 	_current_validation_messages.clear()
 	_refresh_game_context()
 	workspace_panel.show_review_mode()
-	workspace_panel.scroll_to_event(event.id)
-	skinny_event_history_panel.select_event(event.id)
-	event_summary_panel.set_selected_event_summary(_summary_for_event(event.id))
-	compact_scoreboard_panel.set_state(_scoreboard_state_for_event(event.id))
+	_select_event(event.id, "commit")
 
 func _on_event_summary_cancel_requested() -> void:
 	_editing_event_id = ""

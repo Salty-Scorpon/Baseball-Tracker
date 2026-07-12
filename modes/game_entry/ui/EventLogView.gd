@@ -24,7 +24,13 @@ func set_events(events: Array, context: Dictionary = {}) -> void:
 	_context = context.duplicate(true)
 	_render_events()
 	if not _selected_event_id.is_empty():
-		select_event(_selected_event_id)
+		select_event_silent(_selected_event_id)
+
+func select_event_silent(event_id: String) -> void:
+	if event_id.is_empty() or not _cards_by_event_id.has(event_id):
+		return
+	_selected_event_id = event_id
+	_update_card_selection()
 
 func select_event(event_id: String) -> void:
 	if event_id.is_empty() or not _cards_by_event_id.has(event_id):
@@ -36,10 +42,13 @@ func select_event(event_id: String) -> void:
 	_update_card_selection()
 	event_selected.emit(event_id)
 
-func scroll_to_event(event_id: String) -> void:
+func scroll_to_event(event_id: String, emit_selection: bool = true) -> void:
 	if not _cards_by_event_id.has(event_id):
 		return
-	select_event(event_id)
+	if emit_selection:
+		select_event(event_id)
+	else:
+		select_event_silent(event_id)
 	await get_tree().process_frame
 	var card: Control = _cards_by_event_id[event_id]
 	var target_y := max(0, int(card.position.y - (scroll_container.size.y - card.size.y) * 0.5))
