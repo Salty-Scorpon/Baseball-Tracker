@@ -85,6 +85,12 @@ func set_selected_event_summary(text: String) -> void:
 	edit_button.visible = true
 	_update_confirm_state()
 
+func has_active_event() -> bool:
+	return _is_active and cancel_button.visible
+
+func can_confirm_event() -> bool:
+	return _is_active and _can_confirm and not _has_blocking_error and confirm_button.visible and not confirm_button.disabled
+
 func show_payload_preview(payload: Dictionary) -> void:
 	var preview := EventSummaryFormatterScript.summarize(payload)
 	set_preview_text(preview)
