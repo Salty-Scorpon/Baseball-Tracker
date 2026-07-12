@@ -9,7 +9,7 @@ const SaveManagerScript = preload("res://data/saving/save_manager.gd")
 const SampleDataFactoryScript = preload("res://data/sample_data_factory.gd")
 const EventSummaryFormatterScript = preload("res://app/EventSummaryFormatter.gd")
 const EventValidatorScript = preload("res://app/EventValidator.gd")
-const GameReplayScript = preload("res://data/game_replay.gd")
+const GameStateSnapshotScript = preload("res://data/game_state_snapshot.gd")
 const GameEventScript = preload("res://data/models/game_event.gd")
 
 @onready var background: ColorRect = %Background
@@ -326,48 +326,30 @@ func _first_player_id_for_team(team_id: String) -> String:
 			return player.id
 	return ""
 
+func get_game_state_at_event(game_id: String, event_id: String) -> Dictionary:
+	return GameStateSnapshotScript.get_game_state_at_event(_events_for_current_game(), game_id, event_id, _player_names_by_id())
+
+func replay_game_until_sequence(game_id: String, sequence: int) -> Dictionary:
+	return GameStateSnapshotScript.replay_game_until_sequence(_events_for_game_id(game_id), sequence, _player_names_by_id())
+
 func _scoreboard_state_for_event(event_id: String) -> Dictionary:
-	var events := _events_for_current_game()
-	for event in events:
-		if event.id == event_id:
-			return _scoreboard_state_for_events(events, event.sequence_number)
-	return _scoreboard_state_for_events(events)
+	if current_game == null:
+		return _scoreboard_state_for_events([])
+	return get_game_state_at_event(current_game.id, event_id)
 
 func _scoreboard_state_for_events(events: Array, sequence_number: int = -1) -> Dictionary:
-	var replay_state: GameReplayState = GameReplayScript.replay_until(events, sequence_number) if sequence_number >= 0 else GameReplayScript.replay(events)
-	var half := str(replay_state.half_inning).strip_edges().to_lower()
-	var defense_side := "home" if half == "top" else "away"
-	var pitcher_id := str(replay_state.current_pitchers.get(defense_side, "")).strip_edges()
-	return {
-		"away_score": int(replay_state.score.get("away", 0)),
-		"home_score": int(replay_state.score.get("home", 0)),
-		"inning": replay_state.inning,
-		"half": "Bottom" if half == "bottom" else "Top",
-		"outs": replay_state.outs,
-		"base_state": {
-			"first": _empty_to_null(replay_state.bases.get("1B", "")),
-			"second": _empty_to_null(replay_state.bases.get("2B", "")),
-			"third": _empty_to_null(replay_state.bases.get("3B", "")),
-		},
-		"current_pitcher_id": pitcher_id,
-		"current_pitcher_name": _player_name_for_id(pitcher_id),
-		"current_pitcher_strikeouts": _strikeouts_for_pitcher_until(events, pitcher_id, sequence_number),
-	}
+	return GameStateSnapshotScript.replay_game_until_sequence(events, sequence_number, _player_names_by_id())
 
-func _strikeouts_for_pitcher_until(events: Array, pitcher_id: String, sequence_number: int = -1) -> int:
-	if pitcher_id.is_empty():
-		return 0
-	var total := 0
-	for event in events:
-		if sequence_number >= 0 and event.sequence_number > sequence_number:
-			continue
-		var event_type := str(event.details.get("event_type", event.event_type)).strip_edges().to_lower().replace(" ", "_").replace("-", "_")
-		if str(event.pitcher_id).strip_edges() == pitcher_id and event_type.begins_with("strikeout"):
-			total += 1
-	return total
+func _events_for_game_id(game_id: String) -> Array:
+	return _events_for_current_game().filter(func(event: GameEvent) -> bool: return game_id.is_empty() or event.game_id == game_id)
 
-func _empty_to_null(value: Variant) -> Variant:
-	return null if str(value).strip_edges().is_empty() else value
+func _player_names_by_id() -> Dictionary:
+	var names := {}
+	if repository == null:
+		return names
+	for player in repository.players:
+		names[player.id] = player.display_name if not player.display_name.is_empty() else player.id
+	return names
 
 func _player_name_for_id(player_id: String) -> String:
 	if player_id.is_empty() or repository == null:
