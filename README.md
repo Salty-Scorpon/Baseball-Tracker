@@ -2798,3 +2798,1380 @@ The most important upgrades are:
 7. Manual override visibility
 
 These systems will turn Game Entry Mode from a simple scoreboard input screen into a usable baseball stat book.
+
+
+README Addendum — Modern Game Entry UI Redesign
+Purpose of This Addendum
+
+This addendum replaces the current Game Entry Mode layout with a more modern, docked, workspace-based UI.
+
+The current Game Entry screen exposes too many unrelated controls at once and lacks clear visual hierarchy. From a scorer/player perspective, it feels cluttered and difficult to use. The redesigned Game Entry Mode should resemble a Photoshop-style docked workspace:
+
+Event tools on the left
+Main working area in the center
+Event navigation and game state on the right
+Summary/validation context along the bottom
+
+The goal is to make Game Entry Mode feel like a serious scoring cockpit rather than a scattered debug panel.
+
+This is a UI/UX addendum. It should not change the core architectural rule that the event log remains the source of truth.
+
+Core UI Direction
+
+Game Entry Mode should be rebuilt around five major zones:
+
+┌──────────────────────┬────────────────────────────────────────┬──────────────────────┐
+│ LEFT TOOL DOCK       │ CENTER WORKSPACE                       │ RIGHT INFO DOCK      │
+│                      │                                        │                      │
+│ Event Key Grid       │ Scrollable Narrative Event Log         │ Skinny Event History │
+│ 2 columns            │                                        │ Quick event jumping  │
+│                      │ OR                                     │                      │
+│                      │ Active Event Creation Workspace        │                      │
+├──────────────────────┼────────────────────────────────────────┼──────────────────────┤
+│ Home/Away Roster     │ Event Summary / Validation Panel       │ Compact Scoreboard   │
+│ Add Player Button    │ Confirm / Edit / Cancel                │ Game state snapshot  │
+└──────────────────────┴────────────────────────────────────────┴──────────────────────┘
+
+The center workspace should be the dominant visual area.
+
+The left dock should behave like a tool palette.
+
+The right dock should behave like navigation and status panels.
+
+The bottom center should behave like a live preview/validation strip.
+
+Required Layout Zones
+1. Left Tool Dock
+
+The left dock contains the primary scoring tools and quick roster access.
+
+It should be split into:
+
+Event Key Widget
+Home/Away Quick Roster Widget
+Add Player Button
+Left Dock Placement
+
+The left dock should occupy the full height of the application’s left side.
+
+At a near-1920x1080 layout, target width should be approximately:
+
+380px to 420px
+
+This should scale down proportionally on smaller windows.
+
+Do not use absolute positioning for the final implementation. Use Godot Control containers.
+
+Event Key Widget
+Purpose
+
+The Event Key Widget is the primary scoring tool palette.
+
+It should be located in the top-left section of Game Entry Mode and should always remain visible.
+
+Required Layout
+
+Event buttons must be arranged in two columns.
+
+Example:
+
+┌───────────────┐
+│ Event Keys    │
+├───────┬───────┤
+│ 1B    │ 2B    │
+│ 3B    │ HR    │
+│ BB    │ HBP   │
+│ K     │ GO    │
+│ FO    │ E     │
+│ FC    │ SAC   │
+│ SB    │ CS    │
+│ WP    │ PB    │
+│ BK    │ DP    │
+│ TP    │ SUB   │
+│ PCH   │ MAN   │
+└───────┴───────┘
+Required Event Buttons
+
+The widget should contain buttons for:
+
+1B
+2B
+3B
+HR
+BB
+HBP
+K
+GO
+FO
+E
+FC
+SAC
+SB
+CS
+WP
+PB
+BK
+DP
+TP
+SUB
+PCH
+MAN
+
+Button meanings:
+
+1B  = single
+2B  = double
+3B  = triple
+HR  = home run
+BB  = walk
+HBP = hit by pitch
+K   = strikeout
+GO  = groundout
+FO  = flyout
+E   = reached on error
+FC  = fielder's choice
+SAC = sacrifice
+SB  = stolen base
+CS  = caught stealing
+WP  = wild pitch
+PB  = passed ball
+BK  = balk
+DP  = double play
+TP  = triple play
+SUB = substitution
+PCH = pitching change
+MAN = manual correction
+Button Behavior
+
+When an event button is clicked:
+
+The selected event button becomes visually active.
+The center workspace switches from Event Log Mode to Event Creation Mode.
+The correct dynamic event-entry template opens.
+The Event Summary / Validation Panel begins showing live preview and validation messages.
+
+If an event type is not implemented yet, the button should still appear but should be visibly disabled or display a clear “Not implemented yet” message.
+
+Do not remove future event buttons just because their templates are not implemented yet.
+
+Keyboard Shortcut Hints
+
+Buttons may show a small shortcut hint, either inside the button or in a tooltip.
+
+Suggested shortcuts:
+
+S = Single
+D = Double
+T = Triple
+H = Home run
+W = Walk
+K = Strikeout
+G = Groundout
+F = Flyout
+E = Reached on error
+C = Fielder's choice
+B = Stolen base
+P = Pitching change
+U = Substitution
+Ctrl+Z = Undo
+Ctrl+Y = Redo
+Enter = Confirm event
+Esc = Cancel event
+
+Do not let keyboard shortcuts fire while the user is typing inside a text field.
+
+Home/Away Quick Roster Widget
+Purpose
+
+The Quick Roster Widget gives the scorer fast access to team rosters without consuming the center workspace.
+
+It should be located in the bottom-left section, directly below the Event Key Widget.
+
+Required Top Options
+
+At the top of the widget, show two options:
+
+Home
+Away
+
+These should behave like tabs or a segmented toggle.
+
+Only one can be selected at a time.
+
+Required Body Behavior
+
+When Home is selected, the widget shows the home team’s quick roster.
+
+When Away is selected, the widget shows the away team’s quick roster.
+
+Each roster row should show at minimum:
+
+jersey_number
+player_display_name
+
+Recommended display:
+
+#1 Kambe
+#8 Shibata
+#6 Shigemune Daiki
+#3 Taiga Eto
+#10 Makiuchi
+
+Optional later fields:
+
+position
+batting_order_slot
+active/bench marker
+pitcher marker
+Roster Widget Use Cases
+
+The widget should support:
+
+viewing the current team roster
+checking available players
+selecting players for substitutions
+selecting players for pinch hitters or pinch runners
+adding missing players quickly
+Optional Future Filters
+
+Do not prioritize these before the core layout works, but leave room for:
+
+All
+Lineup
+Bench
+Pitchers
+Position
+Search
+Add Player Button
+Placement
+
+The Add Player button should be placed directly below the Home/Away Quick Roster Widget.
+
+It should sit in the bottom-left corner of the application, visually attached to the roster panel.
+
+Behavior
+
+The button should open a compact add-player flow for the currently selected Home/Away team.
+
+The Add Player action should not require leaving Game Entry Mode.
+
+The player should be added to the correct team roster and become available for substitution and quick roster selection.
+
+2. Center Workspace
+Purpose
+
+The center workspace is the main working area of Game Entry Mode.
+
+It has two mutually exclusive modes:
+
+Event Log Mode
+Event Creation/Edit Mode
+
+Only one should be active at a time.
+
+This is the single most important UX improvement in this redesign.
+
+Center Workspace Default: Event Log Mode
+
+When the user is not creating or editing an event, the center workspace should show a scrollable narrative event log.
+
+This log should retell the details of the entire game in a readable form.
+
+It should not be a cramped raw list.
+
+It should feel like a baseball scorebook narrative.
+
+Event Log Format
+
+The event log should be grouped by inning and half-inning.
+
+Example:
+
+Top 1st
+
+#01 — 0 outs
+#1 Kambe singled to LF on a 1-2 count.
+#8 Shibata advanced from 1B to 3B.
+RBI: none.
+Pitcher: #1 Oda.
+Score: Away 0, Home 0.
+
+#02 — 0 outs
+#8 Shibata stole second.
+Catcher throw to 2B was late.
+Score: Away 0, Home 0.
+
+Another example:
+
+Bottom 3rd
+
+#18 — 1 out
+#10 Makiuchi grounded out 6-3 on a 2-1 count.
+Runner on 2B advanced to 3B.
+Score: Away 2, Home 1.
+Event Log Requirements
+
+Each event log entry should include available information such as:
+
+event sequence number
+inning and half
+outs before event
+batter
+pitcher
+event result
+count
+fielder assignment
+runner movement
+runs scored
+RBI
+score after event
+manual override marker
+notes
+
+Missing optional data should not crash the log formatter.
+
+Scroll Behavior
+
+The event log must be inside a ScrollContainer.
+
+When a new event is committed, the event log should scroll to the new event.
+
+When a mini-history event is selected from the right dock, the center event log should scroll to and center that event.
+
+The selected event should be highlighted.
+
+Center Workspace Alternate: Event Creation/Edit Mode
+
+When the user starts creating or editing an event, the center workspace should be replaced by the relevant event-entry form.
+
+The event log should not remain visible in full during entry.
+
+This avoids clutter.
+
+Event Creation Flow
+
+The flow should be:
+
+1. User clicks event button in left dock.
+2. Center workspace switches to Event Creation Mode.
+3. Correct event template opens.
+4. User enters event details.
+5. Bottom center Event Summary / Validation Panel updates live.
+6. User confirms, edits, or cancels.
+7. On confirm, event is committed.
+8. Center workspace returns to Event Log Mode.
+9. New event is highlighted in the event log.
+Required Event Creation Header
+
+At the top of Event Creation Mode, show a clear title:
+
+Creating Event: Single
+
+or:
+
+Editing Event #18: Groundout
+Required Event Creation Sections
+
+Depending on event type, show relevant sections such as:
+
+Batter / Pitcher
+Count / Pitch Data
+Runner Advancement
+Fielder Assignment
+Error Assignment
+Substitution Details
+Pitching Change Details
+Manual Overrides
+Notes
+
+These should be cleanly separated into cards, panels, or collapsible sections.
+
+Do not show irrelevant sections for a given event type.
+
+A home run does not need the same interface as a pitching change.
+
+A pitching change does not need pitch count input.
+
+3. Bottom Center Event Summary / Validation Panel
+Purpose
+
+The Event Summary / Validation Panel previews the event currently being entered and warns the user about invalid or suspicious data.
+
+It should be located under the center workspace.
+
+Required States
+
+The panel needs two states:
+
+Idle State
+
+When no event is being entered, show:
+
+No active event.
+Choose an event button to begin scoring.
+
+If an event is selected from history, the panel may show a compact summary of that selected event.
+
+Active Event State
+
+When creating or editing an event, show:
+
+Preview
+Validation messages
+Confirm / Edit / Cancel controls
+Example Active Panel
+Preview:
+Bottom 3rd, 1 out.
+#10 Makiuchi grounded out 6-3 on a 2-1 count.
+Runner on 2B advanced to 3B.
+
+Validation:
+✓ Batter selected
+✓ Pitcher selected
+✓ Runner advancement valid
+⚠ No putout fielder selected
+
+[Confirm] [Edit] [Cancel]
+Validation Rules
+
+Errors block confirmation.
+
+Warnings do not block confirmation but should remain visible.
+
+Example severities:
+
+error
+warning
+info
+success
+Required Controls
+
+The panel should include:
+
+Confirm
+Edit
+Cancel
+
+Behavior:
+
+Confirm = commit event
+Edit = keep event creation workspace active
+Cancel = discard active event and return center workspace to Event Log Mode
+
+If validation contains blocking errors, Confirm should be disabled.
+
+4. Right Info Dock
+
+The right dock contains:
+
+Skinny Event History Panel
+Compact Scoreboard Widget
+
+The right dock should be narrower than the left dock.
+
+At near-1920x1080 layout, target width should be approximately:
+
+300px to 340px
+
+This should scale down proportionally.
+
+Skinny Event History Panel
+Purpose
+
+The Skinny Event History Panel is a quick event navigator.
+
+It is not the full event log.
+
+It should be located in the top-right section of Game Entry Mode.
+
+Required Display
+
+Each row should show very basic event information.
+
+Example:
+
+#01 T1 1B Kambe
+#02 T1 BB Shibata
+#03 T1 K  Daiki
+#04 T1 GO Eto
+#05 B1 HR Ono
+
+Recommended fields:
+
+event_sequence
+half_inning_short
+event_code
+primary_player_name
+runs_on_play_optional
+manual_override_marker_optional
+Event Code Examples
+1B
+2B
+3B
+HR
+BB
+HBP
+K
+GO
+FO
+E
+FC
+SAC
+SB
+CS
+WP
+PB
+BK
+DP
+TP
+SUB
+PCH
+MAN
+Behavior
+
+When the user selects an event in the Skinny Event History Panel:
+
+The center workspace switches to Event Log Mode if it is not already there.
+The center event log scrolls to that event.
+The selected event is centered or made visible.
+The selected event is highlighted.
+The bottom-right Compact Scoreboard updates to show game state at that event.
+The bottom-center panel may show that selected event’s summary.
+Optional Future Features
+
+Do not prioritize before core behavior works, but design so these can be added later:
+
+search by player
+filter by inning
+filter by event type
+filter scoring plays only
+show manual override icon
+show edited event icon
+Compact Scoreboard Widget
+Purpose
+
+The Compact Scoreboard Widget shows the game state snapshot for the currently selected event or active event preview.
+
+It should be located in the bottom-right section of Game Entry Mode.
+
+Required Information
+
+The scoreboard must show:
+
+home score
+away score
+inning
+top/bottom half
+outs for current half-inning
+base states
+current pitcher
+strikeouts by current pitcher
+Example Display
+Away 3 | Home 2
+
+Bottom 5th
+Outs: 2
+
+Bases:
+1B: occupied
+2B: empty
+3B: occupied
+
+Pitcher:
+#1 Oda
+Ks: 6
+Base State Display
+
+Preferred display:
+
+small base diamond
+occupied bases visually highlighted
+
+Acceptable first version:
+
+1B: occupied
+2B: empty
+3B: occupied
+Strikeout Count Requirement
+
+The scoreboard should show strikeouts accumulated by the current active pitcher through the selected point in the game.
+
+This means the scoreboard state should be based on replayed game state up to the selected event, not merely the latest final game total.
+
+Behavior
+
+The scoreboard should update when:
+
+new event is selected in event history
+event log entry is selected
+new event is being previewed
+new event is confirmed
+old event is edited
+undo/redo occurs
+
+The scoreboard should reflect either:
+
+committed game state at selected event
+
+or:
+
+preview game state while creating/editing an event
+Resolution and Scaling Requirements
+Target Working Area
+
+The UI should be designed for a full-size 1920x1080 display, but the actual used area should be slightly smaller than full screen.
+
+Recommended target content area:
+
+1880 x 1020
+
+This allows comfortable margins and avoids the app feeling pinned to the screen edges.
+
+Minimum Window Size
+
+The minimum supported window size should be one quarter of a 1920x1080 screen by area.
+
+Set minimum window size to:
+
+960 x 540
+
+In Godot project settings or startup code, enforce:
+
+min_width = 960
+min_height = 540
+Nonstandard Aspect Ratios
+
+The layout must support nonstandard aspect ratios.
+
+Example use cases:
+
+half-screen wide
+half-screen tall
+narrow but tall window
+ultrawide window
+
+Do not assume a strict 16:9 layout.
+
+The UI must remain usable when the user resizes the application window.
+
+Responsive Layout Rules
+Large / Standard Layout
+
+For widths approximately:
+
+1400px and wider
+
+Use full three-column dock layout:
+
+left dock
+center workspace
+right dock
+
+Recommended proportions:
+
+left dock:    20% to 22%
+center:       56% to 60%
+right dock:   18% to 20%
+Medium Layout
+
+For widths approximately:
+
+1000px to 1399px
+
+Keep the same general layout, but:
+
+shrink left dock
+shrink right dock
+reduce panel padding
+reduce button height slightly
+allow event log to dominate available width
+Minimum / Narrow Layout
+
+For widths near:
+
+960px to 1100px
+
+The layout should remain usable.
+
+Acceptable strategies:
+
+keep event buttons visible
+allow roster panel to become shorter
+allow right dock to become tabbed
+stack event history and scoreboard tighter
+reduce font sizes slightly
+
+Do not let the center workspace disappear.
+
+The center workspace must remain the primary area.
+
+Tall / Half-Screen Layout
+
+If the app is used in a tall, narrow window:
+
+preserve left event tools if possible
+preserve center workspace
+allow right-side panels to collapse into tabs
+allow bottom panels to stack or shrink
+
+Do not require a wide horizontal layout to use the app.
+
+Godot 4.5 UI Implementation Requirements
+Use Control Containers
+
+Do not build this UI with absolute positioning.
+
+Use Godot Control layout containers so the UI can resize cleanly.
+
+Recommended nodes:
+
+MarginContainer
+PanelContainer
+VBoxContainer
+HBoxContainer
+HSplitContainer
+VSplitContainer
+GridContainer
+ScrollContainer
+TabContainer
+ItemList
+Tree
+Button
+Label
+RichTextLabel
+Recommended Scene Structure
+
+Create or refactor Game Entry Mode toward this structure:
+
+GameEntryMode.tscn
+└── RootMarginContainer
+    └── MainVBox
+        ├── MainContentRow
+        │   ├── LeftDock
+        │   │   ├── EventKeyPanel
+        │   │   ├── TeamQuickRosterPanel
+        │   │   └── AddPlayerButton
+        │   ├── CenterDock
+        │   │   ├── WorkspacePanel
+        │   │   │   ├── EventLogView
+        │   │   │   └── EventCreationWorkspace
+        │   │   └── EventSummaryPanel
+        │   └── RightDock
+        │       ├── SkinnyEventHistoryPanel
+        │       └── CompactScoreboardPanel
+
+The exact node names can vary, but the responsibilities should remain clear.
+
+Recommended Files / Scenes
+
+Create these scenes if they do not already exist:
+
+res://modes/game_entry/GameEntryMode.tscn
+res://modes/game_entry/GameEntryMode.gd
+
+res://modes/game_entry/ui/EventKeyPanel.tscn
+res://modes/game_entry/ui/EventKeyPanel.gd
+
+res://modes/game_entry/ui/TeamQuickRosterPanel.tscn
+res://modes/game_entry/ui/TeamQuickRosterPanel.gd
+
+res://modes/game_entry/ui/EventLogView.tscn
+res://modes/game_entry/ui/EventLogView.gd
+
+res://modes/game_entry/ui/EventCreationWorkspace.tscn
+res://modes/game_entry/ui/EventCreationWorkspace.gd
+
+res://modes/game_entry/ui/EventSummaryPanel.tscn
+res://modes/game_entry/ui/EventSummaryPanel.gd
+
+res://modes/game_entry/ui/SkinnyEventHistoryPanel.tscn
+res://modes/game_entry/ui/SkinnyEventHistoryPanel.gd
+
+res://modes/game_entry/ui/CompactScoreboardPanel.tscn
+res://modes/game_entry/ui/CompactScoreboardPanel.gd
+
+If similar scenes already exist, refactor them instead of duplicating functionality.
+
+Panel Responsibilities
+EventKeyPanel
+
+Responsible for:
+
+displaying event buttons
+displaying disabled future event buttons
+emitting event_type_selected(event_type)
+showing keyboard shortcut hints
+showing selected/active state
+
+Should not:
+
+create GameEvents directly
+calculate stats
+mutate game state directly
+TeamQuickRosterPanel
+
+Responsible for:
+
+showing Home/Away tabs
+displaying selected team roster
+emitting player_selected(player_id)
+emitting add_player_requested(team_id)
+
+Should not:
+
+directly modify unrelated game state
+perform substitution logic by itself
+EventLogView
+
+Responsible for:
+
+displaying full narrative event log
+grouping events by inning/half
+highlighting selected event
+scrolling to selected event
+emitting event_selected(event_id)
+
+Should use an event summary formatter where possible.
+
+Should not:
+
+calculate stats
+own the canonical event list
+mutate game events directly
+EventCreationWorkspace
+
+Responsible for:
+
+displaying dynamic event form
+loading selected event template
+collecting event payload
+supporting edit mode
+emitting payload_changed
+emitting cancel_requested
+
+Should not:
+
+commit event directly without GameEntryMode coordination
+calculate final stats
+EventSummaryPanel
+
+Responsible for:
+
+showing live event preview
+showing validation messages
+showing Confirm/Edit/Cancel buttons
+emitting confirm_requested
+emitting cancel_requested
+
+Should call or receive results from:
+
+EventValidator
+EventSummaryFormatter
+
+Should not:
+
+own the event log
+calculate final stats
+SkinnyEventHistoryPanel
+
+Responsible for:
+
+showing compact event rows
+emitting event_selected(event_id)
+highlighting selected event
+
+Should not:
+
+show full event details
+replace EventLogView
+calculate game state
+CompactScoreboardPanel
+
+Responsible for:
+
+displaying score
+displaying inning/half
+displaying outs
+displaying base states
+displaying current pitcher
+displaying current pitcher strikeouts
+
+Should receive state from replay/snapshot logic.
+
+Should not:
+
+calculate official stats by itself
+mutate event data
+UI State Machine
+
+Game Entry Mode should track its UI mode explicitly.
+
+Recommended modes:
+
+review
+creating_event
+editing_event
+Review Mode
+
+Visible:
+
+EventKeyPanel
+TeamQuickRosterPanel
+EventLogView
+SkinnyEventHistoryPanel
+CompactScoreboardPanel
+EventSummaryPanel idle state
+
+Hidden or inactive:
+
+EventCreationWorkspace
+Creating Event Mode
+
+Visible:
+
+EventCreationWorkspace
+EventSummaryPanel active state
+EventKeyPanel with selected button
+SkinnyEventHistoryPanel
+CompactScoreboardPanel preview state
+TeamQuickRosterPanel
+
+Hidden:
+
+EventLogView
+Editing Event Mode
+
+Visible:
+
+EventCreationWorkspace loaded with existing event
+EventSummaryPanel active state
+SkinnyEventHistoryPanel with selected event
+CompactScoreboardPanel selected/preview state
+
+Hidden:
+
+EventLogView, unless edit is cancelled or completed
+Required Signals
+
+Use signals to keep panels decoupled.
+
+Recommended signals:
+
+event_type_selected(event_type: String)
+event_payload_changed(payload: Dictionary)
+event_validation_changed(messages: Array)
+event_confirm_requested()
+event_cancel_requested()
+event_selected(event_id: String)
+event_edit_requested(event_id: String)
+player_selected(player_id: String)
+add_player_requested(team_id: String)
+roster_team_tab_changed(team_side: String)
+
+GameEntryMode should coordinate these signals.
+
+Individual panels should not reach into each other directly unless absolutely necessary.
+
+Modern Visual Style Requirements
+
+The redesigned UI should use a modern dark docked-panel style.
+
+General Style
+
+Use:
+
+dark neutral background
+slightly lighter dock panels
+clear panel title bars
+consistent padding
+subtle borders
+clear selected states
+clear disabled states
+
+Avoid:
+
+unlabeled raw controls
+random spacing
+full-width controls with no grouping
+giant empty gray regions
+debug placeholder text in final UI
+Panel Titles
+
+Each major panel should have a clear title:
+
+Event Keys
+Roster
+Game Log
+Event Summary
+Event History
+Scoreboard
+Text Hierarchy
+
+Use three basic text levels:
+
+panel title
+section label
+body/detail text
+Active Selection
+
+The following should have obvious selected states:
+
+selected event button
+selected Home/Away tab
+selected event in skinny history
+selected event in center log
+active validation error/warning
+Event Log Narrative Formatting
+
+The center event log should be readable and descriptive.
+
+Do not display raw dictionaries or debug strings.
+
+Required Narrative Content
+
+Each event card should try to show:
+
+sequence number
+inning/half
+outs before event
+primary player
+event result
+count if available
+runner movement
+score after event
+RBI if available
+fielders if available
+manual overrides if present
+notes if present
+Example Event Card
+#12 — Top 3rd, 1 out
+
+#10 Makiuchi singled to LF on a 1-2 count.
+#8 Shibata scored from 2B.
+#6 Shigemune Daiki advanced from 1B to 3B.
+
+RBI: #10 Makiuchi
+Pitcher: #1 Oda
+Score: Away 2, Home 1
+Manual Override Marker
+
+If an event has manual overrides, show a visible marker:
+
+Manual override applied
+
+or:
+
+⚠ Manual scoring override
+
+The exact icon is not important. The marker must be visible.
+
+Selection and Navigation Behavior
+Selecting From Skinny Event History
+
+When a user selects an event from the Skinny Event History Panel:
+
+center workspace switches to Event Log Mode
+EventLogView scrolls to selected event
+selected event is highlighted
+CompactScoreboardPanel updates to state at that event
+EventSummaryPanel shows selected event summary
+Selecting From Event Log
+
+When a user selects an event in the main EventLogView:
+
+SkinnyEventHistoryPanel selects matching event
+CompactScoreboardPanel updates to state at that event
+EventSummaryPanel shows selected event summary
+Editing an Event
+
+When the user chooses to edit an event:
+
+center workspace switches to Editing Event Mode
+EventCreationWorkspace loads existing event
+EventSummaryPanel shows live edit preview
+on confirm, event log is replayed
+center workspace returns to Event Log Mode
+edited event remains highlighted
+Scoreboard Snapshot Requirement
+
+The scoreboard must not only show the final or latest game state.
+
+It must support selected-event snapshots.
+
+This means the app needs a way to get game state at a selected event sequence.
+
+Recommended function shape:
+
+get_game_state_at_event(game_id: String, event_id: String) -> Dictionary
+
+or:
+
+replay_game_until_sequence(game_id: String, sequence: int) -> Dictionary
+
+The returned state should include:
+
+score
+inning
+half
+outs
+base_state
+current_pitcher_id
+current_pitcher_strikeouts
+
+The CompactScoreboardPanel displays this state.
+
+It should not compute this state independently.
+
+Responsive Implementation Notes
+Avoid Absolute Coordinates
+
+Do not hardcode every panel’s pixel position.
+
+Use containers and size flags.
+
+Acceptable fixed/minimum sizes:
+
+minimum window size
+minimum dock width
+minimum button height
+minimum panel height
+
+Avoid:
+
+fixed x/y coordinates
+manual layout math for every control
+hardcoded full-screen-only positions
+Use Size Flags
+
+Use Control size flags so panels expand and shrink correctly:
+
+SIZE_EXPAND_FILL
+SIZE_FILL
+custom_minimum_size
+Use Containers
+
+Recommended:
+
+HBoxContainer or HSplitContainer for main columns
+VBoxContainer for dock stacking
+GridContainer for event buttons
+ScrollContainer for event log and history
+PanelContainer for dock panels
+Scalable Event Buttons
+
+Event buttons should remain usable at minimum size.
+
+At small windows:
+
+reduce padding
+reduce font size slightly if needed
+preserve two-column layout if possible
+allow panel scrolling if necessary
+
+Do not let event buttons overlap.
+
+Suggested Implementation Phases
+Phase 1 — New Layout Shell
+
+Create the new docked Game Entry shell.
+
+Required result:
+
+left dock exists
+center dock exists
+right dock exists
+bottom summary area exists
+old cluttered layout is removed or hidden
+no game logic needs to be perfect yet
+Phase 2 — Event Key Panel
+
+Implement the two-column Event Key Widget.
+
+Required result:
+
+all event buttons visible
+implemented buttons enabled
+future buttons disabled
+clicking a button emits event_type_selected
+selected event visually highlights
+Phase 3 — Center Workspace
+
+Implement the mode-swapping center workspace.
+
+Required result:
+
+review mode shows EventLogView
+creating mode shows EventCreationWorkspace
+cancel returns to EventLogView
+confirm returns to EventLogView
+Phase 4 — Event Log View
+
+Implement scrollable narrative event log.
+
+Required result:
+
+events display as readable cards
+events grouped by inning/half
+selected event highlights
+scroll_to_event works
+Phase 5 — Right Dock
+
+Implement Skinny Event History and Compact Scoreboard.
+
+Required result:
+
+skinny history lists compact event rows
+clicking a row selects and scrolls main log
+scoreboard updates from selected event snapshot
+Phase 6 — Bottom Left Roster Widget
+
+Implement Home/Away roster tabs and Add Player placement.
+
+Required result:
+
+Home tab shows home roster
+Away tab shows away roster
+Add Player button sits below roster widget
+Add Player knows selected team side
+Phase 7 — Event Summary Panel
+
+Implement bottom-center preview and validation.
+
+Required result:
+
+idle state works
+active state works
+preview text displays
+validation messages display
+confirm disabled on errors
+Phase 8 — Responsive Testing
+
+Test at:
+
+1920 x 1080
+1880 x 1020
+1600 x 900
+1280 x 720
+960 x 540
+half-screen wide
+half-screen tall
+
+Required result:
+
+no overlapping panels
+center workspace remains usable
+event buttons remain clickable
+event history remains scrollable
+roster remains accessible
+scoreboard remains readable
+Codex Agent Instructions
+
+When implementing this UI redesign:
+
+Use Godot 4.5-compatible GDScript.
+Use Control nodes and layout containers.
+Do not use absolute positioning except where unavoidable for custom drawing.
+Preserve the event log as the source of truth.
+Do not put stat formulas in UI scripts.
+Do not make UI panels directly mutate unrelated systems.
+Use signals to decouple panels.
+Keep event creation separate from event confirmation.
+Keep the center workspace mode-based: Review, Creating Event, Editing Event.
+Keep all event buttons visible, even if future event buttons are disabled.
+Make the UI scalable down to 960x540.
+Support nonstandard aspect ratios.
+Add clear selected states and disabled states.
+Remove debug placeholder text from final UI.
+Do not hardcode the 108th Japanese tournament into the UI.
+Explain what files changed and how to test the new layout after each patch.
+First Codex Task Recommended for This UI Redesign
+
+Use this as the first implementation prompt:
+
+You are working on a Godot 4.5 baseball stat tracker.
+
+Read README_baseball_stat_tracker_codex.md and all Game Entry addendums before editing.
+
+Your task is to replace the current cluttered Game Entry Mode UI with the first version of a modern Photoshop-style docked layout.
+
+Do not rewrite stat calculation.
+Do not rewrite event replay.
+Do not change the data model unless absolutely required.
+Focus only on the Game Entry UI layout shell.
+
+Create or refactor the Game Entry scene so it has these major zones:
+
+1. LeftDock
+   - EventKeyPanel at the top
+   - TeamQuickRosterPanel below it
+   - AddPlayerButton directly below the roster panel
+
+2. CenterDock
+   - WorkspacePanel
+   - EventSummaryPanel below the workspace
+
+3. RightDock
+   - SkinnyEventHistoryPanel at the top
+   - CompactScoreboardPanel at the bottom
+
+Use Godot Control containers rather than absolute positioning.
+
+The target design should fit comfortably inside a 1920x1080 display with an approximate content area of 1880x1020.
+
+Set or support a minimum usable window size of 960x540.
+
+Support resizing and nonstandard aspect ratios.
+
+For this first patch, placeholder panels are acceptable if they are named correctly and laid out correctly. However, the layout must be clean and scalable.
+
+The EventKeyPanel should show event buttons in two columns:
+
+1B, 2B
+3B, HR
+BB, HBP
+K, GO
+FO, E
+FC, SAC
+SB, CS
+WP, PB
+BK, DP
+TP, SUB
+PCH, MAN
+
+Unimplemented buttons may be disabled.
+
+After editing, explain:
+1. What files changed.
+2. What node structure was created.
+3. Which panels are functional.
+4. Which panels are placeholders.
+5. How to test the layout at 1920x1080 and 960x540.
+Final UI Target
+
+The final redesigned Game Entry Mode should feel like this:
+
+Left side:
+Fast scoring tools and roster access.
+
+Center:
+Main game story and event creation workspace.
+
+Right side:
+Quick event navigation and current game state.
+
+Bottom center:
+Live event preview, validation, and confirmation.
+
+The user should be able to:
+
+click an event key
+enter event details in the center workspace
+preview and validate the event at the bottom
+confirm the event
+see the main log update
+jump to old events from the skinny history
+see the scoreboard update to the selected event
+switch Home/Away roster quickly
+add missing players without leaving Game Entry Mode
+
+This redesigned layout should replace the current Game Entry screen entirely.
