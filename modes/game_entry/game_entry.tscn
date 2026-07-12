@@ -159,39 +159,49 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Confirm Lineups / Pitchers"
 
-[node name="AddPlayerPanel" type="VBoxContainer" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold"]
-layout_mode = 2
-theme_override_constants/separation = 3
-
-[node name="AddPlayerTeam" type="OptionButton" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold/AddPlayerPanel"]
+[node name="AddPlayerButton" type="Button" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold"]
 unique_name_in_owner = true
 layout_mode = 2
-[node name="AddPlayerFirstName" type="LineEdit" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold/AddPlayerPanel"]
+text = "Add Player"
+
+[node name="AddPlayerPopup" type="PopupPanel" parent="."]
+unique_name_in_owner = true
+exclusive = false
+
+[node name="AddPlayerPanel" type="VBoxContainer" parent="AddPlayerPopup"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 248.0
+offset_bottom = 210.0
+theme_override_constants/separation = 3
+
+[node name="AddPlayerTeam" type="OptionButton" parent="AddPlayerPopup/AddPlayerPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+[node name="AddPlayerFirstName" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "First name"
-[node name="AddPlayerLastName" type="LineEdit" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold/AddPlayerPanel"]
+[node name="AddPlayerLastName" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "Last/display name"
-[node name="AddPlayerJersey" type="LineEdit" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold/AddPlayerPanel"]
+[node name="AddPlayerJersey" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "Jersey #"
-[node name="AddPlayerPositions" type="LineEdit" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold/AddPlayerPanel"]
+[node name="AddPlayerPositions" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "Positions"
-[node name="AddPlayerToLineup" type="CheckBox" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold/AddPlayerPanel"]
+[node name="AddPlayerToLineup" type="CheckBox" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 button_pressed = true
 text = "Add to lineup now"
-[node name="AddPlayerButton" type="Button" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold/AddPlayerPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Add Player"
-[node name="AddPlayerStatus" type="Label" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold/AddPlayerPanel"]
+[node name="AddPlayerStatus" type="Label" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 3
