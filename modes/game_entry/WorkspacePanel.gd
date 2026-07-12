@@ -5,6 +5,7 @@ const GameEntryStyle = preload("res://modes/game_entry/GameEntryStyle.gd")
 
 signal event_payload_changed(payload: Dictionary)
 signal event_edit_requested(event_id: String)
+signal event_selected(event_id: String)
 signal event_creation_cancel_requested()
 
 const MODE_REVIEW := "review"
@@ -13,9 +14,7 @@ const MODE_EDITING_EVENT := "editing_event"
 
 @onready var workspace_title_label: Label = %WorkspaceTitleLabel
 @onready var workspace_context_label: Label = %WorkspaceContextLabel
-@onready var event_log_view: Control = %EventLogView
-@onready var event_log_body_label: Label = %EventLogBodyLabel
-@onready var event_log_edit_button: Button = %EventLogEditButton
+@onready var event_log_view: EventLogView = %EventLogView
 @onready var event_creation_workspace: Control = %EventCreationWorkspace
 @onready var event_creation_body_label: Label = %EventCreationBodyLabel
 @onready var payload_preview_label: Label = %PayloadPreviewLabel
@@ -31,15 +30,16 @@ var _event_data: Dictionary = {}
 func _ready() -> void:
 	_apply_style()
 	cancel_event_button.pressed.connect(_on_cancel_event_pressed)
-	event_log_edit_button.pressed.connect(_on_event_log_edit_pressed)
+	event_log_view.event_selected.connect(_on_event_log_selected)
+	event_log_view.event_edit_requested.connect(_on_event_log_edit_requested)
 	event_notes_field.text_changed.connect(_on_payload_input_changed)
 	show_review_mode()
 
 func _apply_style() -> void:
 	GameEntryStyle.style_title_label(workspace_title_label)
-	for label in [workspace_context_label, event_log_body_label, event_creation_body_label, payload_preview_label]:
+	for label in [workspace_context_label, event_creation_body_label, payload_preview_label]:
 		GameEntryStyle.style_body_label(label)
-	for button in [event_log_edit_button, cancel_event_button]:
+	for button in [cancel_event_button]:
 		GameEntryStyle.style_button(button)
 
 func show_review_mode() -> void:
@@ -90,9 +90,23 @@ func _on_cancel_event_pressed() -> void:
 	event_creation_cancel_requested.emit()
 	show_review_mode()
 
-func _on_event_log_edit_pressed() -> void:
-	# Placeholder until EventLogView is backed by real event rows and selection.
-	event_edit_requested.emit("placeholder_event")
+func _on_event_log_selected(event_id: String) -> void:
+	event_selected.emit(event_id)
+
+func _on_event_log_edit_requested(event_id: String) -> void:
+	event_edit_requested.emit(event_id)
+
+func set_events(events: Array, context: Dictionary = {}) -> void:
+	event_log_view.set_events(events, context)
+
+func select_event(event_id: String) -> void:
+	event_log_view.select_event(event_id)
+
+func scroll_to_event(event_id: String) -> void:
+	event_log_view.scroll_to_event(event_id)
+
+func clear_events() -> void:
+	event_log_view.clear()
 
 func _on_payload_input_changed() -> void:
 	if _current_mode == MODE_CREATING_EVENT or _current_mode == MODE_EDITING_EVENT:

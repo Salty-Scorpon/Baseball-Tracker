@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
 [ext_resource type="Script" path="res://modes/game_entry/WorkspacePanel.gd" id="2_workspace_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventKeyPanel.tscn" id="2_event_key_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/TeamQuickRosterPanel.tscn" id="3_team_quick_roster_panel"]
+[ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventLogView.tscn" id="4_event_log_view"]
 
 [node name="GameEntryMode" type="Control"]
 custom_minimum_size = Vector2(960, 540)
@@ -110,7 +111,7 @@ autowrap_mode = 3
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="EventLogView" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack"]
+[node name="EventLogView" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack" instance=ExtResource("4_event_log_view")]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -118,19 +119,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
-
-[node name="EventLogBodyLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventLogView"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-text = "EventLogView placeholder: the ordered event log will be shown here. It remains the source of truth for review and future edit selection."
-autowrap_mode = 3
-
-[node name="EventLogEditButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventLogView"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Request Edit Placeholder"
 
 [node name="EventCreationWorkspace" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack"]
 unique_name_in_owner = true

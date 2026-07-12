@@ -46,6 +46,7 @@ func _ready() -> void:
 	_build_add_player_dialog()
 	event_key_panel.event_type_selected.connect(_on_event_key_pressed)
 	workspace_panel.event_payload_changed.connect(_on_workspace_event_payload_changed)
+	workspace_panel.event_selected.connect(_on_workspace_event_selected)
 	workspace_panel.event_edit_requested.connect(_on_workspace_event_edit_requested)
 	workspace_panel.event_creation_cancel_requested.connect(_on_workspace_event_creation_cancel_requested)
 	team_quick_roster_panel.roster_team_tab_changed.connect(_on_roster_team_tab_changed)
@@ -96,6 +97,7 @@ func _refresh_game_context() -> void:
 	_update_add_player_button_state()
 	var home_team: Team = repository.find_entity_by_id(current_game.home_team_id, "teams")
 	var away_team: Team = repository.find_entity_by_id(current_game.away_team_id, "teams")
+	workspace_panel.set_events(_events_for_current_game(), _event_log_context())
 	scoreboard_placeholder.text = "Game: %s vs %s\nStatus: %s" % [_team_name(away_team), _team_name(home_team), current_game.status]
 
 func _players_for_team(team_id: String) -> Array:
@@ -105,6 +107,23 @@ func _players_for_team(team_id: String) -> Array:
 			output.append(player)
 	return output
 
+func _events_for_current_game() -> Array:
+	var output: Array = []
+	if repository == null or current_game == null:
+		return output
+	for event in repository.game_events:
+		if event.game_id == current_game.id or current_game.event_ids.has(event.id):
+			output.append(event)
+	output.sort_custom(func(a: GameEvent, b: GameEvent) -> bool: return a.sequence < b.sequence)
+	return output
+
+func _event_log_context() -> Dictionary:
+	var players_by_id := {}
+	if repository != null:
+		for player in repository.players:
+			players_by_id[player.id] = player
+	return {"players_by_id": players_by_id}
+
 func _on_event_key_pressed(event_type: String) -> void:
 	workspace_panel.show_create_event_mode(event_type, _build_workspace_game_context())
 	shell_status_label.text = "Drafting event payload for: %s. Confirm/commit will be coordinated by GameEntryMode later." % event_type.replace("_", " ").capitalize()
@@ -112,6 +131,9 @@ func _on_event_key_pressed(event_type: String) -> void:
 
 func _on_workspace_event_payload_changed(payload: Dictionary) -> void:
 	shell_status_label.text = "Workspace payload changed for %s mode." % str(payload.get("mode", workspace_panel.get_current_mode())).replace("_", " ")
+
+func _on_workspace_event_selected(event_id: String) -> void:
+	shell_status_label.text = "Selected event %s in the narrative event log." % event_id
 
 func _on_workspace_event_edit_requested(event_id: String) -> void:
 	workspace_panel.show_edit_event_mode(event_id, {"event_type": "groundout", "notes": "Placeholder event data."}, _build_workspace_game_context())
