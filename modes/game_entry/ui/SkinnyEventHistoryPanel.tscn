@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://modes/game_entry/ui/SkinnyEventHistoryPanel.gd" id="1_skinny_history"]
+
+[node name="SkinnyEventHistoryPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 220)
+script = ExtResource("1_skinny_history")
+
+[node name="EventHistoryBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EventHistoryLabel" type="Label" parent="EventHistoryBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Event History"
+
+[node name="EventHistoryScroll" type="ScrollContainer" parent="EventHistoryBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="EventHistoryRows" type="VBoxContainer" parent="EventHistoryBox/EventHistoryScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="EmptyHistoryLabel" type="Label" parent="EventHistoryBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "No events recorded yet. Compact event rows will appear here."
+autowrap_mode = 3
