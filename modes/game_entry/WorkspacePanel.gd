@@ -91,8 +91,11 @@ func set_events(events: Array, context: Dictionary = {}) -> void:
 func select_event(event_id: String) -> void:
 	event_log_view.select_event(event_id)
 
-func scroll_to_event(event_id: String) -> void:
-	event_log_view.scroll_to_event(event_id)
+func select_event_silent(event_id: String) -> void:
+	event_log_view.select_event_silent(event_id)
+
+func scroll_to_event(event_id: String, emit_selection: bool = true) -> void:
+	event_log_view.scroll_to_event(event_id, emit_selection)
 
 func clear_events() -> void:
 	event_log_view.clear()
