@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" path="res://modes/game_entry/widgets/ManualOverridePanel.tscn" id="3_manual_override"]
 
 [node name="GameEntry" type="Control"]
+custom_minimum_size = Vector2(960, 540)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -18,21 +19,22 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = 12.0
-offset_right = -12.0
-offset_bottom = -12.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
 [node name="Header" type="HBoxContainer" parent="Root"]
 layout_mode = 2
+theme_override_constants/separation = 10
 
 [node name="TitleLabel" type="Label" parent="Root/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Game Entry Cockpit"
+text = "Game Entry"
 
 [node name="GamePicker" type="OptionButton" parent="Root/Header"]
 unique_name_in_owner = true
@@ -43,126 +45,338 @@ size_flags_horizontal = 3
 layout_mode = 2
 text = "Back"
 
-[node name="ScoreboardPanel" type="PanelContainer" parent="Root"]
-layout_mode = 2
-
-[node name="Scoreboard" type="GridContainer" parent="Root/ScoreboardPanel"]
-layout_mode = 2
-columns = 5
-
-[node name="ScoreLabel" type="Label" parent="Root/ScoreboardPanel/Scoreboard"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Score"
-autowrap_mode = 3
-[node name="InningLabel" type="Label" parent="Root/ScoreboardPanel/Scoreboard"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Inning"
-
-[node name="HalfLabel" type="Label" parent="Root/ScoreboardPanel/Scoreboard"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Half"
-
-[node name="OutsLabel" type="Label" parent="Root/ScoreboardPanel/Scoreboard"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Outs"
-
-[node name="CountLabel" type="Label" parent="Root/ScoreboardPanel/Scoreboard"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Count: —"
-
-[node name="Cockpit" type="VBoxContainer" parent="Root"]
+[node name="DockWorkspace" type="HBoxContainer" parent="Root"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
-[node name="MainColumns" type="HBoxContainer" parent="Root/Cockpit"]
+[node name="LeftDock" type="VBoxContainer" parent="Root/DockWorkspace"]
+custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
-size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="LeftPanel" type="VBoxContainer" parent="Root/Cockpit/MainColumns"]
-custom_minimum_size = Vector2(260, 0)
+[node name="EventKeyPanel" type="PanelContainer" parent="Root/DockWorkspace/LeftDock"]
+layout_mode = 2
+
+[node name="EventKeyBox" type="VBoxContainer" parent="Root/DockWorkspace/LeftDock/EventKeyPanel"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="TeamsLabel" type="Label" parent="Root/Cockpit/MainColumns/LeftPanel"]
+[node name="EventButtonsLabel" type="Label" parent="Root/DockWorkspace/LeftDock/EventKeyPanel/EventKeyBox"]
+layout_mode = 2
+text = "Event Key"
+
+[node name="ShortcutLegendLabel" type="Label" parent="Root/DockWorkspace/LeftDock/EventKeyPanel/EventKeyBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Shortcuts: S Single • Enter Confirm • Esc Cancel • Ctrl+Z Undo • Ctrl+Y Redo"
+autowrap_mode = 3
+
+[node name="EventButtonsGrid" type="GridContainer" parent="Root/DockWorkspace/LeftDock/EventKeyPanel/EventKeyBox"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 2
+
+[node name="TeamQuickRosterPanel" type="PanelContainer" parent="Root/DockWorkspace/LeftDock"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TeamQuickRosterBox" type="VBoxContainer" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TeamsLabel" type="Label" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
 unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 3
 
-[node name="OffenseLabel" type="Label" parent="Root/Cockpit/MainColumns/LeftPanel"]
+[node name="OffenseLabel" type="Label" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Offensive lineup"
 
-[node name="LineupScroll" type="ScrollContainer" parent="Root/Cockpit/MainColumns/LeftPanel"]
-custom_minimum_size = Vector2(0, 150)
+[node name="LineupScroll" type="ScrollContainer" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
+custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="LineupList" type="ItemList" parent="Root/Cockpit/MainColumns/LeftPanel/LineupScroll"]
+[node name="LineupList" type="ItemList" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox/LineupScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="CurrentBatterLabel" type="Label" parent="Root/Cockpit/MainColumns/LeftPanel"]
+[node name="CurrentBatterLabel" type="Label" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Current batter: —"
+autowrap_mode = 3
 
-[node name="OnDeckLabel" type="Label" parent="Root/Cockpit/MainColumns/LeftPanel"]
+[node name="OnDeckLabel" type="Label" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "On deck: —"
+autowrap_mode = 3
 
-[node name="SetupFold" type="VBoxContainer" parent="Root/Cockpit/MainColumns/LeftPanel"]
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="SetupLabel" type="Label" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold"]
+[node name="SetupLabel" type="Label" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
 layout_mode = 2
 text = "Setup / quick roster"
 
-[node name="AwayLineup" type="TextEdit" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold"]
+[node name="AwayLineup" type="TextEdit" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 placeholder_text = "Away lineup, one player per line"
 
-[node name="HomeLineup" type="TextEdit" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold"]
+[node name="HomeLineup" type="TextEdit" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 placeholder_text = "Home lineup, one player per line"
 
-[node name="PitcherGrid" type="GridContainer" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold"]
+[node name="PitcherGrid" type="GridContainer" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
 layout_mode = 2
 columns = 2
 
-[node name="AwayPitcher" type="OptionButton" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold/PitcherGrid"]
+[node name="AwayPitcher" type="OptionButton" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox/PitcherGrid"]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="HomePitcher" type="OptionButton" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold/PitcherGrid"]
+[node name="HomePitcher" type="OptionButton" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox/PitcherGrid"]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="ApplySetupButton" type="Button" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold"]
+[node name="ApplySetupButton" type="Button" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Confirm Lineups / Pitchers"
 
-[node name="AddPlayerButton" type="Button" parent="Root/Cockpit/MainColumns/LeftPanel/SetupFold"]
+[node name="AddPlayerButton" type="Button" parent="Root/DockWorkspace/LeftDock"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Add Player"
+
+[node name="CenterDock" type="VBoxContainer" parent="Root/DockWorkspace"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="WorkspacePanel" type="PanelContainer" parent="Root/DockWorkspace/CenterDock"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="WorkspaceBox" type="VBoxContainer" parent="Root/DockWorkspace/CenterDock/WorkspacePanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BasesLabel" type="Label" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Bases"
+
+[node name="BaseDiamond" type="Label" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "      2B\n\n3B          1B\n\n      HP"
+
+[node name="EventEntryPanel" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox" instance=ExtResource("2_event_entry")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LegacyEventGrid" type="GridContainer" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox"]
+layout_mode = 2
+columns = 3
+
+[node name="EventType" type="OptionButton" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+
+[node name="RunsSpin" type="SpinBox" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 4.0
+prefix = "Runs "
+
+[node name="ManualOutsSpin" type="SpinBox" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 3.0
+prefix = "Outs "
+
+[node name="RbiSpin" type="SpinBox" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 4.0
+prefix = "RBI "
+
+[node name="Batter" type="OptionButton" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Pitcher" type="OptionButton" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Notes" type="LineEdit" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Scorer notes / manual explanation"
+
+[node name="ManualOverridePanel" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox" instance=ExtResource("3_manual_override")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="EventSummaryPanel" type="PanelContainer" parent="Root/DockWorkspace/CenterDock"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 110)
+
+[node name="SummaryBox" type="VBoxContainer" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SummaryPreviewLabel" type="Label" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel/SummaryBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Choose an event button to preview the entry."
+autowrap_mode = 3
+
+[node name="PreviewButtons" type="HBoxContainer" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel/SummaryBox"]
+layout_mode = 2
+
+[node name="ConfirmEventButton" type="Button" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel/SummaryBox/PreviewButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Confirm"
+
+[node name="EditEventButton" type="Button" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel/SummaryBox/PreviewButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Edit"
+
+[node name="CancelEventButton" type="Button" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel/SummaryBox/PreviewButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Cancel"
+
+[node name="RightDock" type="VBoxContainer" parent="Root/DockWorkspace"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SkinnyEventHistoryPanel" type="PanelContainer" parent="Root/DockWorkspace/RightDock"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HistoryBox" type="VBoxContainer" parent="Root/DockWorkspace/RightDock/SkinnyEventHistoryPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="HistoryLabel" type="Label" parent="Root/DockWorkspace/RightDock/SkinnyEventHistoryPanel/HistoryBox"]
+layout_mode = 2
+text = "Event history"
+
+[node name="History" type="ItemList" parent="Root/DockWorkspace/RightDock/SkinnyEventHistoryPanel/HistoryBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CompactScoreboardPanel" type="PanelContainer" parent="Root/DockWorkspace/RightDock"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 260)
+
+[node name="ScoreboardBox" type="VBoxContainer" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ScoreboardTitle" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+layout_mode = 2
+text = "Scoreboard"
+
+[node name="ScoreLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Score"
+autowrap_mode = 3
+
+[node name="InningLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Inning"
+
+[node name="HalfLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Half"
+
+[node name="OutsLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Outs"
+
+[node name="CountLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Count: —"
+
+[node name="DefenseLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Defensive team"
+autowrap_mode = 3
+
+[node name="CurrentPitcherLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Current pitcher: —"
+autowrap_mode = 3
+
+[node name="AlignmentLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Defensive alignment"
+
+[node name="DefenseList" type="ItemList" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+
+[node name="ActionButtons" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AddEventButton" type="Button" parent="Root/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+text = "Add Event"
+
+[node name="UndoButton" type="Button" parent="Root/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Undo Last Event"
+
+[node name="RedoButton" type="Button" parent="Root/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Redo Event"
+
+[node name="FinalizeButton" type="Button" parent="Root/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Mark Final"
+
+[node name="StatusLabel" type="Label" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
 
 [node name="AddPlayerPopup" type="PopupPanel" parent="."]
 unique_name_in_owner = true
@@ -180,206 +394,34 @@ theme_override_constants/separation = 3
 [node name="AddPlayerTeam" type="OptionButton" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
+
 [node name="AddPlayerFirstName" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "First name"
+
 [node name="AddPlayerLastName" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "Last/display name"
+
 [node name="AddPlayerJersey" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "Jersey #"
+
 [node name="AddPlayerPositions" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "Positions"
+
 [node name="AddPlayerToLineup" type="CheckBox" parent="AddPlayerPopup/AddPlayerPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 button_pressed = true
 text = "Add to lineup now"
+
 [node name="AddPlayerStatus" type="Label" parent="AddPlayerPopup/AddPlayerPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-autowrap_mode = 3
-
-[node name="CenterPanel" type="VBoxContainer" parent="Root/Cockpit/MainColumns"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 6
-
-[node name="BasesLabel" type="Label" parent="Root/Cockpit/MainColumns/CenterPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Bases"
-
-[node name="BaseDiamond" type="Label" parent="Root/Cockpit/MainColumns/CenterPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "      2B\n\n3B          1B\n\n      HP"
-
-[node name="EventEntryPanel" parent="Root/Cockpit/MainColumns/CenterPanel" instance=ExtResource("2_event_entry")]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="LegacyEventGrid" type="GridContainer" parent="Root/Cockpit/MainColumns/CenterPanel"]
-layout_mode = 2
-columns = 3
-
-[node name="EventType" type="OptionButton" parent="Root/Cockpit/MainColumns/CenterPanel/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-visible = false
-[node name="RunsSpin" type="SpinBox" parent="Root/Cockpit/MainColumns/CenterPanel/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-max_value = 4.0
-prefix = "Runs "
-[node name="ManualOutsSpin" type="SpinBox" parent="Root/Cockpit/MainColumns/CenterPanel/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-max_value = 3.0
-prefix = "Outs "
-[node name="RbiSpin" type="SpinBox" parent="Root/Cockpit/MainColumns/CenterPanel/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-max_value = 4.0
-prefix = "RBI "
-[node name="Batter" type="OptionButton" parent="Root/Cockpit/MainColumns/CenterPanel/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-[node name="Pitcher" type="OptionButton" parent="Root/Cockpit/MainColumns/CenterPanel/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Notes" type="LineEdit" parent="Root/Cockpit/MainColumns/CenterPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-placeholder_text = "Scorer notes / manual explanation"
-
-[node name="ManualOverridePanel" parent="Root/Cockpit/MainColumns/CenterPanel" instance=ExtResource("3_manual_override")]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="SummaryPanel" type="PanelContainer" parent="Root/Cockpit/MainColumns/CenterPanel"]
-layout_mode = 2
-
-[node name="SummaryBox" type="VBoxContainer" parent="Root/Cockpit/MainColumns/CenterPanel/SummaryPanel"]
-layout_mode = 2
-
-[node name="SummaryPreviewLabel" type="Label" parent="Root/Cockpit/MainColumns/CenterPanel/SummaryPanel/SummaryBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Choose an event button to preview the entry."
-autowrap_mode = 3
-
-[node name="PreviewButtons" type="HBoxContainer" parent="Root/Cockpit/MainColumns/CenterPanel/SummaryPanel/SummaryBox"]
-layout_mode = 2
-
-[node name="ConfirmEventButton" type="Button" parent="Root/Cockpit/MainColumns/CenterPanel/SummaryPanel/SummaryBox/PreviewButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-disabled = true
-text = "Confirm"
-[node name="EditEventButton" type="Button" parent="Root/Cockpit/MainColumns/CenterPanel/SummaryPanel/SummaryBox/PreviewButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-disabled = true
-text = "Edit"
-[node name="CancelEventButton" type="Button" parent="Root/Cockpit/MainColumns/CenterPanel/SummaryPanel/SummaryBox/PreviewButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-disabled = true
-text = "Cancel"
-
-[node name="RightPanel" type="VBoxContainer" parent="Root/Cockpit/MainColumns"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="DefenseLabel" type="Label" parent="Root/Cockpit/MainColumns/RightPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Defensive team"
-autowrap_mode = 3
-[node name="CurrentPitcherLabel" type="Label" parent="Root/Cockpit/MainColumns/RightPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Current pitcher: —"
-[node name="AlignmentLabel" type="Label" parent="Root/Cockpit/MainColumns/RightPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Defensive alignment: roster list"
-[node name="DefenseList" type="ItemList" parent="Root/Cockpit/MainColumns/RightPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="BottomPanel" type="HBoxContainer" parent="Root/Cockpit"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 150)
-theme_override_constants/separation = 8
-
-[node name="EventButtonPanel" type="VBoxContainer" parent="Root/Cockpit/BottomPanel"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="EventButtonsLabel" type="Label" parent="Root/Cockpit/BottomPanel/EventButtonPanel"]
-layout_mode = 2
-text = "Event buttons"
-
-[node name="ShortcutLegendLabel" type="Label" parent="Root/Cockpit/BottomPanel/EventButtonPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Shortcuts: S Single • Enter Confirm • Esc Cancel • Ctrl+Z Undo • Ctrl+Y Redo"
-autowrap_mode = 3
-
-[node name="EventButtonsGrid" type="GridContainer" parent="Root/Cockpit/BottomPanel/EventButtonPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-columns = 8
-
-[node name="ActionButtons" type="HBoxContainer" parent="Root/Cockpit/BottomPanel/EventButtonPanel"]
-layout_mode = 2
-
-[node name="AddEventButton" type="Button" parent="Root/Cockpit/BottomPanel/EventButtonPanel/ActionButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-visible = false
-text = "Add Event"
-[node name="UndoButton" type="Button" parent="Root/Cockpit/BottomPanel/EventButtonPanel/ActionButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Undo Last Event"
-[node name="RedoButton" type="Button" parent="Root/Cockpit/BottomPanel/EventButtonPanel/ActionButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-disabled = true
-text = "Redo Event"
-[node name="FinalizeButton" type="Button" parent="Root/Cockpit/BottomPanel/EventButtonPanel/ActionButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Mark Final"
-
-[node name="HistoryPanel" type="VBoxContainer" parent="Root/Cockpit/BottomPanel"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="HistoryLabel" type="Label" parent="Root/Cockpit/BottomPanel/HistoryPanel"]
-layout_mode = 2
-text = "Event history"
-
-[node name="History" type="ItemList" parent="Root/Cockpit/BottomPanel/HistoryPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="StatusLabel" type="Label" parent="Root"]
 unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 3

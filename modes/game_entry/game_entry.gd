@@ -23,25 +23,16 @@ const EVENT_BUTTONS = [
 	{"label": "SAC", "event_type": "sacrifice", "legacy_type": "Sacrifice bunt", "wired": false},
 	{"label": "SB", "event_type": "stolen_base", "legacy_type": "Stolen base", "wired": true, "shortcut": "B"},
 	{"label": "CS", "event_type": "caught_stealing", "legacy_type": "Caught stealing", "wired": false},
+	{"label": "WP", "event_type": "wild_pitch", "legacy_type": "Wild pitch", "wired": false},
+	{"label": "PB", "event_type": "passed_ball", "legacy_type": "Passed ball", "wired": false},
+	{"label": "BK", "event_type": "balk", "legacy_type": "Balk", "wired": false},
 	{"label": "DP", "event_type": "double_play", "legacy_type": "Double play", "wired": true},
 	{"label": "TP", "event_type": "triple_play", "legacy_type": "Triple play", "wired": true},
-	{"label": "D3K", "event_type": "dropped_third_strike", "legacy_type": "Dropped third strike", "wired": true},
-	{"label": "INT", "event_type": "interference", "legacy_type": "Interference", "wired": true},
-	{"label": "PO", "event_type": "pickoff", "legacy_type": "Pickoff", "wired": true},
-	{"label": "POE", "event_type": "pickoff_error", "legacy_type": "Pickoff error", "wired": true},
-	{"label": "Pitching Change", "event_type": "pitching_change", "legacy_type": "Pitching change", "wired": true, "shortcut": "P"},
-	{"label": "PH", "event_type": "pinch_hitter", "legacy_type": "Pinch hitter", "wired": true},
-	{"label": "PR", "event_type": "pinch_runner", "legacy_type": "Pinch runner", "wired": true},
-	{"label": "Def Sub", "event_type": "defensive_substitution", "legacy_type": "Defensive substitution", "wired": true, "shortcut": "U"},
-	{"label": "Def Group", "event_type": "batch_defensive_change", "legacy_type": "Batch defensive change", "wired": true},
-	{"label": "Pos Chg", "event_type": "position_change", "legacy_type": "Position change", "wired": true},
-	{"label": "BO Rep", "event_type": "batting_order_replacement", "legacy_type": "Batting order replacement", "wired": true},
-	{"label": "Manual", "event_type": "manual_correction", "legacy_type": "Manual correction", "wired": true},
-	{"label": "ER Override", "event_type": "earned_run_override", "legacy_type": "Earned run override", "wired": true},
-	{"label": "W/L/S", "event_type": "win_loss_save_assignment", "legacy_type": "Win/loss/save assignment", "wired": true},
-	{"label": "Admin", "event_type": "game_administration_events", "legacy_type": "Game administration events", "wired": true},
+	{"label": "SUB", "event_type": "defensive_substitution", "legacy_type": "Defensive substitution", "wired": true, "shortcut": "U"},
+	{"label": "PCH", "event_type": "pitching_change", "legacy_type": "Pitching change", "wired": true, "shortcut": "P"},
+	{"label": "MAN", "event_type": "manual_correction", "legacy_type": "Manual correction", "wired": true},
 ]
-const EVENT_TYPES = ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Double play", "Triple play", "Dropped third strike", "Interference", "Pickoff", "Pickoff error", "Pitching change", "Pinch hitter", "Pinch runner", "Defensive substitution", "Position change", "Batting order replacement", "Batch defensive change", "Manual correction", "Earned run override", "Win/loss/save assignment", "Game administration events"]
+const EVENT_TYPES = ["Single", "Double", "Triple", "Home run", "Walk", "Hit by pitch", "Strikeout", "Groundout", "Flyout", "Reached on error", "Fielder's choice", "Sacrifice bunt", "Sacrifice fly", "Stolen base", "Caught stealing", "Wild pitch", "Passed ball", "Balk", "Double play", "Triple play", "Dropped third strike", "Interference", "Pickoff", "Pickoff error", "Pitching change", "Pinch hitter", "Pinch runner", "Defensive substitution", "Position change", "Batting order replacement", "Batch defensive change", "Manual correction", "Earned run override", "Win/loss/save assignment", "Game administration events"]
 const OUT_EVENTS = {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt": 1, "Sacrifice fly": 1, "Caught stealing": 1, "Double play": 2, "Triple play": 3}
 
 @onready var game_picker: OptionButton = %GamePicker
