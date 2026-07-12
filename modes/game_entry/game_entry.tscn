@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
 [ext_resource type="Script" path="res://modes/game_entry/WorkspacePanel.gd" id="2_workspace_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventKeyPanel.tscn" id="2_event_key_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/TeamQuickRosterPanel.tscn" id="3_team_quick_roster_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventLogView.tscn" id="4_event_log_view"]
+[ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventCreationWorkspace.tscn" id="5_event_creation_workspace"]
 
 [node name="GameEntryMode" type="Control"]
 custom_minimum_size = Vector2(960, 540)
@@ -120,7 +121,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="EventCreationWorkspace" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack"]
+[node name="EventCreationWorkspace" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack" instance=ExtResource("5_event_creation_workspace")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -129,31 +130,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
-
-[node name="EventCreationBodyLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventCreationWorkspace"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "EventCreationWorkspace placeholder"
-autowrap_mode = 3
-
-[node name="EventNotesField" type="TextEdit" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventCreationWorkspace"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 90)
-layout_mode = 2
-placeholder_text = "Notes for payload draft (not committed here)"
-
-[node name="PayloadPreviewLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventCreationWorkspace"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-text = ""
-autowrap_mode = 3
-
-[node name="CancelEventButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventCreationWorkspace"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Cancel Event Draft"
 
 [node name="EventSummaryPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox"]
 unique_name_in_owner = true

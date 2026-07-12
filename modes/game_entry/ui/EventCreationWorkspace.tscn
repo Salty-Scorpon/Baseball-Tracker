@@ -1,0 +1,99 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://modes/game_entry/ui/EventCreationWorkspace.gd" id="1_workspace"]
+
+[node name="EventCreationWorkspace" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 320)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_workspace")
+
+[node name="WorkspaceMargin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="WorkspaceScroll" type="ScrollContainer" parent="WorkspaceMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="WorkspaceBox" type="VBoxContainer" parent="WorkspaceMargin/WorkspaceScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="HeaderLabel" type="Label" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Event Creation Workspace"
+
+[node name="ModeLabel" type="Label" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Idle"
+
+[node name="SelectedEventLabel" type="Label" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Selected event type: none"
+autowrap_mode = 3
+
+[node name="ContextLabel" type="Label" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Choose an event key to start a draft."
+autowrap_mode = 3
+
+[node name="BatterPitcherSection" type="VBoxContainer" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="BatterPitcherTitle" type="Label" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox/BatterPitcherSection"]
+layout_mode = 2
+text = "Batter / Pitcher"
+
+[node name="BatterValueLabel" type="Label" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox/BatterPitcherSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Current batter: —"
+
+[node name="PitcherValueLabel" type="Label" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox/BatterPitcherSection"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Current pitcher: —"
+
+[node name="FormSectionsBox" type="VBoxContainer" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="NotesTitle" type="Label" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox"]
+layout_mode = 2
+text = "Notes"
+
+[node name="NotesEdit" type="TextEdit" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+placeholder_text = "Scorer notes for this event draft."
+
+[node name="ValidationLabel" type="Label" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+autowrap_mode = 3
+
+[node name="CancelButton" type="Button" parent="WorkspaceMargin/WorkspaceScroll/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel Event Draft"
