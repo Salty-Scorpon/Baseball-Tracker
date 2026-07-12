@@ -18,13 +18,12 @@ const EventSummaryFormatterScript = preload("res://app/EventSummaryFormatter.gd"
 @onready var add_player_button: Button = %AddPlayerButton
 @onready var workspace_panel: WorkspacePanel = %WorkspacePanel
 @onready var event_summary_panel: EventSummaryPanel = %EventSummaryPanel
-@onready var skinny_event_history_panel: PanelContainer = %SkinnyEventHistoryPanel
+@onready var skinny_event_history_panel: SkinnyEventHistoryPanel = %SkinnyEventHistoryPanel
 @onready var compact_scoreboard_panel: PanelContainer = %CompactScoreboardPanel
 @onready var workspace_label: Label = %WorkspaceTitleLabel
 @onready var event_history_label: Label = %EventHistoryLabel
 @onready var scoreboard_label: Label = %ScoreboardLabel
 @onready var workspace_placeholder: Label = %WorkspaceContextLabel
-@onready var event_history_placeholder: Label = %EventHistoryPlaceholder
 @onready var scoreboard_placeholder: Label = %ScoreboardPlaceholder
 
 var repository: DataRepository
@@ -52,6 +51,7 @@ func _ready() -> void:
 	event_summary_panel.confirm_requested.connect(_on_event_summary_confirm_requested)
 	event_summary_panel.cancel_requested.connect(_on_event_summary_cancel_requested)
 	event_summary_panel.edit_requested.connect(_on_event_summary_edit_requested)
+	skinny_event_history_panel.event_selected.connect(_on_skinny_event_history_selected)
 	team_quick_roster_panel.roster_team_tab_changed.connect(_on_roster_team_tab_changed)
 	team_quick_roster_panel.player_selected.connect(_on_roster_player_selected)
 	team_quick_roster_panel.add_player_requested.connect(_on_roster_add_player_requested)
@@ -66,7 +66,7 @@ func _apply_style() -> void:
 		[left_dock, center_dock, right_dock],
 		[event_key_panel, team_quick_roster_panel, workspace_panel, skinny_event_history_panel, compact_scoreboard_panel],
 		[workspace_label, event_history_label, scoreboard_label],
-		[workspace_placeholder, event_history_placeholder, scoreboard_placeholder],
+		[workspace_placeholder, scoreboard_placeholder],
 		[add_player_button]
 	)
 
@@ -92,6 +92,7 @@ func _refresh_game_context() -> void:
 		team_quick_roster_panel.set_home_roster([])
 		team_quick_roster_panel.set_away_roster([])
 		_update_add_player_button_state()
+		skinny_event_history_panel.clear()
 		event_summary_panel.set_idle()
 		return
 	team_quick_roster_panel.set_team_ids(current_game.home_team_id, current_game.away_team_id)
@@ -100,7 +101,10 @@ func _refresh_game_context() -> void:
 	_update_add_player_button_state()
 	var home_team: Team = repository.find_entity_by_id(current_game.home_team_id, "teams")
 	var away_team: Team = repository.find_entity_by_id(current_game.away_team_id, "teams")
-	workspace_panel.set_events(_events_for_current_game(), _event_log_context())
+	var events := _events_for_current_game()
+	var event_context := _event_log_context()
+	workspace_panel.set_events(events, event_context)
+	skinny_event_history_panel.set_events(events, event_context)
 	scoreboard_placeholder.text = "Game: %s vs %s\nStatus: %s" % [_team_name(away_team), _team_name(home_team), current_game.status]
 	event_summary_panel.set_idle()
 
@@ -138,8 +142,15 @@ func _on_event_key_pressed(event_type: String) -> void:
 func _on_workspace_event_payload_changed(payload: Dictionary) -> void:
 	event_summary_panel.show_payload_preview(payload)
 
+func _on_skinny_event_history_selected(event_id: String) -> void:
+	_selected_event_id = event_id
+	workspace_panel.show_review_mode()
+	workspace_panel.scroll_to_event(event_id)
+	event_summary_panel.set_selected_event_summary(_summary_for_event(event_id))
+
 func _on_workspace_event_selected(event_id: String) -> void:
 	_selected_event_id = event_id
+	skinny_event_history_panel.select_event(event_id)
 	event_summary_panel.set_selected_event_summary(_summary_for_event(event_id))
 
 func _on_workspace_event_edit_requested(event_id: String) -> void:

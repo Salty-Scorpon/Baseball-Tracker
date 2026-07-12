@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
 [ext_resource type="Script" path="res://modes/game_entry/WorkspacePanel.gd" id="2_workspace_panel"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventLogView.tscn" id="4_event_log_view"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventCreationWorkspace.tscn" id="5_event_creation_workspace"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventSummaryPanel.tscn" id="6_event_summary_panel"]
+[ext_resource type="PackedScene" path="res://modes/game_entry/ui/SkinnyEventHistoryPanel.tscn" id="7_skinny_history_panel"]
 
 [node name="GameEntryMode" type="Control"]
 custom_minimum_size = Vector2(960, 540)
@@ -147,26 +148,10 @@ size_flags_vertical = 3
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="SkinnyEventHistoryPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox"]
+[node name="SkinnyEventHistoryPanel" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox" instance=ExtResource("7_skinny_history_panel")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-
-[node name="EventHistoryBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/SkinnyEventHistoryPanel"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="EventHistoryLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/SkinnyEventHistoryPanel/EventHistoryBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Event History"
-
-[node name="EventHistoryPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/SkinnyEventHistoryPanel/EventHistoryBox"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-text = "Skinny event navigator placeholder"
-autowrap_mode = 3
 
 [node name="CompactScoreboardPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox"]
 unique_name_in_owner = true
