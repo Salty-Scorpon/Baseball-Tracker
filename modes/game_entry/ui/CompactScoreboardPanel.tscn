@@ -1,0 +1,118 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://modes/game_entry/ui/CompactScoreboardPanel.gd" id="1_compact_scoreboard"]
+
+[node name="CompactScoreboardPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 220)
+script = ExtResource("1_compact_scoreboard")
+
+[node name="ScoreboardBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ScoreboardTitleLabel" type="Label" parent="ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Scoreboard"
+
+[node name="ScoreRow" type="HBoxContainer" parent="ScoreboardBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="AwayScoreLabel" type="Label" parent="ScoreboardBox/ScoreRow"]
+layout_mode = 2
+text = "Away"
+
+[node name="AwayScoreValue" type="Label" parent="ScoreboardBox/ScoreRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
+
+[node name="HomeScoreLabel" type="Label" parent="ScoreboardBox/ScoreRow"]
+layout_mode = 2
+text = "Home"
+
+[node name="HomeScoreValue" type="Label" parent="ScoreboardBox/ScoreRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
+
+[node name="InningGrid" type="GridContainer" parent="ScoreboardBox"]
+layout_mode = 2
+columns = 2
+
+[node name="InningLabel" type="Label" parent="ScoreboardBox/InningGrid"]
+layout_mode = 2
+text = "Inning"
+
+[node name="InningValue" type="Label" parent="ScoreboardBox/InningGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "1"
+
+[node name="HalfLabel" type="Label" parent="ScoreboardBox/InningGrid"]
+layout_mode = 2
+text = "Half"
+
+[node name="HalfValue" type="Label" parent="ScoreboardBox/InningGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Top"
+
+[node name="OutsLabel" type="Label" parent="ScoreboardBox/InningGrid"]
+layout_mode = 2
+text = "Outs"
+
+[node name="OutsValue" type="Label" parent="ScoreboardBox/InningGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0 outs"
+
+[node name="BasesLabel" type="Label" parent="ScoreboardBox"]
+layout_mode = 2
+text = "Bases"
+
+[node name="BasesBox" type="VBoxContainer" parent="ScoreboardBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="FirstBaseLabel" type="Label" parent="ScoreboardBox/BasesBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "1B: empty"
+
+[node name="SecondBaseLabel" type="Label" parent="ScoreboardBox/BasesBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "2B: empty"
+
+[node name="ThirdBaseLabel" type="Label" parent="ScoreboardBox/BasesBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "3B: empty"
+
+[node name="PitcherLabel" type="Label" parent="ScoreboardBox"]
+layout_mode = 2
+text = "Current Pitcher"
+
+[node name="PitcherNameValue" type="Label" parent="ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "No pitcher selected"
+autowrap_mode = 3
+[node name="PitcherIdValue" type="Label" parent="ScoreboardBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ID: —"
+
+[node name="PitcherStrikeoutsRow" type="HBoxContainer" parent="ScoreboardBox"]
+layout_mode = 2
+
+[node name="PitcherStrikeoutsLabel" type="Label" parent="ScoreboardBox/PitcherStrikeoutsRow"]
+layout_mode = 2
+text = "Strikeouts"
+
+[node name="PitcherStrikeoutsValue" type="Label" parent="ScoreboardBox/PitcherStrikeoutsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
