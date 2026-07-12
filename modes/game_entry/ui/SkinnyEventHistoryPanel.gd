@@ -25,6 +25,12 @@ func set_events(events: Array, context: Dictionary = {}) -> void:
 	if not _selected_event_id.is_empty():
 		select_event(_selected_event_id)
 
+func select_event_silent(event_id: String) -> void:
+	if event_id.is_empty() or not _buttons_by_event_id.has(event_id):
+		return
+	_selected_event_id = event_id
+	_update_selection()
+
 func select_event(event_id: String) -> void:
 	if event_id.is_empty() or not _buttons_by_event_id.has(event_id):
 		return
