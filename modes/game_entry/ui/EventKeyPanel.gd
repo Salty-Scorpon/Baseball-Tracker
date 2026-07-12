@@ -31,6 +31,7 @@ const EVENT_KEYS: Array[Dictionary] = [
 ]
 
 @onready var title_label: Label = %EventKeysLabel
+@onready var event_buttons_scroll: ScrollContainer = %EventButtonsScroll
 @onready var event_buttons_grid: GridContainer = %EventButtonsGrid
 
 var _event_buttons_by_type: Dictionary = {}
@@ -39,6 +40,13 @@ var _selected_event_type := ""
 func _ready() -> void:
 	_build_event_key_buttons()
 	_apply_style()
+
+func apply_responsive_density(compact: bool, ultra_compact: bool) -> void:
+	event_buttons_scroll.custom_minimum_size.y = 176.0 if ultra_compact else 204.0 if compact else 260.0
+	event_buttons_grid.add_theme_constant_override(&"h_separation", 4 if ultra_compact else 6)
+	event_buttons_grid.add_theme_constant_override(&"v_separation", 4 if ultra_compact else 6)
+	for button in _event_buttons_by_type.values():
+		button.custom_minimum_size = Vector2(56, 28) if ultra_compact else Vector2(64, 30) if compact else Vector2(72, 34)
 
 func get_selected_event_type() -> String:
 	return _selected_event_type
