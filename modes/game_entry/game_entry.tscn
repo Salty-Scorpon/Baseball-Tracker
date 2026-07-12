@@ -38,10 +38,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
 
 [node name="MainVBox" type="VBoxContainer" parent="RootMarginContainer"]
 layout_mode = 2
@@ -54,7 +54,7 @@ theme_override_constants/separation = 12
 
 [node name="LeftDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(260, 0)
+custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.22
@@ -80,7 +80,7 @@ text = "Add Player"
 
 [node name="CenterDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(420, 0)
+custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.58
@@ -139,7 +139,7 @@ unique_name_in_owner = true
 layout_mode = 2
 [node name="RightDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(240, 0)
+custom_minimum_size = Vector2(190, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.2

@@ -13,6 +13,8 @@ const GameStateSnapshotScript = preload("res://data/game_state_snapshot.gd")
 const GameEventScript = preload("res://data/models/game_event.gd")
 
 @onready var background: ColorRect = %Background
+@onready var root_margin_container: MarginContainer = %RootMarginContainer
+@onready var main_content_row: HBoxContainer = $RootMarginContainer/MainVBox/MainContentRow
 @onready var left_dock: PanelContainer = %LeftDock
 @onready var center_dock: PanelContainer = %CenterDock
 @onready var right_dock: PanelContainer = %RightDock
@@ -62,7 +64,9 @@ const SHORTCUT_EVENT_TYPES := {
 }
 
 func _ready() -> void:
+	size_changed.connect(_on_viewport_size_changed)
 	_apply_style()
+	_apply_responsive_layout()
 	_build_add_player_dialog()
 	event_key_panel.event_type_selected.connect(_on_event_key_pressed)
 	workspace_panel.event_payload_changed.connect(_on_workspace_event_payload_changed)
@@ -112,6 +116,29 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			if SHORTCUT_EVENT_TYPES.has(key_event.keycode):
 				if event_key_panel.activate_event_type(str(SHORTCUT_EVENT_TYPES[key_event.keycode])):
 					get_viewport().set_input_as_handled()
+
+func _on_viewport_size_changed() -> void:
+	_apply_responsive_layout()
+
+func _apply_responsive_layout() -> void:
+	var viewport_size := get_viewport_rect().size
+	var width := viewport_size.x
+	var height := viewport_size.y
+	var compact := width <= 1280.0 or height <= 720.0
+	var ultra_compact := width <= 1000.0 or height <= 560.0
+	var margin := 8 if ultra_compact else 12 if compact else 16
+	for side in [&"margin_left", &"margin_top", &"margin_right", &"margin_bottom"]:
+		root_margin_container.add_theme_constant_override(side, margin)
+	main_content_row.add_theme_constant_override(&"separation", 6 if ultra_compact else 8 if compact else 12)
+	left_dock.custom_minimum_size.x = 190.0 if ultra_compact else 220.0 if compact else 260.0
+	center_dock.custom_minimum_size.x = 280.0 if ultra_compact else 340.0 if compact else 420.0
+	right_dock.custom_minimum_size.x = 170.0 if ultra_compact else 200.0 if compact else 240.0
+	team_quick_roster_panel.custom_minimum_size.y = 150.0 if ultra_compact else 180.0 if compact else 220.0
+	event_summary_panel.custom_minimum_size.y = 108.0 if ultra_compact else 126.0 if compact else 150.0
+	skinny_event_history_panel.custom_minimum_size.y = 150.0 if ultra_compact else 180.0 if compact else 220.0
+	compact_scoreboard_panel.custom_minimum_size.y = 150.0 if ultra_compact else 180.0 if compact else 220.0
+	event_key_panel.apply_responsive_density(compact, ultra_compact)
+	workspace_panel.custom_minimum_size.y = 230.0 if ultra_compact else 280.0 if compact else 320.0
 
 func _is_text_entry_focused() -> bool:
 	var focus_owner := get_viewport().gui_get_focus_owner()
