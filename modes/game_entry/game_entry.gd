@@ -48,6 +48,7 @@ const OUT_EVENTS = {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt
 @onready var teams_label: Label = %TeamsLabel
 @onready var away_lineup: TextEdit = %AwayLineup
 @onready var home_lineup: TextEdit = %HomeLineup
+@onready var add_player_popup: PopupPanel = %AddPlayerPopup
 @onready var add_player_team: OptionButton = %AddPlayerTeam
 @onready var add_player_first_name: LineEdit = %AddPlayerFirstName
 @onready var add_player_last_name: LineEdit = %AddPlayerLastName
@@ -123,7 +124,7 @@ func _connect_signals() -> void:
 	$Root/Header/BackButton.pressed.connect(func() -> void: navigate_requested.emit(&"main_menu"))
 	game_picker.item_selected.connect(_select_game)
 	apply_setup_button.pressed.connect(_apply_setup)
-	add_player_button.pressed.connect(_add_player_to_current_game_team)
+	add_player_button.pressed.connect(_handle_add_player_button_pressed)
 	add_event_button.pressed.connect(_add_event)
 	undo_button.pressed.connect(_undo_last_event)
 	redo_button.pressed.connect(_redo_last_event)
@@ -301,12 +302,32 @@ func _refresh_add_player_team_options() -> void:
 	add_player_team.clear()
 	if selected_game == null:
 		add_player_button.disabled = true
+		add_player_popup.hide()
 		return
 	add_player_team.add_item("Away: %s" % _team_name(selected_game.away_team_id))
 	add_player_team.set_item_metadata(add_player_team.item_count - 1, selected_game.away_team_id)
 	add_player_team.add_item("Home: %s" % _team_name(selected_game.home_team_id))
 	add_player_team.set_item_metadata(add_player_team.item_count - 1, selected_game.home_team_id)
 	add_player_button.disabled = false
+
+func _handle_add_player_button_pressed() -> void:
+	if not add_player_popup.visible:
+		_open_add_player_popup()
+		return
+	_add_player_to_current_game_team()
+
+func _open_add_player_popup() -> void:
+	add_player_status.text = ""
+	var button_rect := add_player_button.get_global_rect()
+	var popup_size := Vector2i(260, 220)
+	var popup_position := Vector2i(int(button_rect.position.x), int(button_rect.end.y + 4.0))
+	var viewport_size := get_viewport_rect().size
+	if popup_position.x + popup_size.x > viewport_size.x:
+		popup_position.x = max(0, int(viewport_size.x) - popup_size.x)
+	if popup_position.y + popup_size.y > viewport_size.y:
+		popup_position.y = max(0, int(button_rect.position.y) - popup_size.y - 4)
+	add_player_popup.popup(Rect2i(popup_position, popup_size))
+	add_player_first_name.grab_focus()
 
 func _add_player_to_current_game_team() -> void:
 	if selected_game == null:
@@ -360,7 +381,9 @@ func _after_player_added(player: Player) -> void:
 	add_player_last_name.text = ""
 	add_player_jersey.text = ""
 	add_player_positions.text = ""
-	add_player_status.text = "Added %s to %s." % [_player_label(player), _team_name(player.team_id)]
+	add_player_popup.hide()
+	status_label.text = "Added %s to %s." % [_player_label(player), _team_name(player.team_id)]
+	add_player_status.text = status_label.text
 
 func _apply_setup() -> void:
 	lineups["away"] = _text_lines(away_lineup.text)
