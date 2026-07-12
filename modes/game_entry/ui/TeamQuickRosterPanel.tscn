@@ -47,8 +47,3 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "No roster loaded for this side yet."
 autowrap_mode = 3
-
-[node name="PanelAddPlayerButton" type="Button" parent="RosterBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Add Player"

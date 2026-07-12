@@ -67,6 +67,11 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="AddPlayerButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add Player"
+
 [node name="CenterDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(420, 0)
