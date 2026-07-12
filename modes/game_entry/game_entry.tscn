@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
+[ext_resource type="Script" path="res://modes/game_entry/WorkspacePanel.gd" id="2_workspace_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventKeyPanel.tscn" id="2_event_key_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/TeamQuickRosterPanel.tscn" id="3_team_quick_roster_panel"]
 
@@ -88,22 +89,83 @@ theme_override_constants/separation = 10
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
+script = ExtResource("2_workspace_panel")
 
 [node name="WorkspaceBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="WorkspaceLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox"]
+[node name="WorkspaceTitleLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Workspace"
+text = "Event Review"
 
-[node name="WorkspacePlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox"]
+[node name="WorkspaceContextLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Review the canonical event log."
+autowrap_mode = 3
+
+[node name="WorkspaceStack" type="Control" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EventLogView" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="EventLogBodyLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventLogView"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-text = "Event log / event creation workspace placeholder"
+text = "EventLogView placeholder: the ordered event log will be shown here. It remains the source of truth for review and future edit selection."
 autowrap_mode = 3
+
+[node name="EventLogEditButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventLogView"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Request Edit Placeholder"
+
+[node name="EventCreationWorkspace" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="EventCreationBodyLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventCreationWorkspace"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "EventCreationWorkspace placeholder"
+autowrap_mode = 3
+
+[node name="EventNotesField" type="TextEdit" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventCreationWorkspace"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+placeholder_text = "Notes for payload draft (not committed here)"
+
+[node name="PayloadPreviewLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventCreationWorkspace"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = ""
+autowrap_mode = 3
+
+[node name="CancelEventButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox/WorkspaceStack/EventCreationWorkspace"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel Event Draft"
 
 [node name="EventSummaryPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox"]
 unique_name_in_owner = true

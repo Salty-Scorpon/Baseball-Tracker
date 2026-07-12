@@ -15,15 +15,15 @@ const SampleDataFactoryScript = preload("res://data/sample_data_factory.gd")
 @onready var event_key_panel: EventKeyPanel = %EventKeyPanel
 @onready var team_quick_roster_panel: TeamQuickRosterPanel = %TeamQuickRosterPanel
 @onready var add_player_button: Button = %AddPlayerButton
-@onready var workspace_panel: PanelContainer = %WorkspacePanel
+@onready var workspace_panel: WorkspacePanel = %WorkspacePanel
 @onready var event_summary_panel: PanelContainer = %EventSummaryPanel
 @onready var skinny_event_history_panel: PanelContainer = %SkinnyEventHistoryPanel
 @onready var compact_scoreboard_panel: PanelContainer = %CompactScoreboardPanel
-@onready var workspace_label: Label = %WorkspaceLabel
+@onready var workspace_label: Label = %WorkspaceTitleLabel
 @onready var event_summary_label: Label = %EventSummaryLabel
 @onready var event_history_label: Label = %EventHistoryLabel
 @onready var scoreboard_label: Label = %ScoreboardLabel
-@onready var workspace_placeholder: Label = %WorkspacePlaceholder
+@onready var workspace_placeholder: Label = %WorkspaceContextLabel
 @onready var event_history_placeholder: Label = %EventHistoryPlaceholder
 @onready var scoreboard_placeholder: Label = %ScoreboardPlaceholder
 @onready var shell_status_label: Label = %ShellStatusLabel
@@ -45,6 +45,9 @@ func _ready() -> void:
 	_apply_style()
 	_build_add_player_dialog()
 	event_key_panel.event_type_selected.connect(_on_event_key_pressed)
+	workspace_panel.event_payload_changed.connect(_on_workspace_event_payload_changed)
+	workspace_panel.event_edit_requested.connect(_on_workspace_event_edit_requested)
+	workspace_panel.event_creation_cancel_requested.connect(_on_workspace_event_creation_cancel_requested)
 	team_quick_roster_panel.roster_team_tab_changed.connect(_on_roster_team_tab_changed)
 	team_quick_roster_panel.player_selected.connect(_on_roster_player_selected)
 	team_quick_roster_panel.add_player_requested.connect(_on_roster_add_player_requested)
@@ -103,8 +106,35 @@ func _players_for_team(team_id: String) -> Array:
 	return output
 
 func _on_event_key_pressed(event_type: String) -> void:
-	shell_status_label.text = "Selected event key: %s (event creation remains placeholder)." % event_type.replace("_", " ").capitalize()
+	workspace_panel.show_create_event_mode(event_type, _build_workspace_game_context())
+	shell_status_label.text = "Drafting event payload for: %s. Confirm/commit will be coordinated by GameEntryMode later." % event_type.replace("_", " ").capitalize()
 	event_key_selected.emit(event_type)
+
+func _on_workspace_event_payload_changed(payload: Dictionary) -> void:
+	shell_status_label.text = "Workspace payload changed for %s mode." % str(payload.get("mode", workspace_panel.get_current_mode())).replace("_", " ")
+
+func _on_workspace_event_edit_requested(event_id: String) -> void:
+	workspace_panel.show_edit_event_mode(event_id, {"event_type": "groundout", "notes": "Placeholder event data."}, _build_workspace_game_context())
+	shell_status_label.text = "Editing requested for event %s. Real event lookup will be wired to the event log later." % event_id
+
+func _on_workspace_event_creation_cancel_requested() -> void:
+	shell_status_label.text = "Event draft cancelled. Returned to event review."
+
+func _build_workspace_game_context() -> Dictionary:
+	if current_game == null:
+		return {}
+	return {
+		"game_id": current_game.id,
+		"inning": 1,
+		"half": "Top",
+		"outs": 0,
+		"home_team_id": current_game.home_team_id,
+		"away_team_id": current_game.away_team_id,
+		"offense_team_id": current_game.away_team_id,
+		"defense_team_id": current_game.home_team_id,
+		"batter_id": "",
+		"pitcher_id": "",
+	}
 
 func _on_roster_team_tab_changed(side: String) -> void:
 	shell_status_label.text = "Showing %s quick roster. Add Player will target this tab's team." % side.capitalize()
