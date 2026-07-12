@@ -40,14 +40,14 @@ var throws_field: LineEdit
 var notes_field: TextEdit
 var validation_label: Label
 var duplicate_warning_label: Label
-var _pending_add_team_id := ""
-var _selected_event_id := ""
+var _pending_add_team_id = ""
+var _selected_event_id = ""
 var _current_payload: Dictionary = {}
 var _current_validation_messages: Array = []
-var _editing_event_id := ""
-var _syncing_event_selection := false
+var _editing_event_id = ""
+var _syncing_event_selection = false
 
-const SHORTCUT_EVENT_TYPES := {
+const SHORTCUT_EVENT_TYPES = {
 	KEY_S: "single",
 	KEY_D: "double",
 	KEY_T: "triple",
@@ -64,7 +64,7 @@ const SHORTCUT_EVENT_TYPES := {
 }
 
 func _ready() -> void:
-	size_changed.connect(_on_viewport_size_changed)
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	_apply_style()
 	_apply_responsive_layout()
 	_build_add_player_dialog()
@@ -87,7 +87,7 @@ func _ready() -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not (event is InputEventKey):
 		return
-	var key_event := event as InputEventKey
+	var key_event = event as InputEventKey
 	if not key_event.pressed or key_event.echo:
 		return
 	if _is_text_entry_focused():
@@ -121,12 +121,12 @@ func _on_viewport_size_changed() -> void:
 	_apply_responsive_layout()
 
 func _apply_responsive_layout() -> void:
-	var viewport_size := get_viewport_rect().size
-	var width := viewport_size.x
-	var height := viewport_size.y
-	var compact := width <= 1280.0 or height <= 720.0
-	var ultra_compact := width <= 1000.0 or height <= 560.0
-	var margin := 8 if ultra_compact else 12 if compact else 16
+	var viewport_size = get_viewport_rect().size
+	var width = viewport_size.x
+	var height = viewport_size.y
+	var compact = width <= 1280.0 or height <= 720.0
+	var ultra_compact = width <= 1000.0 or height <= 560.0
+	var margin = 8 if ultra_compact else 12 if compact else 16
 	for side in [&"margin_left", &"margin_top", &"margin_right", &"margin_bottom"]:
 		root_margin_container.add_theme_constant_override(side, margin)
 	main_content_row.add_theme_constant_override(&"separation", 6 if ultra_compact else 8 if compact else 12)
@@ -141,7 +141,7 @@ func _apply_responsive_layout() -> void:
 	workspace_panel.custom_minimum_size.y = 230.0 if ultra_compact else 280.0 if compact else 320.0
 
 func _is_text_entry_focused() -> bool:
-	var focus_owner := get_viewport().gui_get_focus_owner()
+	var focus_owner = get_viewport().gui_get_focus_owner()
 	if focus_owner == null:
 		return false
 	return focus_owner is LineEdit or focus_owner is TextEdit
@@ -171,7 +171,7 @@ func _load_repository() -> void:
 	repository = SaveManagerScript.load_project()
 	if repository == null:
 		repository = SaveManagerScript.new_project()
-		var sample := SampleDataFactoryScript.create_sample_competition()
+		var sample = SampleDataFactoryScript.create_sample_competition()
 		repository.add_competition(sample["competition"])
 		for ruleset in sample["rulesets"]:
 			repository.add_ruleset(ruleset)
@@ -199,8 +199,8 @@ func _refresh_game_context() -> void:
 	_update_add_player_button_state()
 	var home_team: Team = repository.find_entity_by_id(current_game.home_team_id, "teams")
 	var away_team: Team = repository.find_entity_by_id(current_game.away_team_id, "teams")
-	var events := _events_for_current_game()
-	var event_context := _event_log_context()
+	var events = _events_for_current_game()
+	var event_context = _event_log_context()
 	workspace_panel.set_events(events, event_context)
 	skinny_event_history_panel.set_events(events, event_context)
 	compact_scoreboard_panel.set_state(_scoreboard_state_for_events(events))
@@ -224,7 +224,7 @@ func _events_for_current_game() -> Array:
 	return output
 
 func _event_log_context() -> Dictionary:
-	var players_by_id := {}
+	var players_by_id = {}
 	if repository != null:
 		for player in repository.players:
 			players_by_id[player.id] = player
@@ -242,7 +242,7 @@ func _on_event_key_pressed(event_type: String) -> void:
 
 func _on_workspace_event_payload_changed(payload: Dictionary) -> void:
 	_current_payload = payload.duplicate(true)
-	var preview := EventSummaryFormatterScript.summarize(_current_payload)
+	var preview = EventSummaryFormatterScript.summarize(_current_payload)
 	_current_validation_messages = EventValidatorScript.validate_event_payload(_current_payload)
 	event_summary_panel.set_preview_text(preview)
 	event_summary_panel.set_validation_messages(_current_validation_messages)
@@ -276,7 +276,7 @@ func _on_workspace_event_edit_requested(event_id: String) -> void:
 	if _is_current_game_finalized():
 		event_summary_panel.set_validation_messages([{ "severity": "warning", "message": "This game is marked Final; editing is locked until a formal unlock workflow is added. TODO: add finalized-game unlock/override flow." }])
 		return
-	var event := _find_current_game_event(event_id)
+	var event = _find_current_game_event(event_id)
 	if event == null:
 		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not find event %s in the current game log." % event_id }])
 		return
@@ -313,11 +313,11 @@ func _on_event_summary_confirm_requested() -> void:
 		event_summary_panel.set_validation_messages(_current_validation_messages)
 		event_summary_panel.set_active(false)
 		return
-	var existing_event := _find_current_game_event(_editing_event_id) if not _editing_event_id.is_empty() else null
-	var event := _game_event_from_payload(_current_payload, existing_event)
-	var saved := repository.update_game_event(event) if existing_event != null else repository.append_game_event(event)
+	var existing_event = _find_current_game_event(_editing_event_id) if not _editing_event_id.is_empty() else null
+	var event = _game_event_from_payload(_current_payload, existing_event)
+	var saved = repository.update_game_event(event) if existing_event != null else repository.append_game_event(event)
 	if not saved:
-		var action := "update" if existing_event != null else "append"
+		var action = "update" if existing_event != null else "append"
 		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not %s the event in the current game log." % action }])
 		return
 	SaveManagerScript.save_project(repository)
@@ -340,7 +340,7 @@ func _on_event_summary_cancel_requested() -> void:
 		event_summary_panel.set_selected_event_summary(_summary_for_event(_selected_event_id))
 
 func _on_event_summary_edit_requested() -> void:
-	var event_id := _selected_event_id
+	var event_id = _selected_event_id
 	if event_id.is_empty():
 		event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Edit requested. Select a saved event from the narrative log to edit it." }])
 	else:
@@ -358,13 +358,13 @@ func _is_current_game_finalized() -> bool:
 	return current_game != null and current_game.status.strip_edges().to_lower() == "final"
 
 func _payload_from_game_event(event: GameEvent) -> Dictionary:
-	var payload := event.to_dict()
+	var payload = event.to_dict()
 	payload["event_id"] = event.id
 	payload["mode"] = "editing_event"
 	return payload
 
 func _build_workspace_game_context_for_event(event: GameEvent) -> Dictionary:
-	var context := _build_workspace_game_context()
+	var context = _build_workspace_game_context()
 	context["inning"] = event.inning
 	context["half"] = event.half
 	context["half_inning"] = event.half_inning
@@ -382,11 +382,11 @@ func _build_workspace_game_context_for_event(event: GameEvent) -> Dictionary:
 func _build_workspace_game_context() -> Dictionary:
 	if current_game == null:
 		return {}
-	var events := _events_for_current_game()
-	var state := _scoreboard_state_for_events(events)
-	var half := str(state.get("half", "Top"))
-	var offense_team_id := current_game.away_team_id if half.to_lower() == "top" else current_game.home_team_id
-	var defense_team_id := current_game.home_team_id if half.to_lower() == "top" else current_game.away_team_id
+	var events = _events_for_current_game()
+	var state = _scoreboard_state_for_events(events)
+	var half = str(state.get("half", "Top"))
+	var offense_team_id = current_game.away_team_id if half.to_lower() == "top" else current_game.home_team_id
+	var defense_team_id = current_game.home_team_id if half.to_lower() == "top" else current_game.away_team_id
 	return {
 		"game_id": current_game.id,
 		"inning": int(state.get("inning", 1)),
@@ -406,14 +406,14 @@ func _build_workspace_game_context() -> Dictionary:
 	}
 
 func _game_event_from_payload(payload: Dictionary, existing_event: GameEvent = null) -> GameEvent:
-	var events := _events_for_current_game()
-	var next_sequence := events.size() + 1
+	var events = _events_for_current_game()
+	var next_sequence = events.size() + 1
 	for existing in events:
 		next_sequence = max(next_sequence, existing.sequence_number + 1)
-	var event_id := existing_event.id if existing_event != null else _next_game_event_id()
-	var event := GameEventScript.new(event_id, current_game.id)
-	var event_type := _normalize_event_type(str(payload.get("event_type", "manual_correction")))
-	var details := Dictionary(payload.get("details", {})).duplicate(true) if payload.get("details", {}) is Dictionary else {}
+	var event_id = existing_event.id if existing_event != null else _next_game_event_id()
+	var event = GameEventScript.new(event_id, current_game.id)
+	var event_type = _normalize_event_type(str(payload.get("event_type", "manual_correction")))
+	var details = Dictionary(payload.get("details", {})).duplicate(true) if payload.get("details", {}) is Dictionary else {}
 	details["event_type"] = event_type
 	event.sequence = existing_event.sequence if existing_event != null else next_sequence
 	event.sequence_number = existing_event.sequence_number if existing_event != null else next_sequence
@@ -430,7 +430,7 @@ func _game_event_from_payload(payload: Dictionary, existing_event: GameEvent = n
 	event.defensive_team_id = event.defense_team_id
 	event.outs_before = int(payload.get("outs_before", 0))
 	event.outs_added = _placeholder_outs_added(event_type, details)
-	var requested_outs_after := int(payload.get("outs_after", event.outs_before + event.outs_added))
+	var requested_outs_after = int(payload.get("outs_after", event.outs_before + event.outs_added))
 	if payload.has("outs_after") and requested_outs_after > event.outs_before:
 		event.outs_after = requested_outs_after
 		event.outs_added = max(0, event.outs_after - event.outs_before)
@@ -450,7 +450,7 @@ func _game_event_from_payload(payload: Dictionary, existing_event: GameEvent = n
 	return event
 
 func _next_game_event_id() -> String:
-	var index := repository.game_events.size() + 1 if repository != null else 1
+	var index = repository.game_events.size() + 1 if repository != null else 1
 	while repository != null and repository.find_entity_by_id("event_%03d" % index, "game_events") != null:
 		index += 1
 	return "event_%03d" % index
@@ -459,7 +459,7 @@ func _normalize_event_type(value: String) -> String:
 	return value.strip_edges().to_lower().replace(" ", "_").replace("-", "_")
 
 func _legacy_event_label(event_type: String) -> String:
-	var labels := {"single":"Single", "double":"Double", "triple":"Triple", "home_run":"Home run", "walk":"Walk", "hit_by_pitch":"Hit by pitch", "reached_on_error":"Reached on error", "fielders_choice":"Fielder's choice", "stolen_base":"Stolen base"}
+	var labels = {"single":"Single", "double":"Double", "triple":"Triple", "home_run":"Home run", "walk":"Walk", "hit_by_pitch":"Hit by pitch", "reached_on_error":"Reached on error", "fielders_choice":"Fielder's choice", "stolen_base":"Stolen base"}
 	return str(labels.get(event_type, event_type.replace("_", " ").capitalize()))
 
 func _placeholder_outs_added(event_type: String, details: Dictionary) -> int:
@@ -482,9 +482,9 @@ func _payload_runs_scored(payload: Dictionary, event_type: String, details: Dict
 	return _placeholder_runs_scored(event_type, details)
 
 func _placeholder_runs_scored(event_type: String, details: Dictionary) -> int:
-	var advancements := details.get("runner_advancements", [])
+	var advancements = details.get("runner_advancements", [])
 	if advancements is Array:
-		var total := 0
+		var total = 0
 		for advancement in advancements:
 			if advancement is Dictionary and (bool(advancement.get("scored", false)) or str(advancement.get("end_base", "")).to_upper() == "SCORED"):
 				total += 1
@@ -517,7 +517,7 @@ func _events_for_game_id(game_id: String) -> Array:
 	return _events_for_current_game().filter(func(event: GameEvent) -> bool: return game_id.is_empty() or event.game_id == game_id)
 
 func _player_names_by_id() -> Dictionary:
-	var names := {}
+	var names = {}
 	if repository == null:
 		return names
 	for player in repository.players:
@@ -556,7 +556,7 @@ func _build_add_player_dialog() -> void:
 	add_player_dialog.min_size = Vector2i(420, 420)
 	add_player_dialog.confirmed.connect(_on_add_player_confirmed)
 	add_child(add_player_dialog)
-	var box := VBoxContainer.new()
+	var box = VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	add_player_dialog.add_child(box)
 	jersey_number_field = _add_line_field(box, "Jersey number")
@@ -564,7 +564,7 @@ func _build_add_player_dialog() -> void:
 	position_field = _add_line_field(box, "Position (optional)")
 	bats_field = _add_line_field(box, "Bats (optional)")
 	throws_field = _add_line_field(box, "Throws (optional)")
-	var notes_label := Label.new()
+	var notes_label = Label.new()
 	notes_label.text = "Notes (optional)"
 	box.add_child(notes_label)
 	notes_field = TextEdit.new()
@@ -582,10 +582,10 @@ func _build_add_player_dialog() -> void:
 	GameEntryStyle.style_body_label(duplicate_warning_label)
 
 func _add_line_field(parent: VBoxContainer, label_text: String) -> LineEdit:
-	var label := Label.new()
+	var label = Label.new()
 	label.text = label_text
 	parent.add_child(label)
-	var field := LineEdit.new()
+	var field = LineEdit.new()
 	field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(field)
 	return field
@@ -601,7 +601,7 @@ func _validate_add_player_dialog() -> bool:
 		errors.append("Display name is required.")
 	if _pending_add_team_id.strip_edges().is_empty():
 		errors.append("Select a Home or Away team before adding a player.")
-	var duplicate := repository != null and repository.has_duplicate_jersey_number(_pending_add_team_id, jersey_number_field.text)
+	var duplicate = repository != null and repository.has_duplicate_jersey_number(_pending_add_team_id, jersey_number_field.text)
 	validation_label.text = "\n".join(errors)
 	duplicate_warning_label.text = "Warning: another player on this team already uses jersey #%s." % jersey_number_field.text.strip_edges() if duplicate else ""
 	add_player_dialog.get_ok_button().disabled = not errors.is_empty()
@@ -611,7 +611,7 @@ func _on_add_player_confirmed() -> void:
 	if not _validate_add_player_dialog():
 		add_player_dialog.popup_centered(Vector2i(420, 420))
 		return
-	var player := repository.create_player_for_team(_pending_add_team_id, {
+	var player = repository.create_player_for_team(_pending_add_team_id, {
 		"jersey_number": jersey_number_field.text,
 		"display_name": display_name_field.text,
 		"position": position_field.text,

@@ -29,7 +29,7 @@ static func apply_event(state: GameReplayState, event: GameEvent, mutate_event: 
 	_record_batter(state, event)
 	_record_pitcher(state, event)
 	_apply_runner_substitution(state, event)
-	var normalized_event_type := _normalized_event_type(event)
+	var normalized_event_type = _normalized_event_type(event)
 	if ADVANCE_EVENTS.has(normalized_event_type):
 		_advance_runners(state, int(ADVANCE_EVENTS[normalized_event_type]), event.batter_id, normalized_event_type == "home_run")
 	elif normalized_event_type == "stolen_base":
@@ -93,9 +93,9 @@ static func _steal_one_base(state: GameReplayState) -> void:
 static func _apply_runner_substitution(state: GameReplayState, event: GameEvent) -> void:
 	if _normalized_event_type(event) != "pinch_runner":
 		return
-	var substitution := Dictionary(event.details.get("substitution", {}))
-	var player_out_id := str(substitution.get("player_out_id", ""))
-	var player_in_id := str(substitution.get("player_in_id", ""))
+	var substitution = Dictionary(event.details.get("substitution", {}))
+	var player_out_id = str(substitution.get("player_out_id", ""))
+	var player_in_id = str(substitution.get("player_in_id", ""))
 	if player_out_id.is_empty() or player_in_id.is_empty():
 		return
 	for base in ["1B", "2B", "3B"]:

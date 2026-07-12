@@ -8,23 +8,23 @@ const StatCalculatorScript = preload("res://app/StatCalculator.gd")
 
 var repository: DataRepository
 var stats: Dictionary = {}
-var sort_key := "hits"
-var sort_desc := true
-var current_tab := 0
-var competition_filter := ""
-var team_filter := ""
-var player_filter := ""
-var position_filter := ""
-var grade_filter := ""
-var min_pa := 0
-var min_ip := 0.0
-var start_date := ""
-var end_date := ""
+var sort_key = "hits"
+var sort_desc = true
+var current_tab = 0
+var competition_filter = ""
+var team_filter = ""
+var player_filter = ""
+var position_filter = ""
+var grade_filter = ""
+var min_pa = 0
+var min_ip = 0.0
+var start_date = ""
+var end_date = ""
 
-var competitions_by_id := {}
-var teams_by_id := {}
-var players_by_id := {}
-var games_by_id := {}
+var competitions_by_id = {}
+var teams_by_id = {}
+var players_by_id = {}
+var games_by_id = {}
 
 @onready var status_label: Label = %StatusLabel
 @onready var competition_option: OptionButton = %CompetitionOption
@@ -140,7 +140,7 @@ func _on_filter_changed() -> void:
 
 func _recalculate_and_refresh() -> void:
 	var filtered_games = repository.games.filter(func(g): return _game_in_scope(g))
-	var game_ids := {}
+	var game_ids = {}
 	for game in filtered_games: game_ids[game.id] = true
 	var filtered_events = repository.game_events.filter(func(e): return game_ids.has(e.game_id))
 	stats = StatCalculatorScript.calculate(filtered_games, filtered_events, repository.players, repository.teams)
@@ -288,7 +288,7 @@ func _selected_meta(option: OptionButton) -> String:
 	return "" if option.selected < 0 else str(option.get_item_metadata(option.selected))
 
 func _index_by_id(items: Array) -> Dictionary:
-	var output := {}
+	var output = {}
 	for item in items: output[item.id] = item
 	return output
 
@@ -301,14 +301,14 @@ func _player_name(id: String) -> String:
 	return player.display_name if player != null and not player.display_name.is_empty() else id
 
 func _unique_player_values(field: String) -> Array:
-	var values := {}
+	var values = {}
 	for player in repository.players:
 		if field == "positions":
 			for position in player.positions:
 				if not str(position).is_empty():
 					values[position] = true
 		elif not str(player.get(field)).is_empty(): values[player.get(field)] = true
-	var rows := []
+	var rows = []
 	for value in values.keys(): rows.append([value, value])
 	return rows
 

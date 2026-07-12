@@ -12,7 +12,7 @@ const GameEntryStyle = preload("res://modes/game_entry/GameEntryStyle.gd")
 
 var _events: Array = []
 var _context: Dictionary = {}
-var _selected_event_id := ""
+var _selected_event_id = ""
 var _cards_by_event_id: Dictionary = {}
 
 func _ready() -> void:
@@ -51,7 +51,7 @@ func scroll_to_event(event_id: String, emit_selection: bool = true) -> void:
 		select_event_silent(event_id)
 	await get_tree().process_frame
 	var card: Control = _cards_by_event_id[event_id]
-	var target_y := max(0, int(card.position.y - (scroll_container.size.y - card.size.y) * 0.5))
+	var target_y = max(0, int(card.position.y - (scroll_container.size.y - card.size.y) * 0.5))
 	scroll_container.set_deferred("scroll_vertical", target_y)
 
 func clear() -> void:
@@ -68,20 +68,20 @@ func _render_events() -> void:
 	if not _selected_event_id.is_empty() and not _events.any(func(raw_event: Variant) -> bool: return _event_id(_event_to_dictionary(raw_event)) == _selected_event_id):
 		_selected_event_id = ""
 	empty_state_label.visible = _events.is_empty()
-	var current_group := ""
+	var current_group = ""
 	for raw_event in _events:
-		var event := _event_to_dictionary(raw_event)
-		var group := _group_key(event)
+		var event = _event_to_dictionary(raw_event)
+		var group = _group_key(event)
 		if group != current_group:
 			current_group = group
 			entries_box.add_child(_make_group_header(event))
-		var card := _make_event_card(event)
+		var card = _make_event_card(event)
 		entries_box.add_child(card)
 		_cards_by_event_id[_event_id(event)] = card
 	_update_card_selection()
 
 func _make_group_header(event: Dictionary) -> Label:
-	var label := Label.new()
+	var label = Label.new()
 	label.text = _group_title(event)
 	label.add_theme_font_size_override("font_size", 18)
 	label.add_theme_color_override("font_color", Color(0.86, 0.9, 0.95))
@@ -89,30 +89,30 @@ func _make_group_header(event: Dictionary) -> Label:
 	return label
 
 func _make_event_card(event: Dictionary) -> PanelContainer:
-	var card := PanelContainer.new()
+	var card = PanelContainer.new()
 	card.name = "EventCard_%s" % _event_id(event).replace("-", "_")
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.gui_input.connect(func(input_event: InputEvent) -> void: _on_card_gui_input(input_event, _event_id(event)))
-	var box := VBoxContainer.new()
+	var box = VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
 	card.add_child(box)
-	var header := Label.new()
+	var header = Label.new()
 	header.text = _card_header(event)
 	header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(header)
-	var summary := RichTextLabel.new()
+	var summary = RichTextLabel.new()
 	summary.bbcode_enabled = false
 	summary.fit_content = true
 	summary.scroll_active = false
 	summary.text = _card_body(event)
 	box.add_child(summary)
-	var footer := Label.new()
+	var footer = Label.new()
 	footer.text = _card_footer(event)
 	footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if footer.text.is_empty():
 		footer.hide()
 	box.add_child(footer)
-	var edit_button := Button.new()
+	var edit_button = Button.new()
 	edit_button.text = "Edit Event"
 	edit_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	edit_button.pressed.connect(func() -> void: event_edit_requested.emit(_event_id(event)))
@@ -132,7 +132,7 @@ func _update_card_selection() -> void:
 		_style_card(_cards_by_event_id[event_id], event_id == _selected_event_id)
 
 func _style_card(card: PanelContainer, selected: bool) -> void:
-	var style := StyleBoxFlat.new()
+	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.18, 0.23, 0.30) if selected else Color(0.115, 0.135, 0.17)
 	style.border_color = Color(0.35, 0.62, 0.95) if selected else Color(0.22, 0.27, 0.34)
 	style.set_border_width_all(2 if selected else 1)
@@ -162,7 +162,7 @@ func _card_body(event: Dictionary) -> String:
 
 func _card_footer(event: Dictionary) -> String:
 	var parts: Array[String] = []
-	var notes := str(event.get("notes", "")).strip_edges()
+	var notes = str(event.get("notes", "")).strip_edges()
 	if _has_manual_override(event):
 		parts.append("⚠ Manual scoring override")
 	if not notes.is_empty():
@@ -170,16 +170,16 @@ func _card_footer(event: Dictionary) -> String:
 	return "\n".join(parts)
 
 func _decorate_event(event: Dictionary) -> Dictionary:
-	var decorated := event.duplicate(true)
+	var decorated = event.duplicate(true)
 	for role in ["batter", "pitcher"]:
-		var id_key := role + "_id"
-		var name_key := role + "_name"
+		var id_key = role + "_id"
+		var name_key = role + "_name"
 		if not decorated.has(name_key):
 			decorated[name_key] = _player_label(str(decorated.get(id_key, "")))
 	return decorated
 
 func _player_label(player_id: String) -> String:
-	var players := Dictionary(_context.get("players_by_id", {}))
+	var players = Dictionary(_context.get("players_by_id", {}))
 	if players.has(player_id):
 		var value = players[player_id]
 		if value is Dictionary:
@@ -200,15 +200,15 @@ func _group_key(event: Dictionary) -> String:
 	return "%d_%s" % [int(event.get("inning", 0)), str(event.get("half", event.get("half_inning", ""))).to_lower()]
 
 func _group_title(event: Dictionary) -> String:
-	var half := str(event.get("half", event.get("half_inning", ""))).to_lower()
-	var inning := int(event.get("inning", 0))
+	var half = str(event.get("half", event.get("half_inning", ""))).to_lower()
+	var inning = int(event.get("inning", 0))
 	return "%s %s" % ["Top" if half == "top" else "Bottom" if half == "bottom" else "Half", _ordinal(inning)]
 
 func _outs_label(outs: int) -> String:
 	return "%d %s" % [outs, "out" if outs == 1 else "outs"]
 
 func _ordinal(value: int) -> String:
-	var suffix := "th"
+	var suffix = "th"
 	if value % 100 < 11 or value % 100 > 13:
 		match value % 10:
 			1: suffix = "st"
@@ -217,5 +217,5 @@ func _ordinal(value: int) -> String:
 	return "%d%s" % [value, suffix]
 
 func _has_manual_override(event: Dictionary) -> bool:
-	var overrides := Dictionary(event.get("manual_overrides", {})) if event.get("manual_overrides", {}) is Dictionary else {}
+	var overrides = Dictionary(event.get("manual_overrides", {})) if event.get("manual_overrides", {}) is Dictionary else {}
 	return bool(event.get("manual_override", false)) or not overrides.is_empty()

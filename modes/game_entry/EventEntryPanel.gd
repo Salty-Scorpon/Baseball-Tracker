@@ -87,7 +87,7 @@ func open_for_event(event_type: String, game_context: Dictionary) -> void:
 	_update_validation_label()
 
 func get_event_payload() -> Dictionary:
-	var manual_overrides := _get_widget_data(EventTemplateRegistry.WIDGET_MANUAL_OVERRIDES)
+	var manual_overrides = _get_widget_data(EventTemplateRegistry.WIDGET_MANUAL_OVERRIDES)
 	var details = {
 		"template": _template.duplicate(true),
 		"count": _get_widget_data(EventTemplateRegistry.WIDGET_COUNT_ENTRY),

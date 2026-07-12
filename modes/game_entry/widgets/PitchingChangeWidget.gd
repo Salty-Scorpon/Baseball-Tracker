@@ -106,7 +106,7 @@ func _populate_player_options() -> void:
 
 func _build_runner_responsibility() -> Array:
 	var existing = _as_array(_context.get("runner_responsibility", []))
-	var by_runner := {}
+	var by_runner = {}
 	for entry in existing:
 		if entry is Dictionary:
 			by_runner[str(entry.get("runner_id", ""))] = entry

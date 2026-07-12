@@ -8,18 +8,18 @@ signal event_edit_requested(event_id: String)
 signal event_selected(event_id: String)
 signal event_creation_cancel_requested()
 
-const MODE_REVIEW := "review"
-const MODE_CREATING_EVENT := "creating_event"
-const MODE_EDITING_EVENT := "editing_event"
+const MODE_REVIEW = "review"
+const MODE_CREATING_EVENT = "creating_event"
+const MODE_EDITING_EVENT = "editing_event"
 
 @onready var workspace_title_label: Label = %WorkspaceTitleLabel
 @onready var workspace_context_label: Label = %WorkspaceContextLabel
 @onready var event_log_view: EventLogView = %EventLogView
 @onready var event_creation_workspace: EventCreationWorkspace = %EventCreationWorkspace
 
-var _current_mode := MODE_REVIEW
-var _current_event_type := ""
-var _current_event_id := ""
+var _current_mode = MODE_REVIEW
+var _current_event_type = ""
+var _current_event_id = ""
 var _game_context: Dictionary = {}
 var _event_data: Dictionary = {}
 

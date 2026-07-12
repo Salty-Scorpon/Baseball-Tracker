@@ -13,11 +13,11 @@ const GameEntryStyle = preload("res://modes/game_entry/GameEntryStyle.gd")
 const EventValidatorScript = preload("res://app/EventValidator.gd")
 const EventSummaryFormatterScript = preload("res://app/EventSummaryFormatter.gd")
 
-const IDLE_TEXT := "No active event. Choose an event button to begin scoring."
-const SEVERITY_ERROR := "error"
-const SEVERITY_WARNING := "warning"
-const SEVERITY_INFO := "info"
-const SEVERITY_SUCCESS := "success"
+const IDLE_TEXT = "No active event. Choose an event button to begin scoring."
+const SEVERITY_ERROR = "error"
+const SEVERITY_WARNING = "warning"
+const SEVERITY_INFO = "info"
+const SEVERITY_SUCCESS = "success"
 
 @onready var title_label: Label = %EventSummaryTitleLabel
 @onready var preview_label: Label = %PreviewLabel
@@ -27,10 +27,10 @@ const SEVERITY_SUCCESS := "success"
 @onready var cancel_button: Button = %CancelButton
 
 var _validation_messages: Array = []
-var _is_active := false
-var _has_blocking_error := false
-var _can_confirm := false
-var _edit_relevant := false
+var _is_active = false
+var _has_blocking_error = false
+var _can_confirm = false
+var _edit_relevant = false
 
 func _ready() -> void:
 	_apply_style()
@@ -92,9 +92,9 @@ func can_confirm_event() -> bool:
 	return _is_active and _can_confirm and not _has_blocking_error and confirm_button.visible and not confirm_button.disabled
 
 func show_payload_preview(payload: Dictionary) -> void:
-	var preview := EventSummaryFormatterScript.summarize(payload)
+	var preview = EventSummaryFormatterScript.summarize(payload)
 	set_preview_text(preview)
-	var messages := EventValidatorScript.validate_event_payload(payload)
+	var messages = EventValidatorScript.validate_event_payload(payload)
 	set_validation_messages(messages)
 	set_active(not EventValidatorScript.has_errors(messages))
 
@@ -119,7 +119,7 @@ func _render_validation_messages() -> void:
 		validation_list.add_child(_message_label(SEVERITY_INFO, "No validation messages yet."))
 		return
 	for message in _validation_messages:
-		var severity := _message_severity(message)
+		var severity = _message_severity(message)
 		validation_list.add_child(_message_label(severity, _message_text(message)))
 
 func _clear_validation_list() -> void:
@@ -135,7 +135,7 @@ func _messages_have_errors(messages: Array) -> bool:
 
 func _message_severity(message: Variant) -> String:
 	if message is Dictionary:
-		var severity := str(message.get("severity", SEVERITY_INFO)).strip_edges().to_lower()
+		var severity = str(message.get("severity", SEVERITY_INFO)).strip_edges().to_lower()
 		return severity if [SEVERITY_ERROR, SEVERITY_WARNING, SEVERITY_INFO, SEVERITY_SUCCESS].has(severity) else SEVERITY_INFO
 	return SEVERITY_INFO
 
@@ -145,7 +145,7 @@ func _message_text(message: Variant) -> String:
 	return str(message)
 
 func _message_label(severity: String, text: String) -> Label:
-	var label := Label.new()
+	var label = Label.new()
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.text = "%s %s" % [_severity_icon(severity), text]
 	label.add_theme_color_override("font_color", _severity_color(severity))
