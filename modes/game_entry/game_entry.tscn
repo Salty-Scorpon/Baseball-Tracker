@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" path="res://modes/game_entry/widgets/ManualOverridePanel.tscn" id="3_manual_override"]
 
 [node name="GameEntry" type="Control"]
+visible = false
 custom_minimum_size = Vector2(960, 540)
 layout_mode = 3
 anchors_preset = 15
@@ -15,6 +16,7 @@ grow_vertical = 2
 script = ExtResource("1_game_entry")
 
 [node name="Root" type="VBoxContainer" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -379,6 +381,7 @@ layout_mode = 2
 autowrap_mode = 3
 
 [node name="AddPlayerPopup" type="PopupPanel" parent="."]
+visible = false
 unique_name_in_owner = true
 exclusive = false
 
