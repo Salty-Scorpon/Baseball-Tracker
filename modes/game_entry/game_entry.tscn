@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
 [ext_resource type="Script" path="res://modes/game_entry/WorkspacePanel.gd" id="2_workspace_panel"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventCreationWorkspace.tscn" id="5_event_creation_workspace"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventSummaryPanel.tscn" id="6_event_summary_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/SkinnyEventHistoryPanel.tscn" id="7_skinny_history_panel"]
+[ext_resource type="PackedScene" path="res://modes/game_entry/ui/CompactScoreboardPanel.tscn" id="8_compact_scoreboard_panel"]
 
 [node name="GameEntryMode" type="Control"]
 custom_minimum_size = Vector2(960, 540)
@@ -153,22 +154,6 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CompactScoreboardPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 220)
-layout_mode = 2
-
-[node name="ScoreboardBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/CompactScoreboardPanel"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="ScoreboardLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/CompactScoreboardPanel/ScoreboardBox"]
+[node name="CompactScoreboardPanel" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox" instance=ExtResource("8_compact_scoreboard_panel")]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Scoreboard"
-
-[node name="ScoreboardPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/CompactScoreboardPanel/ScoreboardBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Scoreboard snapshot placeholder"
-autowrap_mode = 3

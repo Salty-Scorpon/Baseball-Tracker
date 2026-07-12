@@ -8,6 +8,7 @@ const GameEntryStyle = preload("res://modes/game_entry/GameEntryStyle.gd")
 const SaveManagerScript = preload("res://data/saving/save_manager.gd")
 const SampleDataFactoryScript = preload("res://data/sample_data_factory.gd")
 const EventSummaryFormatterScript = preload("res://app/EventSummaryFormatter.gd")
+const GameReplayScript = preload("res://data/game_replay.gd")
 
 @onready var background: ColorRect = %Background
 @onready var left_dock: PanelContainer = %LeftDock
@@ -19,12 +20,10 @@ const EventSummaryFormatterScript = preload("res://app/EventSummaryFormatter.gd"
 @onready var workspace_panel: WorkspacePanel = %WorkspacePanel
 @onready var event_summary_panel: EventSummaryPanel = %EventSummaryPanel
 @onready var skinny_event_history_panel: SkinnyEventHistoryPanel = %SkinnyEventHistoryPanel
-@onready var compact_scoreboard_panel: PanelContainer = %CompactScoreboardPanel
+@onready var compact_scoreboard_panel: CompactScoreboardPanel = %CompactScoreboardPanel
 @onready var workspace_label: Label = %WorkspaceTitleLabel
 @onready var event_history_label: Label = %EventHistoryLabel
-@onready var scoreboard_label: Label = %ScoreboardLabel
 @onready var workspace_placeholder: Label = %WorkspaceContextLabel
-@onready var scoreboard_placeholder: Label = %ScoreboardPlaceholder
 
 var repository: DataRepository
 var current_game: Game
@@ -65,8 +64,8 @@ func _apply_style() -> void:
 		background,
 		[left_dock, center_dock, right_dock],
 		[event_key_panel, team_quick_roster_panel, workspace_panel, skinny_event_history_panel, compact_scoreboard_panel],
-		[workspace_label, event_history_label, scoreboard_label],
-		[workspace_placeholder, scoreboard_placeholder],
+		[workspace_label, event_history_label],
+		[workspace_placeholder],
 		[add_player_button]
 	)
 
@@ -93,6 +92,7 @@ func _refresh_game_context() -> void:
 		team_quick_roster_panel.set_away_roster([])
 		_update_add_player_button_state()
 		skinny_event_history_panel.clear()
+		compact_scoreboard_panel.clear()
 		event_summary_panel.set_idle()
 		return
 	team_quick_roster_panel.set_team_ids(current_game.home_team_id, current_game.away_team_id)
@@ -105,7 +105,7 @@ func _refresh_game_context() -> void:
 	var event_context := _event_log_context()
 	workspace_panel.set_events(events, event_context)
 	skinny_event_history_panel.set_events(events, event_context)
-	scoreboard_placeholder.text = "Game: %s vs %s\nStatus: %s" % [_team_name(away_team), _team_name(home_team), current_game.status]
+	compact_scoreboard_panel.set_state(_scoreboard_state_for_events(events))
 	event_summary_panel.set_idle()
 
 func _players_for_team(team_id: String) -> Array:
@@ -147,11 +147,13 @@ func _on_skinny_event_history_selected(event_id: String) -> void:
 	workspace_panel.show_review_mode()
 	workspace_panel.scroll_to_event(event_id)
 	event_summary_panel.set_selected_event_summary(_summary_for_event(event_id))
+	compact_scoreboard_panel.set_state(_scoreboard_state_for_event(event_id))
 
 func _on_workspace_event_selected(event_id: String) -> void:
 	_selected_event_id = event_id
 	skinny_event_history_panel.select_event(event_id)
 	event_summary_panel.set_selected_event_summary(_summary_for_event(event_id))
+	compact_scoreboard_panel.set_state(_scoreboard_state_for_event(event_id))
 
 func _on_workspace_event_edit_requested(event_id: String) -> void:
 	workspace_panel.show_edit_event_mode(event_id, {"event_type": "groundout", "notes": "Placeholder event data."}, _build_workspace_game_context())
@@ -196,6 +198,55 @@ func _build_workspace_game_context() -> Dictionary:
 		"batter_id": "",
 		"pitcher_id": "",
 	}
+
+func _scoreboard_state_for_event(event_id: String) -> Dictionary:
+	var events := _events_for_current_game()
+	for event in events:
+		if event.id == event_id:
+			return _scoreboard_state_for_events(events, event.sequence_number)
+	return _scoreboard_state_for_events(events)
+
+func _scoreboard_state_for_events(events: Array, sequence_number: int = -1) -> Dictionary:
+	var replay_state: GameReplayState = GameReplayScript.replay_until(events, sequence_number) if sequence_number >= 0 else GameReplayScript.replay(events)
+	var half := str(replay_state.half_inning).strip_edges().to_lower()
+	var defense_side := "home" if half == "top" else "away"
+	var pitcher_id := str(replay_state.current_pitchers.get(defense_side, "")).strip_edges()
+	return {
+		"away_score": int(replay_state.score.get("away", 0)),
+		"home_score": int(replay_state.score.get("home", 0)),
+		"inning": replay_state.inning,
+		"half": "Bottom" if half == "bottom" else "Top",
+		"outs": replay_state.outs,
+		"base_state": {
+			"first": _empty_to_null(replay_state.bases.get("1B", "")),
+			"second": _empty_to_null(replay_state.bases.get("2B", "")),
+			"third": _empty_to_null(replay_state.bases.get("3B", "")),
+		},
+		"current_pitcher_id": pitcher_id,
+		"current_pitcher_name": _player_name_for_id(pitcher_id),
+		"current_pitcher_strikeouts": _strikeouts_for_pitcher_until(events, pitcher_id, sequence_number),
+	}
+
+func _strikeouts_for_pitcher_until(events: Array, pitcher_id: String, sequence_number: int = -1) -> int:
+	if pitcher_id.is_empty():
+		return 0
+	var total := 0
+	for event in events:
+		if sequence_number >= 0 and event.sequence_number > sequence_number:
+			continue
+		var event_type := str(event.details.get("event_type", event.event_type)).strip_edges().to_lower().replace(" ", "_").replace("-", "_")
+		if str(event.pitcher_id).strip_edges() == pitcher_id and event_type.begins_with("strikeout"):
+			total += 1
+	return total
+
+func _empty_to_null(value: Variant) -> Variant:
+	return null if str(value).strip_edges().is_empty() else value
+
+func _player_name_for_id(player_id: String) -> String:
+	if player_id.is_empty() or repository == null:
+		return ""
+	var player: Player = repository.find_entity_by_id(player_id, "players")
+	return player.display_name if player != null and not player.display_name.is_empty() else player_id
 
 func _on_roster_team_tab_changed(side: String) -> void:
 	event_summary_panel.set_selected_event_summary("Showing %s quick roster. Add Player will target this tab's team." % side.capitalize())
