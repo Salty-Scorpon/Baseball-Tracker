@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventKeyPanel.tscn" id="2_event_key_panel"]
+[ext_resource type="PackedScene" path="res://modes/game_entry/ui/TeamQuickRosterPanel.tscn" id="3_team_quick_roster_panel"]
 
 [node name="GameEntryMode" type="Control"]
 custom_minimum_size = Vector2(960, 540)
@@ -61,31 +62,10 @@ theme_override_constants/separation = 10
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="TeamQuickRosterPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
+[node name="TeamQuickRosterPanel" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox" instance=ExtResource("3_team_quick_roster_panel")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-
-[node name="RosterBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/TeamQuickRosterPanel"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="RosterLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/TeamQuickRosterPanel/RosterBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Home/Away Roster"
-
-[node name="RosterPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/TeamQuickRosterPanel/RosterBox"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-text = "Roster panel placeholder"
-autowrap_mode = 3
-
-[node name="AddPlayerButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Add Player"
 
 [node name="CenterDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
 unique_name_in_owner = true
