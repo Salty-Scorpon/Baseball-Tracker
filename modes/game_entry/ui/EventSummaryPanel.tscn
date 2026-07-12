@@ -1,0 +1,47 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://modes/game_entry/ui/EventSummaryPanel.gd" id="1_event_summary_panel"]
+
+[node name="EventSummaryPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 150)
+script = ExtResource("1_event_summary_panel")
+
+[node name="EventSummaryBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EventSummaryTitleLabel" type="Label" parent="EventSummaryBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Event Summary / Validation"
+
+[node name="PreviewLabel" type="Label" parent="EventSummaryBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "No active event. Choose an event button to begin scoring."
+autowrap_mode = 3
+
+[node name="ValidationList" type="VBoxContainer" parent="EventSummaryBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="ActionRow" type="HBoxContainer" parent="EventSummaryBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ConfirmButton" type="Button" parent="EventSummaryBox/ActionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Confirm"
+
+[node name="EditButton" type="Button" parent="EventSummaryBox/ActionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Edit"
+
+[node name="CancelButton" type="Button" parent="EventSummaryBox/ActionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel"

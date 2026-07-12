@@ -7,6 +7,7 @@ signal add_player_requested(team_id: String)
 const GameEntryStyle = preload("res://modes/game_entry/GameEntryStyle.gd")
 const SaveManagerScript = preload("res://data/saving/save_manager.gd")
 const SampleDataFactoryScript = preload("res://data/sample_data_factory.gd")
+const EventSummaryFormatterScript = preload("res://app/EventSummaryFormatter.gd")
 
 @onready var background: ColorRect = %Background
 @onready var left_dock: PanelContainer = %LeftDock
@@ -16,17 +17,15 @@ const SampleDataFactoryScript = preload("res://data/sample_data_factory.gd")
 @onready var team_quick_roster_panel: TeamQuickRosterPanel = %TeamQuickRosterPanel
 @onready var add_player_button: Button = %AddPlayerButton
 @onready var workspace_panel: WorkspacePanel = %WorkspacePanel
-@onready var event_summary_panel: PanelContainer = %EventSummaryPanel
+@onready var event_summary_panel: EventSummaryPanel = %EventSummaryPanel
 @onready var skinny_event_history_panel: PanelContainer = %SkinnyEventHistoryPanel
 @onready var compact_scoreboard_panel: PanelContainer = %CompactScoreboardPanel
 @onready var workspace_label: Label = %WorkspaceTitleLabel
-@onready var event_summary_label: Label = %EventSummaryLabel
 @onready var event_history_label: Label = %EventHistoryLabel
 @onready var scoreboard_label: Label = %ScoreboardLabel
 @onready var workspace_placeholder: Label = %WorkspaceContextLabel
 @onready var event_history_placeholder: Label = %EventHistoryPlaceholder
 @onready var scoreboard_placeholder: Label = %ScoreboardPlaceholder
-@onready var shell_status_label: Label = %ShellStatusLabel
 
 var repository: DataRepository
 var current_game: Game
@@ -40,6 +39,7 @@ var notes_field: TextEdit
 var validation_label: Label
 var duplicate_warning_label: Label
 var _pending_add_team_id := ""
+var _selected_event_id := ""
 
 func _ready() -> void:
 	_apply_style()
@@ -49,6 +49,9 @@ func _ready() -> void:
 	workspace_panel.event_selected.connect(_on_workspace_event_selected)
 	workspace_panel.event_edit_requested.connect(_on_workspace_event_edit_requested)
 	workspace_panel.event_creation_cancel_requested.connect(_on_workspace_event_creation_cancel_requested)
+	event_summary_panel.confirm_requested.connect(_on_event_summary_confirm_requested)
+	event_summary_panel.cancel_requested.connect(_on_event_summary_cancel_requested)
+	event_summary_panel.edit_requested.connect(_on_event_summary_edit_requested)
 	team_quick_roster_panel.roster_team_tab_changed.connect(_on_roster_team_tab_changed)
 	team_quick_roster_panel.player_selected.connect(_on_roster_player_selected)
 	team_quick_roster_panel.add_player_requested.connect(_on_roster_add_player_requested)
@@ -61,9 +64,9 @@ func _apply_style() -> void:
 		self,
 		background,
 		[left_dock, center_dock, right_dock],
-		[event_key_panel, team_quick_roster_panel, workspace_panel, event_summary_panel, skinny_event_history_panel, compact_scoreboard_panel],
-		[workspace_label, event_summary_label, event_history_label, scoreboard_label],
-		[workspace_placeholder, shell_status_label, event_history_placeholder, scoreboard_placeholder],
+		[event_key_panel, team_quick_roster_panel, workspace_panel, skinny_event_history_panel, compact_scoreboard_panel],
+		[workspace_label, event_history_label, scoreboard_label],
+		[workspace_placeholder, event_history_placeholder, scoreboard_placeholder],
 		[add_player_button]
 	)
 
@@ -89,7 +92,7 @@ func _refresh_game_context() -> void:
 		team_quick_roster_panel.set_home_roster([])
 		team_quick_roster_panel.set_away_roster([])
 		_update_add_player_button_state()
-		shell_status_label.text = "No game is loaded. Add Player is disabled until a game has home and away teams."
+		event_summary_panel.set_idle()
 		return
 	team_quick_roster_panel.set_team_ids(current_game.home_team_id, current_game.away_team_id)
 	team_quick_roster_panel.set_home_roster(_players_for_team(current_game.home_team_id))
@@ -99,6 +102,7 @@ func _refresh_game_context() -> void:
 	var away_team: Team = repository.find_entity_by_id(current_game.away_team_id, "teams")
 	workspace_panel.set_events(_events_for_current_game(), _event_log_context())
 	scoreboard_placeholder.text = "Game: %s vs %s\nStatus: %s" % [_team_name(away_team), _team_name(home_team), current_game.status]
+	event_summary_panel.set_idle()
 
 func _players_for_team(team_id: String) -> Array:
 	var output: Array = []
@@ -126,21 +130,45 @@ func _event_log_context() -> Dictionary:
 
 func _on_event_key_pressed(event_type: String) -> void:
 	workspace_panel.show_create_event_mode(event_type, _build_workspace_game_context())
-	shell_status_label.text = "Drafting event payload for: %s. Confirm/commit will be coordinated by GameEntryMode later." % event_type.replace("_", " ").capitalize()
+	event_summary_panel.set_preview_text("Drafting event payload for: %s." % event_type.replace("_", " ").capitalize())
+	event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Complete the event form, then review validation before confirming." }])
+	event_summary_panel.set_active(false)
 	event_key_selected.emit(event_type)
 
 func _on_workspace_event_payload_changed(payload: Dictionary) -> void:
-	shell_status_label.text = "Workspace payload changed for %s mode." % str(payload.get("mode", workspace_panel.get_current_mode())).replace("_", " ")
+	event_summary_panel.show_payload_preview(payload)
 
 func _on_workspace_event_selected(event_id: String) -> void:
-	shell_status_label.text = "Selected event %s in the narrative event log." % event_id
+	_selected_event_id = event_id
+	event_summary_panel.set_selected_event_summary(_summary_for_event(event_id))
 
 func _on_workspace_event_edit_requested(event_id: String) -> void:
 	workspace_panel.show_edit_event_mode(event_id, {"event_type": "groundout", "notes": "Placeholder event data."}, _build_workspace_game_context())
-	shell_status_label.text = "Editing requested for event %s. Real event lookup will be wired to the event log later." % event_id
+	event_summary_panel.set_preview_text("Editing event %s. Update fields in the workspace, then confirm from this panel." % event_id)
+	event_summary_panel.set_active(false)
 
 func _on_workspace_event_creation_cancel_requested() -> void:
-	shell_status_label.text = "Event draft cancelled. Returned to event review."
+	event_summary_panel.set_idle()
+
+func _summary_for_event(event_id: String) -> String:
+	for event in _events_for_current_game():
+		if event.id == event_id:
+			return EventSummaryFormatterScript.summarize(event)
+	return "Selected event %s. Event details will appear here when the saved event can be found." % event_id
+
+func _on_event_summary_confirm_requested() -> void:
+	event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Confirm requested. GameEntryMode will commit events in a later wiring pass." }])
+
+func _on_event_summary_cancel_requested() -> void:
+	workspace_panel.show_review_mode()
+	event_summary_panel.set_idle()
+
+func _on_event_summary_edit_requested() -> void:
+	var event_id := _selected_event_id
+	if event_id.is_empty():
+		event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Edit requested. Select a saved event from the narrative log to edit it." }])
+	else:
+		_on_workspace_event_edit_requested(event_id)
 
 func _build_workspace_game_context() -> Dictionary:
 	if current_game == null:
@@ -159,7 +187,7 @@ func _build_workspace_game_context() -> Dictionary:
 	}
 
 func _on_roster_team_tab_changed(side: String) -> void:
-	shell_status_label.text = "Showing %s quick roster. Add Player will target this tab's team." % side.capitalize()
+	event_summary_panel.set_selected_event_summary("Showing %s quick roster. Add Player will target this tab's team." % side.capitalize())
 	_update_add_player_button_state()
 
 func _update_add_player_button_state() -> void:
@@ -167,7 +195,7 @@ func _update_add_player_button_state() -> void:
 	add_player_button.text = "Add Player" if not add_player_button.disabled else "Add Player (select team)"
 
 func _on_roster_player_selected(player_id: String) -> void:
-	shell_status_label.text = "Selected roster player: %s" % player_id
+	event_summary_panel.set_selected_event_summary("Selected roster player: %s" % player_id)
 
 func _on_roster_add_player_requested(team_id: String) -> void:
 	_pending_add_team_id = team_id
@@ -248,11 +276,11 @@ func _on_add_player_confirmed() -> void:
 		"notes": notes_field.text,
 	})
 	if player == null:
-		shell_status_label.text = "Could not create player for team %s." % _pending_add_team_id
+		event_summary_panel.set_selected_event_summary("Could not create player for team %s." % _pending_add_team_id)
 		return
 	SaveManagerScript.save_project(repository)
 	_refresh_game_context()
-	shell_status_label.text = "Added #%s %s to %s roster." % [player.jersey_number, player.display_name, team_quick_roster_panel.get_selected_side().capitalize()]
+	event_summary_panel.set_selected_event_summary("Added #%s %s to %s roster." % [player.jersey_number, player.display_name, team_quick_roster_panel.get_selected_side().capitalize()])
 
 func _team_name(team: Team) -> String:
 	return team.name if team != null and not team.name.is_empty() else "Unknown Team"
