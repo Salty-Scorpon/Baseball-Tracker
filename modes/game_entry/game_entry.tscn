@@ -12,7 +12,18 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_game_entry")
 
+[node name="Background" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
 [node name="RootMarginContainer" type="MarginContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -33,136 +44,164 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 12
 
-[node name="LeftDock" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
+[node name="LeftDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.22
 size_flags_vertical = 3
+
+[node name="LeftDockBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock"]
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="EventKeyPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock"]
+[node name="EventKeyPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
+unique_name_in_owner = true
 layout_mode = 2
 
-[node name="EventKeyBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/EventKeyPanel"]
+[node name="EventKeyBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/EventKeyPanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="EventKeysLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/EventKeyPanel/EventKeyBox"]
+[node name="EventKeysLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/EventKeyPanel/EventKeyBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Event Keys"
 
-[node name="EventButtonsGrid" type="GridContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/EventKeyPanel/EventKeyBox"]
+[node name="EventButtonsGrid" type="GridContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/EventKeyPanel/EventKeyBox"]
 unique_name_in_owner = true
 layout_mode = 2
 columns = 2
 
-[node name="TeamQuickRosterPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock"]
+[node name="TeamQuickRosterPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="RosterBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/TeamQuickRosterPanel"]
+[node name="RosterBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/TeamQuickRosterPanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="RosterLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/TeamQuickRosterPanel/RosterBox"]
+[node name="RosterLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/TeamQuickRosterPanel/RosterBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Home/Away Roster"
 
-[node name="RosterPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/TeamQuickRosterPanel/RosterBox"]
+[node name="RosterPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/TeamQuickRosterPanel/RosterBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 text = "Roster panel placeholder"
 autowrap_mode = 3
 
-[node name="AddPlayerButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock"]
+[node name="AddPlayerButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Add Player"
 
-[node name="CenterDock" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
+[node name="CenterDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(420, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.58
 size_flags_vertical = 3
+
+[node name="CenterDockBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock"]
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="WorkspacePanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock"]
+[node name="WorkspacePanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="WorkspaceBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/WorkspacePanel"]
+[node name="WorkspaceBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="WorkspaceLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/WorkspacePanel/WorkspaceBox"]
+[node name="WorkspaceLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Workspace"
 
-[node name="WorkspacePlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/WorkspacePanel/WorkspaceBox"]
+[node name="WorkspacePlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 text = "Event log / event creation workspace placeholder"
 autowrap_mode = 3
 
-[node name="EventSummaryPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock"]
+[node name="EventSummaryPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
 
-[node name="EventSummaryBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/EventSummaryPanel"]
+[node name="EventSummaryBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/EventSummaryPanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="EventSummaryLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/EventSummaryPanel/EventSummaryBox"]
+[node name="EventSummaryLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/EventSummaryPanel/EventSummaryBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Event Summary / Validation"
 
-[node name="ShellStatusLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/EventSummaryPanel/EventSummaryBox"]
+[node name="ShellStatusLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/EventSummaryPanel/EventSummaryBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "No active event. Choose an event button to begin scoring."
 autowrap_mode = 3
 
-[node name="RightDock" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
+[node name="RightDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.2
 size_flags_vertical = 3
+
+[node name="RightDockBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock"]
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="SkinnyEventHistoryPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock"]
+[node name="SkinnyEventHistoryPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="EventHistoryBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/SkinnyEventHistoryPanel"]
+[node name="EventHistoryBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/SkinnyEventHistoryPanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="EventHistoryLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/SkinnyEventHistoryPanel/EventHistoryBox"]
+[node name="EventHistoryLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/SkinnyEventHistoryPanel/EventHistoryBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Event History"
 
-[node name="EventHistoryPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/SkinnyEventHistoryPanel/EventHistoryBox"]
+[node name="EventHistoryPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/SkinnyEventHistoryPanel/EventHistoryBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 text = "Skinny event navigator placeholder"
 autowrap_mode = 3
 
-[node name="CompactScoreboardPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock"]
+[node name="CompactScoreboardPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 
-[node name="ScoreboardBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/CompactScoreboardPanel"]
+[node name="ScoreboardBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/CompactScoreboardPanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="ScoreboardLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+[node name="ScoreboardLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Scoreboard"
 
-[node name="ScoreboardPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+[node name="ScoreboardPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Scoreboard snapshot placeholder"
 autowrap_mode = 3
