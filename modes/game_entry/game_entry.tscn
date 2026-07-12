@@ -1,11 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
-[ext_resource type="PackedScene" path="res://modes/game_entry/EventEntryPanel.tscn" id="2_event_entry"]
-[ext_resource type="PackedScene" path="res://modes/game_entry/widgets/ManualOverridePanel.tscn" id="3_manual_override"]
 
-[node name="GameEntry" type="Control"]
-visible = false
+[node name="GameEntryMode" type="Control"]
 custom_minimum_size = Vector2(960, 540)
 layout_mode = 3
 anchors_preset = 15
@@ -15,416 +12,196 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_game_entry")
 
-[node name="Root" type="VBoxContainer" parent="."]
-visible = false
+[node name="Background" type="ColorRect" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 10
+mouse_filter = 2
 
-[node name="Header" type="HBoxContainer" parent="Root"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="TitleLabel" type="Label" parent="Root/Header"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Game Entry"
-
-[node name="GamePicker" type="OptionButton" parent="Root/Header"]
+[node name="RootMarginContainer" type="MarginContainer" parent="."]
 unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
 
-[node name="BackButton" type="Button" parent="Root/Header"]
+[node name="MainVBox" type="VBoxContainer" parent="RootMarginContainer"]
 layout_mode = 2
-text = "Back"
+theme_override_constants/separation = 12
 
-[node name="DockWorkspace" type="HBoxContainer" parent="Root"]
+[node name="MainContentRow" type="HBoxContainer" parent="RootMarginContainer/MainVBox"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="LeftDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.22
+size_flags_vertical = 3
+
+[node name="LeftDockBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock"]
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="LeftDock" type="VBoxContainer" parent="Root/DockWorkspace"]
-custom_minimum_size = Vector2(220, 0)
+[node name="EventKeyPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="EventKeyBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/EventKeyPanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="EventKeyPanel" type="PanelContainer" parent="Root/DockWorkspace/LeftDock"]
-layout_mode = 2
-
-[node name="EventKeyBox" type="VBoxContainer" parent="Root/DockWorkspace/LeftDock/EventKeyPanel"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="EventButtonsLabel" type="Label" parent="Root/DockWorkspace/LeftDock/EventKeyPanel/EventKeyBox"]
-layout_mode = 2
-text = "Event Key"
-
-[node name="ShortcutLegendLabel" type="Label" parent="Root/DockWorkspace/LeftDock/EventKeyPanel/EventKeyBox"]
+[node name="EventKeysLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/EventKeyPanel/EventKeyBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Shortcuts: S Single • Enter Confirm • Esc Cancel • Ctrl+Z Undo • Ctrl+Y Redo"
-autowrap_mode = 3
+text = "Event Keys"
 
-[node name="EventButtonsGrid" type="GridContainer" parent="Root/DockWorkspace/LeftDock/EventKeyPanel/EventKeyBox"]
+[node name="EventButtonsGrid" type="GridContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/EventKeyPanel/EventKeyBox"]
 unique_name_in_owner = true
 layout_mode = 2
 columns = 2
 
-[node name="TeamQuickRosterPanel" type="PanelContainer" parent="Root/DockWorkspace/LeftDock"]
+[node name="TeamQuickRosterPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="TeamQuickRosterBox" type="VBoxContainer" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel"]
+[node name="RosterBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/TeamQuickRosterPanel"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
-[node name="TeamsLabel" type="Label" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
+[node name="RosterLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/TeamQuickRosterPanel/RosterBox"]
 unique_name_in_owner = true
 layout_mode = 2
-autowrap_mode = 3
+text = "Home/Away Roster"
 
-[node name="OffenseLabel" type="Label" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
+[node name="RosterPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/TeamQuickRosterPanel/RosterBox"]
 unique_name_in_owner = true
-layout_mode = 2
-text = "Offensive lineup"
-
-[node name="LineupScroll" type="ScrollContainer" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
-custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
 size_flags_vertical = 3
-
-[node name="LineupList" type="ItemList" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox/LineupScroll"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="CurrentBatterLabel" type="Label" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Current batter: —"
+text = "Roster panel placeholder"
 autowrap_mode = 3
 
-[node name="OnDeckLabel" type="Label" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "On deck: —"
-autowrap_mode = 3
-
-[node name="SetupLabel" type="Label" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
-layout_mode = 2
-text = "Setup / quick roster"
-
-[node name="AwayLineup" type="TextEdit" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 70)
-layout_mode = 2
-placeholder_text = "Away lineup, one player per line"
-
-[node name="HomeLineup" type="TextEdit" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 70)
-layout_mode = 2
-placeholder_text = "Home lineup, one player per line"
-
-[node name="PitcherGrid" type="GridContainer" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
-layout_mode = 2
-columns = 2
-
-[node name="AwayPitcher" type="OptionButton" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox/PitcherGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="HomePitcher" type="OptionButton" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox/PitcherGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="ApplySetupButton" type="Button" parent="Root/DockWorkspace/LeftDock/TeamQuickRosterPanel/TeamQuickRosterBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Confirm Lineups / Pitchers"
-
-[node name="AddPlayerButton" type="Button" parent="Root/DockWorkspace/LeftDock"]
+[node name="AddPlayerButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Add Player"
 
-[node name="CenterDock" type="VBoxContainer" parent="Root/DockWorkspace"]
+[node name="CenterDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(420, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.58
 size_flags_vertical = 3
+
+[node name="CenterDockBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock"]
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="WorkspacePanel" type="PanelContainer" parent="Root/DockWorkspace/CenterDock"]
+[node name="WorkspacePanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="WorkspaceBox" type="VBoxContainer" parent="Root/DockWorkspace/CenterDock/WorkspacePanel"]
+[node name="WorkspaceBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BasesLabel" type="Label" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox"]
+[node name="WorkspaceLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Bases"
+text = "Workspace"
 
-[node name="BaseDiamond" type="Label" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "      2B\n\n3B          1B\n\n      HP"
-
-[node name="EventEntryPanel" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox" instance=ExtResource("2_event_entry")]
+[node name="WorkspacePlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/WorkspacePanel/WorkspaceBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-
-[node name="LegacyEventGrid" type="GridContainer" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox"]
-layout_mode = 2
-columns = 3
-
-[node name="EventType" type="OptionButton" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-visible = false
-
-[node name="RunsSpin" type="SpinBox" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-max_value = 4.0
-prefix = "Runs "
-
-[node name="ManualOutsSpin" type="SpinBox" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-max_value = 3.0
-prefix = "Outs "
-
-[node name="RbiSpin" type="SpinBox" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-max_value = 4.0
-prefix = "RBI "
-
-[node name="Batter" type="OptionButton" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Pitcher" type="OptionButton" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox/LegacyEventGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Notes" type="LineEdit" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox"]
-unique_name_in_owner = true
-layout_mode = 2
-placeholder_text = "Scorer notes / manual explanation"
-
-[node name="ManualOverridePanel" parent="Root/DockWorkspace/CenterDock/WorkspacePanel/WorkspaceBox" instance=ExtResource("3_manual_override")]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="EventSummaryPanel" type="PanelContainer" parent="Root/DockWorkspace/CenterDock"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 110)
-
-[node name="SummaryBox" type="VBoxContainer" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="SummaryPreviewLabel" type="Label" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel/SummaryBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Choose an event button to preview the entry."
+text = "Event log / event creation workspace placeholder"
 autowrap_mode = 3
 
-[node name="PreviewButtons" type="HBoxContainer" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel/SummaryBox"]
-layout_mode = 2
-
-[node name="ConfirmEventButton" type="Button" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel/SummaryBox/PreviewButtons"]
+[node name="EventSummaryPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
-disabled = true
-text = "Confirm"
 
-[node name="EditEventButton" type="Button" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel/SummaryBox/PreviewButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-disabled = true
-text = "Edit"
-
-[node name="CancelEventButton" type="Button" parent="Root/DockWorkspace/CenterDock/EventSummaryPanel/SummaryBox/PreviewButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-disabled = true
-text = "Cancel"
-
-[node name="RightDock" type="VBoxContainer" parent="Root/DockWorkspace"]
-custom_minimum_size = Vector2(250, 0)
+[node name="EventSummaryBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/EventSummaryPanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="SkinnyEventHistoryPanel" type="PanelContainer" parent="Root/DockWorkspace/RightDock"]
+[node name="EventSummaryLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/EventSummaryPanel/EventSummaryBox"]
+unique_name_in_owner = true
 layout_mode = 2
+text = "Event Summary / Validation"
+
+[node name="ShellStatusLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/EventSummaryPanel/EventSummaryBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "No active event. Choose an event button to begin scoring."
+autowrap_mode = 3
+
+[node name="RightDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.2
 size_flags_vertical = 3
 
-[node name="HistoryBox" type="VBoxContainer" parent="Root/DockWorkspace/RightDock/SkinnyEventHistoryPanel"]
+[node name="RightDockBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 10
 
-[node name="HistoryLabel" type="Label" parent="Root/DockWorkspace/RightDock/SkinnyEventHistoryPanel/HistoryBox"]
-layout_mode = 2
-text = "Event history"
-
-[node name="History" type="ItemList" parent="Root/DockWorkspace/RightDock/SkinnyEventHistoryPanel/HistoryBox"]
+[node name="SkinnyEventHistoryPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CompactScoreboardPanel" type="PanelContainer" parent="Root/DockWorkspace/RightDock"]
+[node name="EventHistoryBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/SkinnyEventHistoryPanel"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 260)
+theme_override_constants/separation = 8
 
-[node name="ScoreboardBox" type="VBoxContainer" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel"]
+[node name="EventHistoryLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/SkinnyEventHistoryPanel/EventHistoryBox"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 6
+text = "Event History"
 
-[node name="ScoreboardTitle" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+[node name="EventHistoryPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/SkinnyEventHistoryPanel/EventHistoryBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "Skinny event navigator placeholder"
+autowrap_mode = 3
+
+[node name="CompactScoreboardPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+
+[node name="ScoreboardBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/CompactScoreboardPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ScoreboardLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/CompactScoreboardPanel/ScoreboardBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Scoreboard"
 
-[node name="ScoreLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
+[node name="ScoreboardPlaceholder" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/RightDock/RightDockBox/CompactScoreboardPanel/ScoreboardBox"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-text = "Score"
-autowrap_mode = 3
-
-[node name="InningLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Inning"
-
-[node name="HalfLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Half"
-
-[node name="OutsLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Outs"
-
-[node name="CountLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Count: —"
-
-[node name="DefenseLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Defensive team"
-autowrap_mode = 3
-
-[node name="CurrentPitcherLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Current pitcher: —"
-autowrap_mode = 3
-
-[node name="AlignmentLabel" type="Label" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Defensive alignment"
-
-[node name="DefenseList" type="ItemList" parent="Root/DockWorkspace/RightDock/CompactScoreboardPanel/ScoreboardBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 80)
-layout_mode = 2
-
-[node name="ActionButtons" type="HBoxContainer" parent="Root"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="AddEventButton" type="Button" parent="Root/ActionButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-visible = false
-text = "Add Event"
-
-[node name="UndoButton" type="Button" parent="Root/ActionButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Undo Last Event"
-
-[node name="RedoButton" type="Button" parent="Root/ActionButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-disabled = true
-text = "Redo Event"
-
-[node name="FinalizeButton" type="Button" parent="Root/ActionButtons"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Mark Final"
-
-[node name="StatusLabel" type="Label" parent="Root"]
-unique_name_in_owner = true
-layout_mode = 2
-autowrap_mode = 3
-
-[node name="AddPlayerPopup" type="PopupPanel" parent="."]
-visible = false
-unique_name_in_owner = true
-exclusive = false
-
-[node name="AddPlayerPanel" type="VBoxContainer" parent="AddPlayerPopup"]
-custom_minimum_size = Vector2(240, 0)
-layout_mode = 2
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 248.0
-offset_bottom = 210.0
-theme_override_constants/separation = 3
-
-[node name="AddPlayerTeam" type="OptionButton" parent="AddPlayerPopup/AddPlayerPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="AddPlayerFirstName" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-placeholder_text = "First name"
-
-[node name="AddPlayerLastName" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-placeholder_text = "Last/display name"
-
-[node name="AddPlayerJersey" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-placeholder_text = "Jersey #"
-
-[node name="AddPlayerPositions" type="LineEdit" parent="AddPlayerPopup/AddPlayerPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-placeholder_text = "Positions"
-
-[node name="AddPlayerToLineup" type="CheckBox" parent="AddPlayerPopup/AddPlayerPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-button_pressed = true
-text = "Add to lineup now"
-
-[node name="AddPlayerStatus" type="Label" parent="AddPlayerPopup/AddPlayerPanel"]
-unique_name_in_owner = true
-layout_mode = 2
+text = "Scoreboard snapshot placeholder"
 autowrap_mode = 3
