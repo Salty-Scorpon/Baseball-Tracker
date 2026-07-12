@@ -8,7 +8,9 @@ const GameEntryStyle = preload("res://modes/game_entry/GameEntryStyle.gd")
 const SaveManagerScript = preload("res://data/saving/save_manager.gd")
 const SampleDataFactoryScript = preload("res://data/sample_data_factory.gd")
 const EventSummaryFormatterScript = preload("res://app/EventSummaryFormatter.gd")
+const EventValidatorScript = preload("res://app/EventValidator.gd")
 const GameReplayScript = preload("res://data/game_replay.gd")
+const GameEventScript = preload("res://data/models/game_event.gd")
 
 @onready var background: ColorRect = %Background
 @onready var left_dock: PanelContainer = %LeftDock
@@ -38,6 +40,8 @@ var validation_label: Label
 var duplicate_warning_label: Label
 var _pending_add_team_id := ""
 var _selected_event_id := ""
+var _current_payload: Dictionary = {}
+var _current_validation_messages: Array = []
 
 func _ready() -> void:
 	_apply_style()
@@ -133,6 +137,8 @@ func _event_log_context() -> Dictionary:
 	return {"players_by_id": players_by_id}
 
 func _on_event_key_pressed(event_type: String) -> void:
+	_current_payload.clear()
+	_current_validation_messages.clear()
 	workspace_panel.show_create_event_mode(event_type, _build_workspace_game_context())
 	event_summary_panel.set_preview_text("Drafting event payload for: %s." % event_type.replace("_", " ").capitalize())
 	event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Complete the event form, then review validation before confirming." }])
@@ -140,7 +146,12 @@ func _on_event_key_pressed(event_type: String) -> void:
 	event_key_selected.emit(event_type)
 
 func _on_workspace_event_payload_changed(payload: Dictionary) -> void:
-	event_summary_panel.show_payload_preview(payload)
+	_current_payload = payload.duplicate(true)
+	var preview := EventSummaryFormatterScript.summarize(_current_payload)
+	_current_validation_messages = EventValidatorScript.validate_event_payload(_current_payload)
+	event_summary_panel.set_preview_text(preview)
+	event_summary_panel.set_validation_messages(_current_validation_messages)
+	event_summary_panel.set_active(not EventValidatorScript.has_errors(_current_validation_messages))
 
 func _on_skinny_event_history_selected(event_id: String) -> void:
 	_selected_event_id = event_id
@@ -161,6 +172,8 @@ func _on_workspace_event_edit_requested(event_id: String) -> void:
 	event_summary_panel.set_active(false)
 
 func _on_workspace_event_creation_cancel_requested() -> void:
+	_current_payload.clear()
+	_current_validation_messages.clear()
 	event_summary_panel.set_idle()
 
 func _summary_for_event(event_id: String) -> String:
@@ -170,11 +183,39 @@ func _summary_for_event(event_id: String) -> String:
 	return "Selected event %s. Event details will appear here when the saved event can be found." % event_id
 
 func _on_event_summary_confirm_requested() -> void:
-	event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Confirm requested. GameEntryMode will commit events in a later wiring pass." }])
+	if current_game == null:
+		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "No current game is available." }])
+		return
+	if _current_payload.is_empty():
+		_current_payload = workspace_panel.get_event_payload()
+	_current_validation_messages = EventValidatorScript.validate_event_payload(_current_payload)
+	if EventValidatorScript.has_errors(_current_validation_messages):
+		event_summary_panel.set_validation_messages(_current_validation_messages)
+		event_summary_panel.set_active(false)
+		return
+	var event := _game_event_from_payload(_current_payload)
+	if not repository.add_game_event(event):
+		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not append the event to the current game log." }])
+		return
+	SaveManagerScript.save_project(repository)
+	_selected_event_id = event.id
+	_current_payload.clear()
+	_current_validation_messages.clear()
+	_refresh_game_context()
+	workspace_panel.show_review_mode()
+	workspace_panel.select_event(event.id)
+	skinny_event_history_panel.select_event(event.id)
+	event_summary_panel.set_selected_event_summary(_summary_for_event(event.id))
+	compact_scoreboard_panel.set_state(_scoreboard_state_for_event(event.id))
 
 func _on_event_summary_cancel_requested() -> void:
+	_current_payload.clear()
+	_current_validation_messages.clear()
 	workspace_panel.show_review_mode()
-	event_summary_panel.set_idle()
+	if _selected_event_id.is_empty():
+		event_summary_panel.set_idle()
+	else:
+		event_summary_panel.set_selected_event_summary(_summary_for_event(_selected_event_id))
 
 func _on_event_summary_edit_requested() -> void:
 	var event_id := _selected_event_id
@@ -186,18 +227,104 @@ func _on_event_summary_edit_requested() -> void:
 func _build_workspace_game_context() -> Dictionary:
 	if current_game == null:
 		return {}
+	var events := _events_for_current_game()
+	var state := _scoreboard_state_for_events(events)
+	var half := str(state.get("half", "Top"))
+	var offense_team_id := current_game.away_team_id if half.to_lower() == "top" else current_game.home_team_id
+	var defense_team_id := current_game.home_team_id if half.to_lower() == "top" else current_game.away_team_id
 	return {
 		"game_id": current_game.id,
-		"inning": 1,
-		"half": "Top",
-		"outs": 0,
+		"inning": int(state.get("inning", 1)),
+		"half": half,
+		"outs": int(state.get("outs", 0)),
+		"base_state": state.get("base_state", {}),
+		"score": {"away": int(state.get("away_score", 0)), "home": int(state.get("home_score", 0))},
 		"home_team_id": current_game.home_team_id,
 		"away_team_id": current_game.away_team_id,
-		"offense_team_id": current_game.away_team_id,
-		"defense_team_id": current_game.home_team_id,
-		"batter_id": "",
-		"pitcher_id": "",
+		"offense_team_id": offense_team_id,
+		"defense_team_id": defense_team_id,
+		"batter_id": _first_player_id_for_team(offense_team_id),
+		"pitcher_id": _first_player_id_for_team(defense_team_id),
 	}
+
+func _game_event_from_payload(payload: Dictionary) -> GameEvent:
+	var events := _events_for_current_game()
+	var next_sequence := events.size() + 1
+	for existing in events:
+		next_sequence = max(next_sequence, existing.sequence_number + 1)
+	var event_id := _next_game_event_id()
+	var event := GameEventScript.new(event_id, current_game.id)
+	var event_type := _normalize_event_type(str(payload.get("event_type", "manual_correction")))
+	var details := Dictionary(payload.get("details", {})).duplicate(true) if payload.get("details", {}) is Dictionary else {}
+	details["event_type"] = event_type
+	event.sequence = next_sequence
+	event.sequence_number = next_sequence
+	event.inning = int(payload.get("inning", 1))
+	event.half = str(payload.get("half", payload.get("half_inning", "top"))).to_lower()
+	event.half_inning = event.half
+	event.event_type = _legacy_event_label(event_type)
+	event.event_group = str(details.get("template", {}).get("category", "")) if details.get("template", {}) is Dictionary else ""
+	event.batter_id = str(payload.get("batter_id", ""))
+	event.pitcher_id = str(payload.get("pitcher_id", ""))
+	event.offense_team_id = str(payload.get("offense_team_id", ""))
+	event.offensive_team_id = event.offense_team_id
+	event.defense_team_id = str(payload.get("defense_team_id", ""))
+	event.defensive_team_id = event.defense_team_id
+	event.outs_before = int(payload.get("outs_before", 0))
+	event.outs_added = _placeholder_outs_added(event_type, details)
+	event.outs_after = event.outs_before + event.outs_added
+	event.base_state_before = Dictionary(payload.get("base_state_before", {})).duplicate(true) if payload.get("base_state_before", {}) is Dictionary else {}
+	event.score_before = Dictionary(payload.get("score_before", {})).duplicate(true) if payload.get("score_before", {}) is Dictionary else {}
+	event.runs_scored = _placeholder_runs_scored(event_type, details)
+	event.rbi_count = event.runs_scored
+	event.details = details
+	event.manual_overrides = Dictionary(details.get("manual_overrides", payload.get("manual_overrides", {}))).duplicate(true) if details.get("manual_overrides", payload.get("manual_overrides", {})) is Dictionary else {}
+	event.manual_override = not event.manual_overrides.is_empty()
+	event.notes = str(payload.get("notes", details.get("notes", ""))).strip_edges()
+	event.result = _legacy_event_label(event_type)
+	return event
+
+func _next_game_event_id() -> String:
+	var index := repository.game_events.size() + 1 if repository != null else 1
+	while repository != null and repository.find_entity_by_id("event_%03d" % index, "game_events") != null:
+		index += 1
+	return "event_%03d" % index
+
+func _normalize_event_type(value: String) -> String:
+	return value.strip_edges().to_lower().replace(" ", "_").replace("-", "_")
+
+func _legacy_event_label(event_type: String) -> String:
+	var labels := {"single":"Single", "double":"Double", "triple":"Triple", "home_run":"Home run", "walk":"Walk", "hit_by_pitch":"Hit by pitch", "reached_on_error":"Reached on error", "fielders_choice":"Fielder's choice", "stolen_base":"Stolen base"}
+	return str(labels.get(event_type, event_type.replace("_", " ").capitalize()))
+
+func _placeholder_outs_added(event_type: String, details: Dictionary) -> int:
+	if details.has("out_assignments") and details["out_assignments"] is Array:
+		return min(3, details["out_assignments"].size())
+	if ["strikeout", "groundout", "flyout", "sacrifice_bunt", "sacrifice_fly", "caught_stealing"].has(event_type):
+		return 1
+	if event_type == "double_play":
+		return 2
+	if event_type == "triple_play":
+		return 3
+	return 0
+
+func _placeholder_runs_scored(event_type: String, details: Dictionary) -> int:
+	var advancements := details.get("runner_advancements", [])
+	if advancements is Array:
+		var total := 0
+		for advancement in advancements:
+			if advancement is Dictionary and (bool(advancement.get("scored", false)) or str(advancement.get("end_base", "")).to_upper() == "SCORED"):
+				total += 1
+		return total
+	return 0
+
+func _first_player_id_for_team(team_id: String) -> String:
+	if repository == null or team_id.is_empty():
+		return ""
+	for player in repository.players:
+		if player.team_id == team_id:
+			return player.id
+	return ""
 
 func _scoreboard_state_for_event(event_id: String) -> Dictionary:
 	var events := _events_for_current_game()
