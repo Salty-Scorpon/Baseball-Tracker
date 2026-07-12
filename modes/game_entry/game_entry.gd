@@ -45,6 +45,22 @@ var _current_validation_messages: Array = []
 var _editing_event_id := ""
 var _syncing_event_selection := false
 
+const SHORTCUT_EVENT_TYPES := {
+	KEY_S: "single",
+	KEY_D: "double",
+	KEY_T: "triple",
+	KEY_H: "home_run",
+	KEY_W: "walk",
+	KEY_K: "strikeout",
+	KEY_G: "groundout",
+	KEY_F: "flyout",
+	KEY_E: "reached_on_error",
+	KEY_C: "fielders_choice",
+	KEY_B: "stolen_base",
+	KEY_P: "pitching_change",
+	KEY_U: "substitution",
+}
+
 func _ready() -> void:
 	_apply_style()
 	_build_add_player_dialog()
@@ -63,6 +79,55 @@ func _ready() -> void:
 	add_player_button.pressed.connect(team_quick_roster_panel.request_add_player)
 	_load_repository()
 	_refresh_game_context()
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	if _is_text_entry_focused():
+		return
+	if key_event.ctrl_pressed and not key_event.alt_pressed and not key_event.shift_pressed:
+		match key_event.keycode:
+			KEY_Z:
+				undo_last_event()
+				get_viewport().set_input_as_handled()
+			KEY_Y:
+				redo_last_event()
+				get_viewport().set_input_as_handled()
+		return
+	if key_event.ctrl_pressed or key_event.alt_pressed or key_event.meta_pressed:
+		return
+	match key_event.keycode:
+		KEY_ENTER, KEY_KP_ENTER:
+			if event_summary_panel.can_confirm_event():
+				_on_event_summary_confirm_requested()
+				get_viewport().set_input_as_handled()
+		KEY_ESCAPE:
+			if event_summary_panel.has_active_event():
+				_on_event_summary_cancel_requested()
+				get_viewport().set_input_as_handled()
+		_:
+			if SHORTCUT_EVENT_TYPES.has(key_event.keycode):
+				if event_key_panel.activate_event_type(str(SHORTCUT_EVENT_TYPES[key_event.keycode])):
+					get_viewport().set_input_as_handled()
+
+func _is_text_entry_focused() -> bool:
+	var focus_owner := get_viewport().gui_get_focus_owner()
+	if focus_owner == null:
+		return false
+	return focus_owner is LineEdit or focus_owner is TextEdit
+
+func undo_last_event() -> void:
+	# TODO: Replace this safe placeholder with event-log undo once the new docked
+	# workflow exposes command history for event commits and edits.
+	event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Undo is not wired to event history yet. TODO: connect Ctrl+Z to event-log undo." }])
+
+func redo_last_event() -> void:
+	# TODO: Replace this safe placeholder with redo-stack handling when undo is
+	# implemented for the new docked Game Entry coordinator.
+	event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Redo is not wired to event history yet. TODO: connect Ctrl+Y to event-log redo." }])
 
 func _apply_style() -> void:
 	GameEntryStyle.apply_shell_style(
