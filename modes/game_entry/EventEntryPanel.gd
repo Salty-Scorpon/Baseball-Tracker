@@ -87,6 +87,7 @@ func open_for_event(event_type: String, game_context: Dictionary) -> void:
 	_update_validation_label()
 
 func get_event_payload() -> Dictionary:
+	var manual_overrides := _get_widget_data(EventTemplateRegistry.WIDGET_MANUAL_OVERRIDES)
 	var details = {
 		"template": _template.duplicate(true),
 		"count": _get_widget_data(EventTemplateRegistry.WIDGET_COUNT_ENTRY),
@@ -94,7 +95,7 @@ func get_event_payload() -> Dictionary:
 		"fielder_assignment": _get_widget_data(EventTemplateRegistry.WIDGET_BASIC_FIELDER_ASSIGNMENT),
 		"errors": _get_widget_data(EventTemplateRegistry.WIDGET_ERROR_DETAILS),
 		"event_details": _collect_detail_data(),
-		"manual_overrides": _get_widget_data(EventTemplateRegistry.WIDGET_MANUAL_OVERRIDES),
+		"manual_overrides": manual_overrides,
 		"pitching_change": _get_widget_data(EventTemplateRegistry.WIDGET_PITCHING_CHANGE),
 		"substitution": _get_widget_data(EventTemplateRegistry.WIDGET_SUBSTITUTION),
 		"defensive_change": _get_widget_data(EventTemplateRegistry.WIDGET_DEFENSIVE_CHANGE_WIZARD),
@@ -104,7 +105,8 @@ func get_event_payload() -> Dictionary:
 		"event_type": _event_type,
 		"game_id": _game_context.get("game_id", ""),
 		"inning": _game_context.get("inning", null),
-		"half": _game_context.get("half", ""),
+		"half": _game_context.get("half", _game_context.get("half_inning", "")),
+		"half_inning": _game_context.get("half_inning", _game_context.get("half", "")),
 		"offense_team_id": _game_context.get("offense_team_id", ""),
 		"defense_team_id": _game_context.get("defense_team_id", ""),
 		"batter_id": _game_context.get("batter_id", ""),
@@ -112,6 +114,7 @@ func get_event_payload() -> Dictionary:
 		"base_state_before": _as_dictionary(_game_context.get("base_state", {})).duplicate(true),
 		"outs_before": _game_context.get("outs", 0),
 		"score_before": _as_dictionary(_game_context.get("score", {})).duplicate(true),
+		"manual_overrides": manual_overrides,
 		"details": details,
 	}
 

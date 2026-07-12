@@ -236,6 +236,7 @@ func _build_workspace_game_context() -> Dictionary:
 		"game_id": current_game.id,
 		"inning": int(state.get("inning", 1)),
 		"half": half,
+		"half_inning": half,
 		"outs": int(state.get("outs", 0)),
 		"base_state": state.get("base_state", {}),
 		"score": {"away": int(state.get("away_score", 0)), "home": int(state.get("home_score", 0))},
@@ -245,6 +246,8 @@ func _build_workspace_game_context() -> Dictionary:
 		"defense_team_id": defense_team_id,
 		"batter_id": _first_player_id_for_team(offense_team_id),
 		"pitcher_id": _first_player_id_for_team(defense_team_id),
+		"offensive_lineup": _players_for_team(offense_team_id),
+		"defensive_players": _players_for_team(defense_team_id),
 	}
 
 func _game_event_from_payload(payload: Dictionary) -> GameEvent:
@@ -263,7 +266,7 @@ func _game_event_from_payload(payload: Dictionary) -> GameEvent:
 	event.half = str(payload.get("half", payload.get("half_inning", "top"))).to_lower()
 	event.half_inning = event.half
 	event.event_type = _legacy_event_label(event_type)
-	event.event_group = str(details.get("template", {}).get("category", "")) if details.get("template", {}) is Dictionary else ""
+	event.event_group = str(details.get("template", {}).get("event_group", "")) if details.get("template", {}) is Dictionary else ""
 	event.batter_id = str(payload.get("batter_id", ""))
 	event.pitcher_id = str(payload.get("pitcher_id", ""))
 	event.offense_team_id = str(payload.get("offense_team_id", ""))
