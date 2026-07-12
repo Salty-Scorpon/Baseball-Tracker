@@ -9,19 +9,19 @@ const PlayerModel = preload("res://data/models/player.gd")
 const GameReplay = preload("res://data/game_replay.gd")
 
 const EVENT_BUTTONS = [
-	{"label": "1B", "event_type": "single", "legacy_type": "Single", "wired": true},
-	{"label": "2B", "event_type": "double", "legacy_type": "Double", "wired": true},
-	{"label": "3B", "event_type": "triple", "legacy_type": "Triple", "wired": true},
-	{"label": "HR", "event_type": "home_run", "legacy_type": "Home run", "wired": true},
-	{"label": "BB", "event_type": "walk", "legacy_type": "Walk", "wired": true},
+	{"label": "1B", "event_type": "single", "legacy_type": "Single", "wired": true, "shortcut": "S"},
+	{"label": "2B", "event_type": "double", "legacy_type": "Double", "wired": true, "shortcut": "D"},
+	{"label": "3B", "event_type": "triple", "legacy_type": "Triple", "wired": true, "shortcut": "T"},
+	{"label": "HR", "event_type": "home_run", "legacy_type": "Home run", "wired": true, "shortcut": "H"},
+	{"label": "BB", "event_type": "walk", "legacy_type": "Walk", "wired": true, "shortcut": "W"},
 	{"label": "HBP", "event_type": "hit_by_pitch", "legacy_type": "Hit by pitch", "wired": true},
-	{"label": "K", "event_type": "strikeout", "legacy_type": "Strikeout", "wired": true},
-	{"label": "GO", "event_type": "groundout", "legacy_type": "Groundout", "wired": true},
-	{"label": "FO", "event_type": "flyout", "legacy_type": "Flyout", "wired": true},
-	{"label": "E", "event_type": "reached_on_error", "legacy_type": "Reached on error", "wired": false},
-	{"label": "FC", "event_type": "fielders_choice", "legacy_type": "Fielder's choice", "wired": false},
+	{"label": "K", "event_type": "strikeout", "legacy_type": "Strikeout", "wired": true, "shortcut": "K"},
+	{"label": "GO", "event_type": "groundout", "legacy_type": "Groundout", "wired": true, "shortcut": "G"},
+	{"label": "FO", "event_type": "flyout", "legacy_type": "Flyout", "wired": true, "shortcut": "F"},
+	{"label": "E", "event_type": "reached_on_error", "legacy_type": "Reached on error", "wired": true, "shortcut": "E"},
+	{"label": "FC", "event_type": "fielders_choice", "legacy_type": "Fielder's choice", "wired": true, "shortcut": "C"},
 	{"label": "SAC", "event_type": "sacrifice", "legacy_type": "Sacrifice bunt", "wired": false},
-	{"label": "SB", "event_type": "stolen_base", "legacy_type": "Stolen base", "wired": false},
+	{"label": "SB", "event_type": "stolen_base", "legacy_type": "Stolen base", "wired": true, "shortcut": "B"},
 	{"label": "CS", "event_type": "caught_stealing", "legacy_type": "Caught stealing", "wired": false},
 	{"label": "DP", "event_type": "double_play", "legacy_type": "Double play", "wired": true},
 	{"label": "TP", "event_type": "triple_play", "legacy_type": "Triple play", "wired": true},
@@ -29,10 +29,10 @@ const EVENT_BUTTONS = [
 	{"label": "INT", "event_type": "interference", "legacy_type": "Interference", "wired": true},
 	{"label": "PO", "event_type": "pickoff", "legacy_type": "Pickoff", "wired": true},
 	{"label": "POE", "event_type": "pickoff_error", "legacy_type": "Pickoff error", "wired": true},
-	{"label": "Pitching Change", "event_type": "pitching_change", "legacy_type": "Pitching change", "wired": true},
+	{"label": "Pitching Change", "event_type": "pitching_change", "legacy_type": "Pitching change", "wired": true, "shortcut": "P"},
 	{"label": "PH", "event_type": "pinch_hitter", "legacy_type": "Pinch hitter", "wired": true},
 	{"label": "PR", "event_type": "pinch_runner", "legacy_type": "Pinch runner", "wired": true},
-	{"label": "Def Sub", "event_type": "defensive_substitution", "legacy_type": "Defensive substitution", "wired": true},
+	{"label": "Def Sub", "event_type": "defensive_substitution", "legacy_type": "Defensive substitution", "wired": true, "shortcut": "U"},
 	{"label": "Def Group", "event_type": "batch_defensive_change", "legacy_type": "Batch defensive change", "wired": true},
 	{"label": "Pos Chg", "event_type": "position_change", "legacy_type": "Position change", "wired": true},
 	{"label": "BO Rep", "event_type": "batting_order_replacement", "legacy_type": "Batting order replacement", "wired": true},
@@ -89,6 +89,8 @@ const OUT_EVENTS = {"Strikeout": 1, "Groundout": 1, "Flyout": 1, "Sacrifice bunt
 @onready var cancel_event_button: Button = %CancelEventButton
 @onready var add_event_button: Button = %AddEventButton
 @onready var undo_button: Button = %UndoButton
+@onready var redo_button: Button = %RedoButton
+@onready var shortcut_legend_label: Label = %ShortcutLegendLabel
 @onready var finalize_button: Button = %FinalizeButton
 @onready var history: ItemList = %History
 @onready var status_label: Label = %StatusLabel
@@ -105,6 +107,8 @@ var starting_pitchers = {"away": "", "home": ""}
 var current_pitchers = {"away": "", "home": ""}
 var pending_event_button: Dictionary = {}
 var pending_payload: Dictionary = {}
+var redo_stack: Array[GameEvent] = []
+var shortcut_configs: Dictionary = {}
 
 func _ready() -> void:
 	_load_repository()
@@ -112,6 +116,7 @@ func _ready() -> void:
 	_populate_static_options()
 	_populate_games()
 	_build_event_buttons()
+	_build_shortcut_legend()
 	_select_game(0)
 
 func _connect_signals() -> void:
@@ -121,11 +126,53 @@ func _connect_signals() -> void:
 	add_player_button.pressed.connect(_add_player_to_current_game_team)
 	add_event_button.pressed.connect(_add_event)
 	undo_button.pressed.connect(_undo_last_event)
+	redo_button.pressed.connect(_redo_last_event)
 	finalize_button.pressed.connect(_finalize_game)
 	confirm_event_button.pressed.connect(_confirm_pending_event)
 	edit_event_button.pressed.connect(_refresh_pending_preview)
 	cancel_event_button.pressed.connect(_cancel_pending_event)
 	event_type.item_selected.connect(func(_i: int) -> void: _sync_default_outs())
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey) or not event.pressed or event.echo:
+		return
+	var key_event := event as InputEventKey
+	if _is_text_entry_focused():
+		return
+	if key_event.ctrl_pressed and key_event.keycode == KEY_Z:
+		_undo_last_event()
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.ctrl_pressed and key_event.keycode == KEY_Y:
+		_redo_last_event()
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode == KEY_ENTER or key_event.keycode == KEY_KP_ENTER:
+		_confirm_pending_event()
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode == KEY_ESCAPE:
+		_cancel_pending_event()
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.ctrl_pressed or key_event.alt_pressed or key_event.meta_pressed:
+		return
+	var shortcut := OS.get_keycode_string(key_event.keycode).to_upper()
+	if shortcut_configs.has(shortcut):
+		_open_event_template(shortcut_configs[shortcut])
+		get_viewport().set_input_as_handled()
+
+func _is_text_entry_focused() -> bool:
+	var focused := get_viewport().gui_get_focus_owner()
+	return focused is LineEdit or focused is TextEdit or focused is SpinBox
+
+func _event_button_tooltip(config: Dictionary, shortcut: String) -> String:
+	var label := str(config["legacy_type"]) if bool(config["wired"]) else "%s not implemented yet" % str(config["legacy_type"])
+	return label if shortcut.is_empty() else "%s (%s)" % [label, shortcut]
+
+func _build_shortcut_legend() -> void:
+	shortcut_legend_label.text = "Shortcuts: S Single • D Double • T Triple • H HR • W Walk • K Strikeout • G Groundout • F Flyout • E Error • C FC • B SB • P Pitching • U Substitution • Enter Confirm • Esc Cancel • Ctrl+Z Undo • Ctrl+Y Redo"
 
 func _load_repository() -> void:
 	repository = SaveManagerScript.load_project()
@@ -147,14 +194,18 @@ func _populate_static_options() -> void:
 
 
 func _build_event_buttons() -> void:
+	shortcut_configs.clear()
 	for child in event_buttons_grid.get_children():
 		child.queue_free()
 	for config in EVENT_BUTTONS:
 		var button = Button.new()
 		button.text = str(config["label"])
-		button.tooltip_text = str(config["legacy_type"]) if bool(config["wired"]) else "%s not implemented yet" % str(config["legacy_type"])
+		var shortcut = str(config.get("shortcut", ""))
+		button.tooltip_text = _event_button_tooltip(config, shortcut)
 		button.disabled = not bool(config["wired"])
 		if bool(config["wired"]):
+			if not shortcut.is_empty():
+				shortcut_configs[shortcut] = config
 			button.pressed.connect(func(c = config) -> void: _open_event_template(c))
 		event_buttons_grid.add_child(button)
 
@@ -229,6 +280,7 @@ func _select_game(index: int) -> void:
 		_refresh_add_player_team_options()
 		return
 	selected_game = repository.find_entity_by_id(str(game_picker.get_item_metadata(index)), "games")
+	redo_stack.clear()
 	_build_setup_from_game()
 	_refresh_add_player_team_options()
 	_replay_events()
@@ -391,6 +443,8 @@ func _add_event_from_pending() -> void:
 		event.manual_overrides = manual_override_panel.get_overrides()
 	event.manual_override = _is_administrative_event_type(str(event.details["event_type"])) or type == "Manual correction" or event.runs_scored > 0 or not event.notes.is_empty() or manual_override_panel.has_active_overrides()
 	repository.add_game_event(event)
+	redo_stack.clear()
+	_update_undo_redo_buttons()
 	_replay_events(true)
 	selected_game.status = "In Progress"
 	SaveManagerScript.save_project(repository)
@@ -414,10 +468,28 @@ func _undo_last_event() -> void:
 	var event: GameEvent = events[-1]
 	repository.game_events.erase(event)
 	selected_game.event_ids.erase(event.id)
+	redo_stack.append(event)
 	_replay_events()
 	SaveManagerScript.save_project(repository)
 	_refresh_all()
 	status_label.text = "Removed the most recent event and replayed game state."
+
+
+func _redo_last_event() -> void:
+	if selected_game == null or redo_stack.is_empty():
+		return
+	var event: GameEvent = redo_stack.pop_back()
+	repository.add_game_event(event)
+	_replay_events()
+	SaveManagerScript.save_project(repository)
+	_refresh_all()
+	status_label.text = "Restored the most recently undone event and replayed game state."
+
+func _update_undo_redo_buttons() -> void:
+	if is_instance_valid(undo_button):
+		undo_button.disabled = selected_game == null or _game_events().is_empty()
+	if is_instance_valid(redo_button):
+		redo_button.disabled = selected_game == null or redo_stack.is_empty()
 
 func _replay_events(mutate_events: bool = false) -> void:
 	lineups["away"] = _text_lines(away_lineup.text)
@@ -431,6 +503,7 @@ func _refresh_all() -> void:
 	_refresh_state_labels()
 	_refresh_lineup_and_defense()
 	_refresh_history()
+	_update_undo_redo_buttons()
 
 func _refresh_matchup_options() -> void:
 	var offensive_side = "away" if half_inning == "top" else "home"

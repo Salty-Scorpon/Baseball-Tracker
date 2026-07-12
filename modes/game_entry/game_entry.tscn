@@ -323,6 +323,12 @@ size_flags_horizontal = 3
 layout_mode = 2
 text = "Event buttons"
 
+[node name="ShortcutLegendLabel" type="Label" parent="Root/Cockpit/BottomPanel/EventButtonPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Shortcuts: S Single • Enter Confirm • Esc Cancel • Ctrl+Z Undo • Ctrl+Y Redo"
+autowrap_mode = 3
+
 [node name="EventButtonsGrid" type="GridContainer" parent="Root/Cockpit/BottomPanel/EventButtonPanel"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -340,6 +346,11 @@ text = "Add Event"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Undo Last Event"
+[node name="RedoButton" type="Button" parent="Root/Cockpit/BottomPanel/EventButtonPanel/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Redo Event"
 [node name="FinalizeButton" type="Button" parent="Root/Cockpit/BottomPanel/EventButtonPanel/ActionButtons"]
 unique_name_in_owner = true
 layout_mode = 2
