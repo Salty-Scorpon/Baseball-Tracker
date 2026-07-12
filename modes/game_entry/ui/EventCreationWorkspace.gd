@@ -9,7 +9,6 @@ signal payload_changed(payload: Dictionary)
 signal cancel_requested()
 
 const DynamicEventEntryPanelScene = preload("res://modes/game_entry/EventEntryPanel.tscn")
-const SubstitutionWidgetScene = preload("res://modes/game_entry/widgets/SubstitutionWidget.tscn")
 
 const BATTER_PITCHER_EVENTS := {
 	"single": true, "double": true, "triple": true, "home_run": true,
@@ -38,7 +37,6 @@ var _event_id := ""
 var _game_context: Dictionary = {}
 var _existing_event_data: Dictionary = {}
 var _entry_panel: DynamicEventEntryPanel
-var _special_widget: Control
 var _is_setting_payload := false
 
 func _ready() -> void:
@@ -66,20 +64,15 @@ func open_for_existing_event(event_data: Dictionary, game_context: Dictionary) -
 	_emit_payload_changed_deferred()
 
 func get_event_payload() -> Dictionary:
-	var child_payload: Dictionary = {}
+	var child_payload: Dictionary = _base_payload()
 	if is_instance_valid(_entry_panel):
-		child_payload = _entry_panel.get_event_payload()
-	elif is_instance_valid(_special_widget) and _special_widget.has_method("get_substitution_data"):
-		child_payload = _base_payload()
-		child_payload["details"] = {"substitution": _special_widget.get_substitution_data()}
-	var payload := child_payload.duplicate(true)
+		child_payload.merge(_entry_panel.get_event_payload(), true)
+	var payload := _normalize_payload_shape(child_payload)
 	payload["mode"] = _mode
 	payload["event_id"] = _event_id
 	payload["event_type"] = _event_type
 	payload["game_context"] = _game_context.duplicate(true)
 	payload["notes"] = notes_edit.text.strip_edges()
-	if not payload.has("details"):
-		payload["details"] = {}
 	payload["details"]["notes"] = notes_edit.text.strip_edges()
 	return payload
 
@@ -118,8 +111,6 @@ func validate_local() -> Array:
 		issues.append("Select an event type.")
 	if is_instance_valid(_entry_panel) and _entry_panel.has_method("validate"):
 		issues.append_array(_entry_panel.validate())
-	if is_instance_valid(_special_widget) and _special_widget.has_method("validate"):
-		issues.append_array(_special_widget.validate())
 	validation_label.text = "No local validation issues." if issues.is_empty() else "\n".join(issues)
 	return issues
 
@@ -133,21 +124,14 @@ func _build_workspace() -> void:
 	pitcher_value_label.text = _player_label(str(_game_context.get("pitcher_id", "")), "Current pitcher")
 	_clear_form_sections()
 	form_sections_box.add_child(_section_label("Event template sections below use existing widgets when available. Unimplemented advanced fields are clearly labeled placeholders."))
-	if _event_type == "substitution":
-		_special_widget = SubstitutionWidgetScene.instantiate()
-		form_sections_box.add_child(_special_widget)
-		_special_widget.setup_context(_game_context)
-		call_deferred("_connect_payload_signals", _special_widget)
-	else:
-		_entry_panel = DynamicEventEntryPanelScene.instantiate()
-		form_sections_box.add_child(_entry_panel)
-		_entry_panel.open_for_event(_event_type, _game_context)
-		call_deferred("_connect_payload_signals", _entry_panel)
+	_entry_panel = DynamicEventEntryPanelScene.instantiate()
+	form_sections_box.add_child(_entry_panel)
+	_entry_panel.open_for_event(_event_type, _game_context)
+	call_deferred("_connect_payload_signals", _entry_panel)
 	validate_local()
 
 func _clear_form_sections() -> void:
 	_entry_panel = null
-	_special_widget = null
 	for child in form_sections_box.get_children():
 		child.queue_free()
 
@@ -180,6 +164,7 @@ func _base_payload() -> Dictionary:
 		"game_id": _game_context.get("game_id", ""),
 		"inning": _game_context.get("inning", null),
 		"half": _game_context.get("half", _game_context.get("half_inning", "")),
+		"half_inning": _game_context.get("half_inning", _game_context.get("half", "")),
 		"offense_team_id": _game_context.get("offense_team_id", ""),
 		"defense_team_id": _game_context.get("defense_team_id", ""),
 		"batter_id": _game_context.get("batter_id", ""),
@@ -188,6 +173,26 @@ func _base_payload() -> Dictionary:
 		"outs_before": _game_context.get("outs", 0),
 		"score_before": _game_context.get("score", {}).duplicate(true) if _game_context.get("score", {}) is Dictionary else {},
 	}
+
+func _normalize_payload_shape(payload: Dictionary) -> Dictionary:
+	var normalized := _base_payload()
+	normalized.merge(payload, true)
+	var details := _as_dictionary(normalized.get("details", {}))
+	details["template"] = _as_dictionary(details.get("template", EventTemplateRegistry.get_template(_event_type)))
+	var overrides := _as_dictionary(normalized.get("manual_overrides", details.get("manual_overrides", {})))
+	details["manual_overrides"] = overrides.duplicate(true)
+	normalized["details"] = details
+	normalized["manual_overrides"] = overrides.duplicate(true)
+	normalized["base_state_before"] = _as_dictionary(normalized.get("base_state_before", _game_context.get("base_state", {}))).duplicate(true)
+	normalized["score_before"] = _as_dictionary(normalized.get("score_before", _game_context.get("score", {}))).duplicate(true)
+	if not normalized.has("half_inning"):
+		normalized["half_inning"] = normalized.get("half", "")
+	if not normalized.has("outs_after"):
+		normalized["outs_after"] = normalized.get("outs_before", 0)
+	return normalized
+
+func _as_dictionary(value: Variant) -> Dictionary:
+	return value.duplicate(true) if value is Dictionary else {}
 
 func _section_label(text: String) -> Label:
 	var label := Label.new()
