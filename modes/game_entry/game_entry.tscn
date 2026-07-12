@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
 [ext_resource type="Script" path="res://modes/game_entry/WorkspacePanel.gd" id="2_workspace_panel"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/TeamQuickRosterPanel.tscn" id="3_team_quick_roster_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventLogView.tscn" id="4_event_log_view"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventCreationWorkspace.tscn" id="5_event_creation_workspace"]
+[ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventSummaryPanel.tscn" id="6_event_summary_panel"]
 
 [node name="GameEntryMode" type="Control"]
 custom_minimum_size = Vector2(960, 540)
@@ -131,26 +132,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="EventSummaryPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 120)
-layout_mode = 2
-
-[node name="EventSummaryBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/EventSummaryPanel"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="EventSummaryLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/EventSummaryPanel/EventSummaryBox"]
+[node name="EventSummaryPanel" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox" instance=ExtResource("6_event_summary_panel")]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Event Summary / Validation"
-
-[node name="ShellStatusLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/CenterDock/CenterDockBox/EventSummaryPanel/EventSummaryBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "No active event. Choose an event button to begin scoring."
-autowrap_mode = 3
-
 [node name="RightDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 0)
