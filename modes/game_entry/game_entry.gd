@@ -42,6 +42,7 @@ var _pending_add_team_id := ""
 var _selected_event_id := ""
 var _current_payload: Dictionary = {}
 var _current_validation_messages: Array = []
+var _editing_event_id := ""
 
 func _ready() -> void:
 	_apply_style()
@@ -137,6 +138,7 @@ func _event_log_context() -> Dictionary:
 	return {"players_by_id": players_by_id}
 
 func _on_event_key_pressed(event_type: String) -> void:
+	_editing_event_id = ""
 	_current_payload.clear()
 	_current_validation_messages.clear()
 	workspace_panel.show_create_event_mode(event_type, _build_workspace_game_context())
@@ -167,11 +169,25 @@ func _on_workspace_event_selected(event_id: String) -> void:
 	compact_scoreboard_panel.set_state(_scoreboard_state_for_event(event_id))
 
 func _on_workspace_event_edit_requested(event_id: String) -> void:
-	workspace_panel.show_edit_event_mode(event_id, {"event_type": "groundout", "notes": "Placeholder event data."}, _build_workspace_game_context())
-	event_summary_panel.set_preview_text("Editing event %s. Update fields in the workspace, then confirm from this panel." % event_id)
-	event_summary_panel.set_active(false)
+	if _is_current_game_finalized():
+		event_summary_panel.set_validation_messages([{ "severity": "warning", "message": "This game is marked Final; editing is locked until a formal unlock workflow is added. TODO: add finalized-game unlock/override flow." }])
+		return
+	var event := _find_current_game_event(event_id)
+	if event == null:
+		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not find event %s in the current game log." % event_id }])
+		return
+	_selected_event_id = event_id
+	_editing_event_id = event_id
+	_current_payload = _payload_from_game_event(event)
+	_current_validation_messages = EventValidatorScript.validate_event_payload(_current_payload)
+	workspace_panel.show_edit_event_mode(event_id, _current_payload, _build_workspace_game_context_for_event(event))
+	skinny_event_history_panel.select_event_silent(event_id)
+	event_summary_panel.set_preview_text(EventSummaryFormatterScript.summarize(_current_payload))
+	event_summary_panel.set_validation_messages(_current_validation_messages)
+	event_summary_panel.set_active(not EventValidatorScript.has_errors(_current_validation_messages))
 
 func _on_workspace_event_creation_cancel_requested() -> void:
+	_editing_event_id = ""
 	_current_payload.clear()
 	_current_validation_messages.clear()
 	event_summary_panel.set_idle()
@@ -193,12 +209,16 @@ func _on_event_summary_confirm_requested() -> void:
 		event_summary_panel.set_validation_messages(_current_validation_messages)
 		event_summary_panel.set_active(false)
 		return
-	var event := _game_event_from_payload(_current_payload)
-	if not repository.append_game_event(event):
-		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not append the event to the current game log." }])
+	var existing_event := _find_current_game_event(_editing_event_id) if not _editing_event_id.is_empty() else null
+	var event := _game_event_from_payload(_current_payload, existing_event)
+	var saved := repository.update_game_event(event) if existing_event != null else repository.append_game_event(event)
+	if not saved:
+		var action := "update" if existing_event != null else "append"
+		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not %s the event in the current game log." % action }])
 		return
 	SaveManagerScript.save_project(repository)
 	_selected_event_id = event.id
+	_editing_event_id = ""
 	_current_payload.clear()
 	_current_validation_messages.clear()
 	_refresh_game_context()
@@ -209,6 +229,7 @@ func _on_event_summary_confirm_requested() -> void:
 	compact_scoreboard_panel.set_state(_scoreboard_state_for_event(event.id))
 
 func _on_event_summary_cancel_requested() -> void:
+	_editing_event_id = ""
 	_current_payload.clear()
 	_current_validation_messages.clear()
 	workspace_panel.show_review_mode()
@@ -223,6 +244,39 @@ func _on_event_summary_edit_requested() -> void:
 		event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Edit requested. Select a saved event from the narrative log to edit it." }])
 	else:
 		_on_workspace_event_edit_requested(event_id)
+
+func _find_current_game_event(event_id: String) -> GameEvent:
+	if event_id.is_empty():
+		return null
+	for event in _events_for_current_game():
+		if event.id == event_id:
+			return event
+	return null
+
+func _is_current_game_finalized() -> bool:
+	return current_game != null and current_game.status.strip_edges().to_lower() == "final"
+
+func _payload_from_game_event(event: GameEvent) -> Dictionary:
+	var payload := event.to_dict()
+	payload["event_id"] = event.id
+	payload["mode"] = "editing_event"
+	return payload
+
+func _build_workspace_game_context_for_event(event: GameEvent) -> Dictionary:
+	var context := _build_workspace_game_context()
+	context["inning"] = event.inning
+	context["half"] = event.half
+	context["half_inning"] = event.half_inning
+	context["outs"] = event.outs_before
+	context["base_state"] = event.base_state_before.duplicate(true)
+	context["score"] = event.score_before.duplicate(true)
+	context["offense_team_id"] = event.offense_team_id
+	context["defense_team_id"] = event.defense_team_id
+	context["batter_id"] = event.batter_id
+	context["pitcher_id"] = event.pitcher_id
+	context["offensive_lineup"] = _players_for_team(event.offense_team_id)
+	context["defensive_players"] = _players_for_team(event.defense_team_id)
+	return context
 
 func _build_workspace_game_context() -> Dictionary:
 	if current_game == null:
@@ -250,18 +304,18 @@ func _build_workspace_game_context() -> Dictionary:
 		"defensive_players": _players_for_team(defense_team_id),
 	}
 
-func _game_event_from_payload(payload: Dictionary) -> GameEvent:
+func _game_event_from_payload(payload: Dictionary, existing_event: GameEvent = null) -> GameEvent:
 	var events := _events_for_current_game()
 	var next_sequence := events.size() + 1
 	for existing in events:
 		next_sequence = max(next_sequence, existing.sequence_number + 1)
-	var event_id := _next_game_event_id()
+	var event_id := existing_event.id if existing_event != null else _next_game_event_id()
 	var event := GameEventScript.new(event_id, current_game.id)
 	var event_type := _normalize_event_type(str(payload.get("event_type", "manual_correction")))
 	var details := Dictionary(payload.get("details", {})).duplicate(true) if payload.get("details", {}) is Dictionary else {}
 	details["event_type"] = event_type
-	event.sequence = next_sequence
-	event.sequence_number = next_sequence
+	event.sequence = existing_event.sequence if existing_event != null else next_sequence
+	event.sequence_number = existing_event.sequence_number if existing_event != null else next_sequence
 	event.inning = int(payload.get("inning", 1))
 	event.half = str(payload.get("half", payload.get("half_inning", "top"))).to_lower()
 	event.half_inning = event.half

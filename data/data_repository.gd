@@ -163,6 +163,21 @@ func append_game_event(event: GameEvent) -> bool:
 		game.event_ids.append(event.id)
 	return true
 
+
+func update_game_event(event: GameEvent) -> bool:
+	if event == null or event.id.is_empty():
+		return false
+	var game: Game = find_entity_by_id(event.game_id, "games")
+	if game == null:
+		return false
+	for index in range(game_events.size()):
+		if game_events[index].id == event.id:
+			game_events[index] = event
+			if not game.event_ids.has(event.id):
+				game.event_ids.append(event.id)
+			return true
+	return false
+
 func find_entity_by_id(entity_id: String, collection_name: String = "") -> Variant:
 	if entity_id.is_empty():
 		return null
