@@ -6,9 +6,9 @@ signal player_selected(player_id: String)
 signal add_player_requested(team_id: String)
 
 const GameEntryStyle = preload("res://modes/game_entry/GameEntryStyle.gd")
-const SIDE_HOME := "home"
-const SIDE_AWAY := "away"
-const VALID_SIDES := [SIDE_HOME, SIDE_AWAY]
+const SIDE_HOME = "home"
+const SIDE_AWAY = "away"
+const VALID_SIDES = [SIDE_HOME, SIDE_AWAY]
 
 @onready var title_label: Label = %RosterTitleLabel
 @onready var home_tab_button: Button = %HomeTabButton
@@ -16,11 +16,11 @@ const VALID_SIDES := [SIDE_HOME, SIDE_AWAY]
 @onready var roster_rows: VBoxContainer = %RosterRows
 @onready var empty_label: Label = %EmptyRosterLabel
 
-var _selected_side := SIDE_HOME
+var _selected_side = SIDE_HOME
 var _home_roster: Array = []
 var _away_roster: Array = []
-var _home_team_id := "home"
-var _away_team_id := "away"
+var _home_team_id = "home"
+var _away_team_id = "away"
 
 
 func set_team_ids(home_team_id: String, away_team_id: String) -> void:
@@ -51,7 +51,7 @@ func set_away_roster(players: Array) -> void:
 
 
 func set_selected_side(side: String) -> void:
-	var normalized_side := side.to_lower()
+	var normalized_side = side.to_lower()
 	if not VALID_SIDES.has(normalized_side):
 		push_warning("Unsupported roster side '%s'. Expected 'home' or 'away'." % side)
 		return
@@ -91,17 +91,17 @@ func can_add_player_to_selected_team() -> bool:
 func _refresh_roster_rows() -> void:
 	for child in roster_rows.get_children():
 		child.queue_free()
-	var players := _current_roster()
+	var players = _current_roster()
 	empty_label.visible = players.is_empty()
 	for player in players:
 		roster_rows.add_child(_build_player_row(player))
 
 
 func _build_player_row(player: Variant) -> Button:
-	var player_id := _player_field(player, "id", "")
-	var jersey_number := _player_field(player, "jersey_number", "--")
-	var display_name := _player_display_name(player)
-	var button := Button.new()
+	var player_id = _player_field(player, "id", "")
+	var jersey_number = _player_field(player, "jersey_number", "--")
+	var display_name = _player_display_name(player)
+	var button = Button.new()
 	button.text = "#%s %s" % [jersey_number, display_name]
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -112,12 +112,12 @@ func _build_player_row(player: Variant) -> Button:
 
 
 func _player_display_name(player: Variant) -> String:
-	var display_name := _player_field(player, "display_name", "")
+	var display_name = _player_field(player, "display_name", "")
 	if not display_name.is_empty():
 		return display_name
-	var first_name := _player_field(player, "first_name", "")
-	var last_name := _player_field(player, "last_name", "")
-	var combined_name := "%s %s" % [first_name, last_name]
+	var first_name = _player_field(player, "first_name", "")
+	var last_name = _player_field(player, "last_name", "")
+	var combined_name = "%s %s" % [first_name, last_name]
 	combined_name = combined_name.strip_edges()
 	return combined_name if not combined_name.is_empty() else "Unnamed Player"
 
@@ -133,7 +133,7 @@ func _player_field(player: Variant, field_name: String, default_value: String) -
 
 func _team_id_from_roster(players: Array, fallback: String) -> String:
 	for player in players:
-		var team_id := _player_field(player, "team_id", "")
+		var team_id = _player_field(player, "team_id", "")
 		if not team_id.is_empty():
 			return team_id
 	return fallback

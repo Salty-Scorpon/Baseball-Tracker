@@ -169,7 +169,7 @@ static func _format_substitution_summary(event: Dictionary, details: Dictionary)
 		var pieces: Array[String] = []
 		for item in _as_array(defensive_change.get("changes", [])):
 			var change = _as_dictionary(item)
-			var type := str(change.get("change_type", ""))
+			var type = str(change.get("change_type", ""))
 			match type:
 				"position_change":
 					pieces.append("%s moves from %s to %s" % [change.get("player_name", change.get("player_id", "player")), change.get("old_position", "?"), change.get("new_position", "?")])

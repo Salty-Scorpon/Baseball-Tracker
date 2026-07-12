@@ -1,20 +1,20 @@
 class_name GameEntryStyle
 extends RefCounted
 
-const BACKGROUND_COLOR := Color("#101419")
-const DOCK_COLOR := Color("#171d24")
-const PANEL_COLOR := Color("#202832")
-const PANEL_HEADER_COLOR := Color("#2a3440")
-const BORDER_COLOR := Color("#3a4654")
-const TEXT_COLOR := Color("#d8e0ea")
-const MUTED_TEXT_COLOR := Color("#93a0ad")
-const ACCENT_COLOR := Color("#4f8cff")
-const ACCENT_DARK_COLOR := Color("#244b8f")
-const BUTTON_COLOR := Color("#27313d")
-const BUTTON_HOVER_COLOR := Color("#344150")
-const BUTTON_PRESSED_COLOR := Color("#3f587a")
-const BUTTON_DISABLED_COLOR := Color("#1c222a")
-const BUTTON_DISABLED_TEXT_COLOR := Color("#65707c")
+const BACKGROUND_COLOR = Color("#101419")
+const DOCK_COLOR = Color("#171d24")
+const PANEL_COLOR = Color("#202832")
+const PANEL_HEADER_COLOR = Color("#2a3440")
+const BORDER_COLOR = Color("#3a4654")
+const TEXT_COLOR = Color("#d8e0ea")
+const MUTED_TEXT_COLOR = Color("#93a0ad")
+const ACCENT_COLOR = Color("#4f8cff")
+const ACCENT_DARK_COLOR = Color("#244b8f")
+const BUTTON_COLOR = Color("#27313d")
+const BUTTON_HOVER_COLOR = Color("#344150")
+const BUTTON_PRESSED_COLOR = Color("#3f587a")
+const BUTTON_DISABLED_COLOR = Color("#1c222a")
+const BUTTON_DISABLED_TEXT_COLOR = Color("#65707c")
 
 static func apply_shell_style(root: Control, background: ColorRect, dock_panels: Array, content_panels: Array, title_labels: Array, body_labels: Array, buttons: Array) -> void:
 	if is_instance_valid(background):
@@ -80,7 +80,7 @@ static func set_button_selected(button: Button, selected: bool) -> void:
 		style_button(button)
 
 static func _panel_box(color: Color, border_color: Color, corner_radius: int, content_margin: int) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
+	var box = StyleBoxFlat.new()
 	box.bg_color = color
 	box.border_color = border_color
 	box.border_width_left = 1
@@ -98,7 +98,7 @@ static func _panel_box(color: Color, border_color: Color, corner_radius: int, co
 	return box
 
 static func _button_box(color: Color, border_color: Color) -> StyleBoxFlat:
-	var box := _panel_box(color, border_color, 6, 8)
+	var box = _panel_box(color, border_color, 6, 8)
 	box.content_margin_top = 6
 	box.content_margin_bottom = 6
 	return box

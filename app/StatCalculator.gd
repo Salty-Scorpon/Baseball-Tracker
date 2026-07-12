@@ -32,12 +32,12 @@ static func calculate(games: Array, events: Array, players: Array = [], teams: A
 		"team_totals": {},
 		"leaderboards": {},
 	}
-	var seen_player_batting_games := {}
-	var seen_player_pitching_games := {}
-	var seen_player_fielding_games := {}
-	var seen_team_batting_games := {}
-	var seen_team_pitching_games := {}
-	var starting_pitchers := {}
+	var seen_player_batting_games = {}
+	var seen_player_pitching_games = {}
+	var seen_player_fielding_games = {}
+	var seen_team_batting_games = {}
+	var seen_team_pitching_games = {}
+	var starting_pitchers = {}
 
 	for event in sorted_events:
 		if event == null:
@@ -267,19 +267,19 @@ static func _mark_game(seen: Dictionary, stats: Dictionary, subject_id: String, 
 	if not seen.has(key): seen[key] = true; stats.games += 1
 
 static func _index_by_id(items: Array) -> Dictionary:
-	var output := {}
+	var output = {}
 	for item in items:
 		if item != null: output[item.id] = item
 	return output
 
 static func _player_team_ids(players: Array) -> Dictionary:
-	var output := {}
+	var output = {}
 	for player in players:
 		if player != null: output[player.id] = player.team_id
 	return output
 
 static func _leaderboard(map: Dictionary, key: String, limit: int, descending: bool) -> Array:
-	var rows := []
+	var rows = []
 	for subject_id in map.keys(): rows.append({"id": subject_id, "value": map[subject_id].get(key, 0)})
 	rows.sort_custom(func(a, b): return a.value > b.value if descending else a.value < b.value)
 	return rows.slice(0, mini(limit, rows.size()))

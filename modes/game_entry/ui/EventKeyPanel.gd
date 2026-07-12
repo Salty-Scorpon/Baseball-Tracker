@@ -35,7 +35,7 @@ const EVENT_KEYS: Array[Dictionary] = [
 @onready var event_buttons_grid: GridContainer = %EventButtonsGrid
 
 var _event_buttons_by_type: Dictionary = {}
-var _selected_event_type := ""
+var _selected_event_type = ""
 
 func _ready() -> void:
 	_build_event_key_buttons()
@@ -65,9 +65,9 @@ func _build_event_key_buttons() -> void:
 	for child in event_buttons_grid.get_children():
 		child.queue_free()
 	for event_config in EVENT_KEYS:
-		var event_type := str(event_config["event_type"])
-		var implemented := bool(event_config["implemented"])
-		var button := Button.new()
+		var event_type = str(event_config["event_type"])
+		var implemented = bool(event_config["implemented"])
+		var button = Button.new()
 		button.text = str(event_config["label"])
 		button.custom_minimum_size = Vector2(72, 34)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -84,11 +84,11 @@ func _apply_style() -> void:
 		GameEntryStyle.style_button(button)
 
 func _event_key_tooltip(event_config: Dictionary, implemented: bool) -> String:
-	var hint := str(event_config.get("hint", event_config.get("event_type", "")))
-	var event_type := str(event_config.get("event_type", ""))
-	var shortcut := str(event_config.get("shortcut", "")).strip_edges()
-	var shortcut_hint := "Shortcut: %s" % shortcut if not shortcut.is_empty() else "No shortcut assigned"
-	var suffix := "Select %s event" % event_type
+	var hint = str(event_config.get("hint", event_config.get("event_type", "")))
+	var event_type = str(event_config.get("event_type", ""))
+	var shortcut = str(event_config.get("shortcut", "")).strip_edges()
+	var shortcut_hint = "Shortcut: %s" % shortcut if not shortcut.is_empty() else "No shortcut assigned"
+	var suffix = "Select %s event" % event_type
 	return "%s — %s — %s" % [hint, shortcut_hint, suffix] if implemented else "%s — future event type disabled for now" % hint
 
 func _on_event_key_pressed(event_type: String) -> void:

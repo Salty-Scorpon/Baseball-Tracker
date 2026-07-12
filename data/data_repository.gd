@@ -84,16 +84,16 @@ func create_player_for_team(team_id: String, player_data: Dictionary) -> Player:
 	if team == null:
 		push_error("Cannot create player for missing team: %s" % team_id)
 		return null
-	var display_name := str(player_data.get("display_name", "")).strip_edges()
+	var display_name = str(player_data.get("display_name", "")).strip_edges()
 	if display_name.is_empty():
 		push_error("Cannot create player without a display name.")
 		return null
-	var player_id := str(player_data.get("id", "")).strip_edges()
+	var player_id = str(player_data.get("id", "")).strip_edges()
 	if player_id.is_empty():
 		player_id = _next_entity_id("player")
-	var player := PlayerModel.new(player_id, team_id, display_name)
+	var player = PlayerModel.new(player_id, team_id, display_name)
 	player.jersey_number = str(player_data.get("jersey_number", "")).strip_edges()
-	var position := str(player_data.get("position", "")).strip_edges()
+	var position = str(player_data.get("position", "")).strip_edges()
 	player.positions = [] if position.is_empty() else [position]
 	player.bats = str(player_data.get("bats", "Unknown")).strip_edges()
 	if player.bats.is_empty():
@@ -105,7 +105,7 @@ func create_player_for_team(team_id: String, player_data: Dictionary) -> Player:
 	return player if add_player(player) else null
 
 func has_duplicate_jersey_number(team_id: String, jersey_number: String) -> bool:
-	var normalized_jersey := jersey_number.strip_edges()
+	var normalized_jersey = jersey_number.strip_edges()
 	if team_id.is_empty() or normalized_jersey.is_empty():
 		return false
 	for player in players:
@@ -148,7 +148,7 @@ func append_game_event(event: GameEvent) -> bool:
 	if game == null:
 		return false
 	if event.sequence <= 0 and event.sequence_number <= 0:
-		var next_sequence := 1
+		var next_sequence = 1
 		for existing in game_events:
 			if existing.game_id == event.game_id or game.event_ids.has(existing.id):
 				next_sequence = max(next_sequence, max(existing.sequence_number + 1, existing.sequence + 1))
@@ -265,9 +265,9 @@ func _collections_for_lookup(collection_name: String) -> Array:
 		_: return [competitions, teams, players, games, rulesets, game_events, manual_stat_entries]
 
 func _next_entity_id(prefix: String) -> String:
-	var index := 1
+	var index = 1
 	while true:
-		var candidate := "%s_%03d" % [prefix, index]
+		var candidate = "%s_%03d" % [prefix, index]
 		if find_entity_by_id(candidate) == null:
 			return candidate
 		index += 1

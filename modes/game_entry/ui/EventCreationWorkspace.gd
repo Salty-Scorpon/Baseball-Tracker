@@ -10,7 +10,7 @@ signal cancel_requested()
 
 const DynamicEventEntryPanelScene = preload("res://modes/game_entry/EventEntryPanel.tscn")
 
-const BATTER_PITCHER_EVENTS := {
+const BATTER_PITCHER_EVENTS = {
 	"single": true, "double": true, "triple": true, "home_run": true,
 	"walk": true, "hit_by_pitch": true, "strikeout": true,
 	"groundout": true, "flyout": true, "reached_on_error": true,
@@ -31,13 +31,13 @@ const BATTER_PITCHER_EVENTS := {
 @onready var validation_label: Label = %ValidationLabel
 @onready var cancel_button: Button = %CancelButton
 
-var _mode := "idle"
-var _event_type := ""
-var _event_id := ""
+var _mode = "idle"
+var _event_type = ""
+var _event_id = ""
 var _game_context: Dictionary = {}
 var _existing_event_data: Dictionary = {}
 var _entry_panel: DynamicEventEntryPanel
-var _is_setting_payload := false
+var _is_setting_payload = false
 
 func _ready() -> void:
 	cancel_button.pressed.connect(func() -> void: cancel_requested.emit())
@@ -67,7 +67,7 @@ func get_event_payload() -> Dictionary:
 	var child_payload: Dictionary = _base_payload()
 	if is_instance_valid(_entry_panel):
 		child_payload.merge(_entry_panel.get_event_payload(), true)
-	var payload := _normalize_payload_shape(child_payload)
+	var payload = _normalize_payload_shape(child_payload)
 	payload["mode"] = _mode
 	payload["event_id"] = _event_id
 	payload["event_type"] = _event_type
@@ -175,11 +175,11 @@ func _base_payload() -> Dictionary:
 	}
 
 func _normalize_payload_shape(payload: Dictionary) -> Dictionary:
-	var normalized := _base_payload()
+	var normalized = _base_payload()
 	normalized.merge(payload, true)
-	var details := _as_dictionary(normalized.get("details", {}))
+	var details = _as_dictionary(normalized.get("details", {}))
 	details["template"] = _as_dictionary(details.get("template", EventTemplateRegistry.get_template(_event_type)))
-	var overrides := _as_dictionary(normalized.get("manual_overrides", details.get("manual_overrides", {})))
+	var overrides = _as_dictionary(normalized.get("manual_overrides", details.get("manual_overrides", {})))
 	details["manual_overrides"] = overrides.duplicate(true)
 	normalized["details"] = details
 	normalized["manual_overrides"] = overrides.duplicate(true)
@@ -195,7 +195,7 @@ func _as_dictionary(value: Variant) -> Dictionary:
 	return value.duplicate(true) if value is Dictionary else {}
 
 func _section_label(text: String) -> Label:
-	var label := Label.new()
+	var label = Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label

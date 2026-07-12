@@ -246,10 +246,10 @@ static func _validate_batch_defensive_change(messages: Array[Dictionary], event_
 	var changes = _as_array(defensive_change.get("changes", []))
 	if changes.is_empty():
 		_add_error(messages, "details.defensive_change.changes", "A grouped defensive change must include at least one change.")
-	var slots := {}
+	var slots = {}
 	for index in range(changes.size()):
 		var change = _as_dictionary(changes[index])
-		var type := str(change.get("change_type", ""))
+		var type = str(change.get("change_type", ""))
 		if _is_blank(type):
 			_add_error(messages, "details.defensive_change.changes[%d].change_type" % index, "Each defensive change needs a change_type.")
 		if type == "position_change" and _is_blank(change.get("player_id", "")):
@@ -260,7 +260,7 @@ static func _validate_batch_defensive_change(messages: Array[Dictionary], event_
 			_add_error(messages, "details.defensive_change.changes[%d].player_out_id" % index, "A replacement or player-leaves-game change needs a player_out_id.")
 		if type != "player_leaves_game" and _is_blank(change.get("new_position", "")):
 			_add_warning(messages, "details.defensive_change.changes[%d].new_position" % index, "This defensive change should record the new position.")
-		var slot := str(change.get("batting_order_slot", "")).strip_edges()
+		var slot = str(change.get("batting_order_slot", "")).strip_edges()
 		if not slot.is_empty() and slot != "0":
 			if slots.has(slot):
 				_add_warning(messages, "details.defensive_change.batting_order_slot", "Batting order slot %s appears more than once in the grouped change." % slot)

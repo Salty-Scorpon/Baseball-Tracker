@@ -49,7 +49,7 @@ func setup_context(game_context: Dictionary) -> void:
 	_update_type_defaults()
 
 func get_substitution_data() -> Dictionary:
-	var data := {
+	var data = {
 		"team_id": _selected_meta(team_option),
 		"substitution_type": _selected_meta(substitution_type_option),
 		"player_out_id": _selected_meta(player_out_option),
@@ -102,7 +102,7 @@ func reset() -> void:
 
 func validate() -> Array[String]:
 	var issues: Array[String] = []
-	var type := _selected_meta(substitution_type_option)
+	var type = _selected_meta(substitution_type_option)
 	if _selected_meta(team_option).is_empty(): issues.append("Substitution requires a team.")
 	if type.is_empty(): issues.append("Substitution requires a type.")
 	if not NO_PLAYER_OUT_TYPES.has(type) and _selected_meta(player_out_option).is_empty(): issues.append("%s requires a player leaving/replaced." % type)
@@ -140,11 +140,11 @@ func _update_player_options() -> void:
 func _populate_player_options(option: OptionButton, players: Array) -> void:
 	option.clear(); option.add_item("(none)"); option.set_item_metadata(0, "")
 	for player in players:
-		var id := str(player.get("id", player.get("player_id", "")))
+		var id = str(player.get("id", player.get("player_id", "")))
 		option.add_item(str(player.get("display_name", player.get("name", id)))); option.set_item_metadata(option.item_count - 1, id)
 
 func _update_type_defaults(update_team: bool = true) -> void:
-	var type := _selected_meta(substitution_type_option)
+	var type = _selected_meta(substitution_type_option)
 	if update_team: _select_default_team_for_type()
 	affects_batting_order_check.button_pressed = type in ["pinch_hitter", "pinch_runner", "batting_order_replacement"]
 	player_out_option.disabled = NO_PLAYER_OUT_TYPES.has(type)
@@ -154,13 +154,13 @@ func _update_type_defaults(update_team: bool = true) -> void:
 	_update_context_label()
 
 func _select_default_team_for_type() -> void:
-	var type := _selected_meta(substitution_type_option)
-	var default_team := str(_context.get("defense_team_id", "")) if type in ["defensive_substitution", "position_change"] else str(_context.get("offense_team_id", ""))
+	var type = _selected_meta(substitution_type_option)
+	var default_team = str(_context.get("defense_team_id", "")) if type in ["defensive_substitution", "position_change"] else str(_context.get("offense_team_id", ""))
 	_select_option_by_meta(team_option, default_team)
 
 func _update_slot_from_player_out() -> void:
 	var players: Array = _as_array(_players_by_team.get(_selected_meta(team_option), []))
-	var player_id := _selected_meta(player_out_option)
+	var player_id = _selected_meta(player_out_option)
 	for index in range(players.size()):
 		var player: Dictionary = players[index]
 		if str(player.get("id", player.get("player_id", ""))) == player_id:
@@ -169,7 +169,7 @@ func _update_slot_from_player_out() -> void:
 
 func _runner_state_for(player_id: String) -> Dictionary:
 	if player_id.is_empty(): return {}
-	var base_state := _as_dictionary(_context.get("base_state", {}))
+	var base_state = _as_dictionary(_context.get("base_state", {}))
 	for base in BASE_KEYS:
 		if str(base_state.get(base, "")) == player_id:
 			return {"runner_id": player_id, "base": base}
@@ -177,7 +177,7 @@ func _runner_state_for(player_id: String) -> Dictionary:
 
 func _update_inherited_runner_label() -> void:
 	if not is_node_ready(): return
-	var runner_state := _runner_state_for(_selected_meta(player_out_option))
+	var runner_state = _runner_state_for(_selected_meta(player_out_option))
 	inherited_runner_label.text = "Pinch runner base inheritance: %s" % ("none" if runner_state.is_empty() else "%s on %s" % [runner_state.get("runner_id", ""), runner_state.get("base", "")])
 
 func _update_context_label() -> void:

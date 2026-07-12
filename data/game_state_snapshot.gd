@@ -7,9 +7,9 @@ const GameReplayScript = preload("res://data/game_replay.gd")
 ## display-only while preserving the event log/replay as the source of truth.
 static func replay_game_until_sequence(events: Array, sequence_number: int = -1, player_names_by_id: Dictionary = {}, starting_pitchers: Dictionary = {}) -> Dictionary:
 	var replay_state: GameReplayState = GameReplayScript.replay_until(events, sequence_number, starting_pitchers) if sequence_number >= 0 else GameReplayScript.replay(events, starting_pitchers)
-	var half := str(replay_state.half_inning).strip_edges().to_lower()
-	var defense_side := "home" if half == "top" else "away"
-	var pitcher_id := str(replay_state.current_pitchers.get(defense_side, "")).strip_edges()
+	var half = str(replay_state.half_inning).strip_edges().to_lower()
+	var defense_side = "home" if half == "top" else "away"
+	var pitcher_id = str(replay_state.current_pitchers.get(defense_side, "")).strip_edges()
 	return {
 		"away_score": int(replay_state.score.get("away", 0)),
 		"home_score": int(replay_state.score.get("home", 0)),
@@ -27,7 +27,7 @@ static func replay_game_until_sequence(events: Array, sequence_number: int = -1,
 	}
 
 static func get_game_state_at_event(events: Array, game_id: String, event_id: String, player_names_by_id: Dictionary = {}, starting_pitchers: Dictionary = {}) -> Dictionary:
-	var game_events := _events_for_game(events, game_id)
+	var game_events = _events_for_game(events, game_id)
 	for event in game_events:
 		if str(event.id) == event_id:
 			return replay_game_until_sequence(game_events, int(event.sequence_number), player_names_by_id, starting_pitchers)
@@ -48,11 +48,11 @@ static func _events_for_game(events: Array, game_id: String) -> Array:
 static func _strikeouts_for_pitcher_until(events: Array, pitcher_id: String, sequence_number: int = -1) -> int:
 	if pitcher_id.is_empty():
 		return 0
-	var total := 0
+	var total = 0
 	for event in events:
 		if sequence_number >= 0 and int(event.sequence_number) > sequence_number:
 			continue
-		var event_type := str(event.details.get("event_type", event.event_type)).strip_edges().to_lower().replace(" ", "_").replace("-", "_")
+		var event_type = str(event.details.get("event_type", event.event_type)).strip_edges().to_lower().replace(" ", "_").replace("-", "_")
 		if str(event.pitcher_id).strip_edges() == pitcher_id and event_type.begins_with("strikeout"):
 			total += 1
 	return total
