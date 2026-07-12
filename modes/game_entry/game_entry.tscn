@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
+[ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventKeyPanel.tscn" id="2_event_key_panel"]
 
 [node name="GameEntryMode" type="Control"]
 custom_minimum_size = Vector2(960, 540)
@@ -56,23 +57,9 @@ size_flags_vertical = 3
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="EventKeyPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
+[node name="EventKeyPanel" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox" instance=ExtResource("2_event_key_panel")]
 unique_name_in_owner = true
 layout_mode = 2
-
-[node name="EventKeyBox" type="VBoxContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/EventKeyPanel"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="EventKeysLabel" type="Label" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/EventKeyPanel/EventKeyBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Event Keys"
-
-[node name="EventButtonsGrid" type="GridContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox/EventKeyPanel/EventKeyBox"]
-unique_name_in_owner = true
-layout_mode = 2
-columns = 2
 
 [node name="TeamQuickRosterPanel" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
 unique_name_in_owner = true
