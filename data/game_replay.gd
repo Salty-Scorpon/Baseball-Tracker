@@ -2,7 +2,7 @@ class_name GameReplay
 extends RefCounted
 
 const GameReplayStateModel = preload("res://data/game_replay_state.gd")
-const ADVANCE_EVENTS = {"Single": 1, "Double": 2, "Triple": 3, "Home run": 4, "Walk": 1, "Hit by pitch": 1, "Reached on error": 1, "Fielder's choice": 1}
+const ADVANCE_EVENTS = {"single": 1, "double": 2, "triple": 3, "home_run": 4, "walk": 1, "hit_by_pitch": 1, "reached_on_error": 1, "fielders_choice": 1}
 
 static func initial_state(starting_pitchers: Dictionary = {}) -> GameReplayState:
 	var state = GameReplayStateModel.new()
@@ -29,9 +29,10 @@ static func apply_event(state: GameReplayState, event: GameEvent, mutate_event: 
 	_record_batter(state, event)
 	_record_pitcher(state, event)
 	_apply_runner_substitution(state, event)
-	if ADVANCE_EVENTS.has(event.event_type):
-		_advance_runners(state, int(ADVANCE_EVENTS[event.event_type]), event.batter_id, event.event_type == "Home run")
-	elif event.event_type == "Stolen base":
+	var normalized_event_type := _normalized_event_type(event)
+	if ADVANCE_EVENTS.has(normalized_event_type):
+		_advance_runners(state, int(ADVANCE_EVENTS[normalized_event_type]), event.batter_id, normalized_event_type == "home_run")
+	elif normalized_event_type == "stolen_base":
 		_steal_one_base(state)
 	_add_runs(state, event.runs_scored)
 	state.outs += event.outs_added

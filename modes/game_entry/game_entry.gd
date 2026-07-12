@@ -194,7 +194,7 @@ func _on_event_summary_confirm_requested() -> void:
 		event_summary_panel.set_active(false)
 		return
 	var event := _game_event_from_payload(_current_payload)
-	if not repository.add_game_event(event):
+	if not repository.append_game_event(event):
 		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not append the event to the current game log." }])
 		return
 	SaveManagerScript.save_project(repository)
@@ -203,7 +203,7 @@ func _on_event_summary_confirm_requested() -> void:
 	_current_validation_messages.clear()
 	_refresh_game_context()
 	workspace_panel.show_review_mode()
-	workspace_panel.select_event(event.id)
+	workspace_panel.scroll_to_event(event.id)
 	skinny_event_history_panel.select_event(event.id)
 	event_summary_panel.set_selected_event_summary(_summary_for_event(event.id))
 	compact_scoreboard_panel.set_state(_scoreboard_state_for_event(event.id))
@@ -265,7 +265,7 @@ func _game_event_from_payload(payload: Dictionary) -> GameEvent:
 	event.inning = int(payload.get("inning", 1))
 	event.half = str(payload.get("half", payload.get("half_inning", "top"))).to_lower()
 	event.half_inning = event.half
-	event.event_type = _legacy_event_label(event_type)
+	event.event_type = event_type
 	event.event_group = str(details.get("template", {}).get("event_group", "")) if details.get("template", {}) is Dictionary else ""
 	event.batter_id = str(payload.get("batter_id", ""))
 	event.pitcher_id = str(payload.get("pitcher_id", ""))
@@ -275,10 +275,17 @@ func _game_event_from_payload(payload: Dictionary) -> GameEvent:
 	event.defensive_team_id = event.defense_team_id
 	event.outs_before = int(payload.get("outs_before", 0))
 	event.outs_added = _placeholder_outs_added(event_type, details)
-	event.outs_after = event.outs_before + event.outs_added
+	var requested_outs_after := int(payload.get("outs_after", event.outs_before + event.outs_added))
+	if payload.has("outs_after") and requested_outs_after > event.outs_before:
+		event.outs_after = requested_outs_after
+		event.outs_added = max(0, event.outs_after - event.outs_before)
+	else:
+		event.outs_after = event.outs_before + event.outs_added
 	event.base_state_before = Dictionary(payload.get("base_state_before", {})).duplicate(true) if payload.get("base_state_before", {}) is Dictionary else {}
+	event.base_state_after = Dictionary(payload.get("base_state_after", event.base_state_before)).duplicate(true) if payload.get("base_state_after", event.base_state_before) is Dictionary else event.base_state_before.duplicate(true)
 	event.score_before = Dictionary(payload.get("score_before", {})).duplicate(true) if payload.get("score_before", {}) is Dictionary else {}
-	event.runs_scored = _placeholder_runs_scored(event_type, details)
+	event.score_after = Dictionary(payload.get("score_after", event.score_before)).duplicate(true) if payload.get("score_after", event.score_before) is Dictionary else event.score_before.duplicate(true)
+	event.runs_scored = _payload_runs_scored(payload, event_type, details)
 	event.rbi_count = event.runs_scored
 	event.details = details
 	event.manual_overrides = Dictionary(details.get("manual_overrides", payload.get("manual_overrides", {}))).duplicate(true) if details.get("manual_overrides", payload.get("manual_overrides", {})) is Dictionary else {}
@@ -310,6 +317,14 @@ func _placeholder_outs_added(event_type: String, details: Dictionary) -> int:
 	if event_type == "triple_play":
 		return 3
 	return 0
+
+func _payload_runs_scored(payload: Dictionary, event_type: String, details: Dictionary) -> int:
+	var raw_runs = payload.get("runs_scored", null)
+	if raw_runs is Array:
+		return raw_runs.size()
+	if raw_runs is int or raw_runs is float:
+		return int(raw_runs)
+	return _placeholder_runs_scored(event_type, details)
 
 func _placeholder_runs_scored(event_type: String, details: Dictionary) -> int:
 	var advancements := details.get("runner_advancements", [])

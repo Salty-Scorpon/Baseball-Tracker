@@ -139,11 +139,27 @@ func add_manual_stat_entry(entry: ManualStatEntry) -> bool:
 	return true
 
 func add_game_event(event: GameEvent) -> bool:
+	return append_game_event(event)
+
+func append_game_event(event: GameEvent) -> bool:
 	if event == null or event.id.is_empty() or find_entity_by_id(event.id) != null:
 		return false
-	game_events.append(event)
 	var game: Game = find_entity_by_id(event.game_id, "games")
-	if game != null and not game.event_ids.has(event.id):
+	if game == null:
+		return false
+	if event.sequence <= 0 and event.sequence_number <= 0:
+		var next_sequence := 1
+		for existing in game_events:
+			if existing.game_id == event.game_id or game.event_ids.has(existing.id):
+				next_sequence = max(next_sequence, max(existing.sequence_number + 1, existing.sequence + 1))
+		event.sequence = next_sequence
+		event.sequence_number = next_sequence
+	elif event.sequence <= 0:
+		event.sequence = event.sequence_number
+	elif event.sequence_number <= 0:
+		event.sequence_number = event.sequence
+	game_events.append(event)
+	if not game.event_ids.has(event.id):
 		game.event_ids.append(event.id)
 	return true
 
