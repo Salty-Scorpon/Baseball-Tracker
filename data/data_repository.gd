@@ -78,6 +78,41 @@ func add_player(player: Player) -> bool:
 		team.add_player_id(player.id)
 	return true
 
+
+func create_player_for_team(team_id: String, player_data: Dictionary) -> Player:
+	var team: Team = find_entity_by_id(team_id, "teams")
+	if team == null:
+		push_error("Cannot create player for missing team: %s" % team_id)
+		return null
+	var display_name := str(player_data.get("display_name", "")).strip_edges()
+	if display_name.is_empty():
+		push_error("Cannot create player without a display name.")
+		return null
+	var player_id := str(player_data.get("id", "")).strip_edges()
+	if player_id.is_empty():
+		player_id = _next_entity_id("player")
+	var player := PlayerModel.new(player_id, team_id, display_name)
+	player.jersey_number = str(player_data.get("jersey_number", "")).strip_edges()
+	var position := str(player_data.get("position", "")).strip_edges()
+	player.positions = [] if position.is_empty() else [position]
+	player.bats = str(player_data.get("bats", "Unknown")).strip_edges()
+	if player.bats.is_empty():
+		player.bats = "Unknown"
+	player.throws_hand = str(player_data.get("throws", player_data.get("throws_hand", "Unknown"))).strip_edges()
+	if player.throws_hand.is_empty():
+		player.throws_hand = "Unknown"
+	player.notes = str(player_data.get("notes", "")).strip_edges()
+	return player if add_player(player) else null
+
+func has_duplicate_jersey_number(team_id: String, jersey_number: String) -> bool:
+	var normalized_jersey := jersey_number.strip_edges()
+	if team_id.is_empty() or normalized_jersey.is_empty():
+		return false
+	for player in players:
+		if player.team_id == team_id and player.jersey_number.strip_edges() == normalized_jersey:
+			return true
+	return false
+
 func add_game(game: Game) -> bool:
 	if game == null or game.id.is_empty() or find_entity_by_id(game.id) != null:
 		return false
@@ -197,3 +232,12 @@ func _collections_for_lookup(collection_name: String) -> Array:
 		"game_events": return [game_events]
 		"manual_stat_entries": return [manual_stat_entries]
 		_: return [competitions, teams, players, games, rulesets, game_events, manual_stat_entries]
+
+func _next_entity_id(prefix: String) -> String:
+	var index := 1
+	while true:
+		var candidate := "%s_%03d" % [prefix, index]
+		if find_entity_by_id(candidate) == null:
+			return candidate
+		index += 1
+	return "%s_%d" % [prefix, int(Time.get_unix_time_from_system())]

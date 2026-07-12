@@ -15,7 +15,6 @@ const VALID_SIDES := [SIDE_HOME, SIDE_AWAY]
 @onready var away_tab_button: Button = %AwayTabButton
 @onready var roster_rows: VBoxContainer = %RosterRows
 @onready var empty_label: Label = %EmptyRosterLabel
-@onready var add_player_button: Button = %PanelAddPlayerButton
 
 var _selected_side := SIDE_HOME
 var _home_roster: Array = []
@@ -24,10 +23,14 @@ var _home_team_id := "home"
 var _away_team_id := "away"
 
 
+func set_team_ids(home_team_id: String, away_team_id: String) -> void:
+	_home_team_id = home_team_id
+	_away_team_id = away_team_id
+
+
 func _ready() -> void:
 	home_tab_button.pressed.connect(func() -> void: set_selected_side(SIDE_HOME))
 	away_tab_button.pressed.connect(func() -> void: set_selected_side(SIDE_AWAY))
-	add_player_button.pressed.connect(func() -> void: add_player_requested.emit(get_selected_team_id()))
 	_apply_style()
 	_refresh_tabs()
 	_refresh_roster_rows()
@@ -35,14 +38,14 @@ func _ready() -> void:
 
 func set_home_roster(players: Array) -> void:
 	_home_roster = players.duplicate()
-	_home_team_id = _team_id_from_roster(_home_roster, SIDE_HOME)
+	_home_team_id = _team_id_from_roster(_home_roster, _home_team_id)
 	if _selected_side == SIDE_HOME:
 		_refresh_roster_rows()
 
 
 func set_away_roster(players: Array) -> void:
 	_away_roster = players.duplicate()
-	_away_team_id = _team_id_from_roster(_away_roster, SIDE_AWAY)
+	_away_team_id = _team_id_from_roster(_away_roster, _away_team_id)
 	if _selected_side == SIDE_AWAY:
 		_refresh_roster_rows()
 
@@ -75,6 +78,14 @@ func _current_roster() -> Array:
 func _refresh_tabs() -> void:
 	GameEntryStyle.set_button_selected(home_tab_button, _selected_side == SIDE_HOME)
 	GameEntryStyle.set_button_selected(away_tab_button, _selected_side == SIDE_AWAY)
+
+
+func request_add_player() -> void:
+	add_player_requested.emit(get_selected_team_id())
+
+
+func can_add_player_to_selected_team() -> bool:
+	return not get_selected_team_id().strip_edges().is_empty()
 
 
 func _refresh_roster_rows() -> void:
@@ -134,4 +145,3 @@ func _apply_style() -> void:
 	GameEntryStyle.style_body_label(empty_label)
 	GameEntryStyle.style_button(home_tab_button)
 	GameEntryStyle.style_button(away_tab_button)
-	GameEntryStyle.style_button(add_player_button)
