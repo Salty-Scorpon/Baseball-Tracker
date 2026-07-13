@@ -20,6 +20,7 @@ const GameEventScript = preload("res://data/models/game_event.gd")
 @onready var right_dock: PanelContainer = %RightDock
 @onready var event_key_panel: EventKeyPanel = %EventKeyPanel
 @onready var team_quick_roster_panel: TeamQuickRosterPanel = %TeamQuickRosterPanel
+@onready var edit_batting_lineup_button: Button = %EditBattingLineupButton
 @onready var add_player_button: Button = %AddPlayerButton
 @onready var workspace_panel: WorkspacePanel = %WorkspacePanel
 @onready var event_summary_panel: EventSummaryPanel = %EventSummaryPanel
@@ -49,6 +50,9 @@ var _current_payload: Dictionary = {}
 var _current_validation_messages: Array = []
 var _editing_event_id = ""
 var _syncing_event_selection = false
+var lineup_dialog: AcceptDialog
+var lineup_selectors: Array[OptionButton] = []
+var _editing_lineup_side = ""
 
 const SHORTCUT_EVENT_TYPES = {
 	KEY_S: "single",
@@ -71,6 +75,7 @@ func _ready() -> void:
 	_apply_style()
 	_apply_responsive_layout()
 	_build_add_player_dialog()
+	_build_lineup_dialog()
 	event_key_panel.event_type_selected.connect(_on_event_key_pressed)
 	workspace_panel.event_payload_changed.connect(_on_workspace_event_payload_changed)
 	workspace_panel.event_selected.connect(_on_workspace_event_selected)
@@ -83,6 +88,7 @@ func _ready() -> void:
 	team_quick_roster_panel.roster_team_tab_changed.connect(_on_roster_team_tab_changed)
 	team_quick_roster_panel.player_selected.connect(_on_roster_player_selected)
 	team_quick_roster_panel.add_player_requested.connect(_on_roster_add_player_requested)
+	edit_batting_lineup_button.pressed.connect(_on_edit_batting_lineup_pressed)
 	add_player_button.pressed.connect(team_quick_roster_panel.request_add_player)
 	_load_repository()
 	_refresh_game_context()
@@ -167,7 +173,7 @@ func _apply_style() -> void:
 		[event_key_panel, team_quick_roster_panel, workspace_panel, skinny_event_history_panel, compact_scoreboard_panel],
 		[workspace_label, event_history_label],
 		[workspace_placeholder],
-		[add_player_button]
+		[edit_batting_lineup_button, add_player_button]
 	)
 
 func _load_repository() -> void:
@@ -191,6 +197,7 @@ func _refresh_game_context() -> void:
 		team_quick_roster_panel.set_team_ids("", "")
 		team_quick_roster_panel.set_home_roster([])
 		team_quick_roster_panel.set_away_roster([])
+		team_quick_roster_panel.set_active_batter_ids("", "")
 		_update_add_player_button_state()
 		skinny_event_history_panel.clear()
 		compact_scoreboard_panel.clear()
@@ -199,6 +206,7 @@ func _refresh_game_context() -> void:
 	team_quick_roster_panel.set_team_ids(current_game.home_team_id, current_game.away_team_id)
 	team_quick_roster_panel.set_home_roster(_players_for_team(current_game.home_team_id))
 	team_quick_roster_panel.set_away_roster(_players_for_team(current_game.away_team_id))
+	team_quick_roster_panel.set_active_batter_ids(_active_batter_id_for_team(current_game.home_team_id), _active_batter_id_for_team(current_game.away_team_id))
 	_update_add_player_button_state()
 	var home_team: Team = repository.find_entity_by_id(current_game.home_team_id, "teams")
 	var away_team: Team = repository.find_entity_by_id(current_game.away_team_id, "teams")
@@ -542,14 +550,107 @@ func _player_name_for_id(player_id: String) -> String:
 	var player: Player = repository.find_entity_by_id(player_id, "players")
 	return player.display_name if player != null and not player.display_name.is_empty() else player_id
 
+func _active_batter_id_for_team(team_id: String) -> String:
+	if current_game == null or team_id.strip_edges().is_empty():
+		return ""
+	var lineup = team_quick_roster_panel.get_lineup_for_team_id(team_id)
+	var filled_lineup: Array[String] = []
+	for player_id in lineup:
+		if not str(player_id).strip_edges().is_empty():
+			filled_lineup.append(str(player_id))
+	if filled_lineup.is_empty():
+		return ""
+	var plate_appearances = 0
+	for event in _events_for_current_game():
+		if str(event.offense_team_id) == team_id and not str(event.batter_id).strip_edges().is_empty():
+			plate_appearances += 1
+	return filled_lineup[plate_appearances % filled_lineup.size()]
+
+func _on_edit_batting_lineup_pressed() -> void:
+	_editing_lineup_side = team_quick_roster_panel.get_selected_side()
+	_populate_lineup_dialog()
+	var team: Team = repository.find_entity_by_id(team_quick_roster_panel.get_selected_team_id(), "teams") if repository != null else null
+	lineup_dialog.title = "Edit Batting Lineup — %s" % _team_name(team)
+	lineup_dialog.popup_centered(Vector2i(480, 520))
+
+func _build_lineup_dialog() -> void:
+	lineup_dialog = AcceptDialog.new()
+	lineup_dialog.title = "Edit Batting Lineup"
+	lineup_dialog.min_size = Vector2i(480, 520)
+	lineup_dialog.confirmed.connect(_on_lineup_confirmed)
+	add_child(lineup_dialog)
+	var box = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	lineup_dialog.add_child(box)
+	var help = Label.new()
+	help.text = "Choose one unique roster player for each batting order spot."
+	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(help)
+	GameEntryStyle.style_body_label(help)
+	for index in range(9):
+		var selector = OptionButton.new()
+		selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		selector.item_selected.connect(func(_item_index: int) -> void: _refresh_lineup_selector_options())
+		lineup_selectors.append(selector)
+		var row = HBoxContainer.new()
+		var label = Label.new()
+		label.custom_minimum_size.x = 64
+		label.text = "Spot %d" % (index + 1)
+		row.add_child(label)
+		row.add_child(selector)
+		box.add_child(row)
+
+func _populate_lineup_dialog() -> void:
+	var current_lineup = team_quick_roster_panel.get_lineup_for_side(_editing_lineup_side)
+	for index in range(lineup_selectors.size()):
+		lineup_selectors[index].set_meta("selected_player_id", str(current_lineup[index]) if index < current_lineup.size() else "")
+	_refresh_lineup_selector_options()
+
+func _refresh_lineup_selector_options() -> void:
+	var selected_ids: Array[String] = []
+	for selector in lineup_selectors:
+		if selector.selected >= 0:
+			selector.set_meta("selected_player_id", str(selector.get_item_metadata(selector.selected)))
+		var selected_id = str(selector.get_meta("selected_player_id", ""))
+		if not selected_id.is_empty():
+			selected_ids.append(selected_id)
+	var roster = team_quick_roster_panel.get_roster_for_side(_editing_lineup_side)
+	for selector in lineup_selectors:
+		var current_id = str(selector.get_meta("selected_player_id", ""))
+		selector.clear()
+		selector.add_item("-- Select player --")
+		selector.set_item_metadata(0, "")
+		for player in roster:
+			var player_id = player.id
+			if player_id != current_id and selected_ids.has(player_id):
+				continue
+			selector.add_item("#%s %s" % [player.jersey_number if not player.jersey_number.is_empty() else "--", player.display_name])
+			selector.set_item_metadata(selector.get_item_count() - 1, player_id)
+		for item_index in range(selector.get_item_count()):
+			if str(selector.get_item_metadata(item_index)) == current_id:
+				selector.select(item_index)
+				break
+
+func _on_lineup_confirmed() -> void:
+	var lineup: Array[String] = []
+	for selector in lineup_selectors:
+		lineup.append(str(selector.get_meta("selected_player_id", "")))
+	team_quick_roster_panel.set_lineup_for_side(_editing_lineup_side, lineup)
+	if current_game != null:
+		team_quick_roster_panel.set_active_batter_ids(_active_batter_id_for_team(current_game.home_team_id), _active_batter_id_for_team(current_game.away_team_id))
+	event_summary_panel.set_selected_event_summary("Updated %s batting lineup." % _editing_lineup_side.capitalize())
+
 func _on_roster_team_tab_changed(side: String) -> void:
 	_selected_player_id = ""
 	event_summary_panel.set_selected_event_summary("Showing %s quick roster. Add Player will target this tab's team." % side.capitalize())
 	_update_add_player_button_state()
 
 func _update_add_player_button_state() -> void:
-	add_player_button.disabled = not team_quick_roster_panel.can_add_player_to_selected_team()
+	var team_unavailable = not team_quick_roster_panel.can_add_player_to_selected_team()
+	add_player_button.disabled = team_unavailable
 	add_player_button.text = "Add Player" if not add_player_button.disabled else "Add Player (select team)"
+	edit_batting_lineup_button.disabled = team_unavailable
+	edit_batting_lineup_button.text = "Edit Batting Lineup" if not edit_batting_lineup_button.disabled else "Edit Lineup (select team)"
 
 func _on_roster_player_selected(player_id: String) -> void:
 	var player: Player = repository.find_entity_by_id(player_id, "players") if repository != null else null

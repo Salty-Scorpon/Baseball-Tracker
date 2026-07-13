@@ -23,6 +23,8 @@ var _home_team_id = "home"
 var _away_team_id = "away"
 var _selected_player_id = ""
 var _buttons_by_player_id: Dictionary = {}
+var _lineups_by_side: Dictionary = {SIDE_HOME: [], SIDE_AWAY: []}
+var _active_batter_ids_by_side: Dictionary = {SIDE_HOME: "", SIDE_AWAY: ""}
 
 
 func set_team_ids(home_team_id: String, away_team_id: String) -> void:
@@ -74,7 +76,36 @@ func get_selected_team_id() -> String:
 
 
 func _current_roster() -> Array:
-	return _home_roster if _selected_side == SIDE_HOME else _away_roster
+	return get_roster_for_side(_selected_side)
+
+func get_roster_for_side(side: String) -> Array:
+	return _home_roster if side == SIDE_HOME else _away_roster
+
+func get_lineup_for_side(side: String) -> Array:
+	return Array(_lineups_by_side.get(side, [])).duplicate()
+
+func get_lineup_for_team_id(team_id: String) -> Array:
+	if team_id == _home_team_id:
+		return get_lineup_for_side(SIDE_HOME)
+	if team_id == _away_team_id:
+		return get_lineup_for_side(SIDE_AWAY)
+	return []
+
+func set_lineup_for_side(side: String, lineup: Array) -> void:
+	var normalized_side = side.to_lower()
+	if not VALID_SIDES.has(normalized_side):
+		return
+	var trimmed: Array[String] = []
+	for index in range(9):
+		trimmed.append(str(lineup[index]) if index < lineup.size() else "")
+	_lineups_by_side[normalized_side] = trimmed
+	if _selected_side == normalized_side:
+		_refresh_roster_rows()
+
+func set_active_batter_ids(home_player_id: String, away_player_id: String) -> void:
+	_active_batter_ids_by_side[SIDE_HOME] = home_player_id
+	_active_batter_ids_by_side[SIDE_AWAY] = away_player_id
+	_refresh_roster_rows()
 
 
 func _refresh_tabs() -> void:
@@ -98,11 +129,22 @@ func _refresh_roster_rows() -> void:
 	if not _selected_player_id.is_empty() and not players.any(func(player: Variant) -> bool: return _player_field(player, "id", "") == _selected_player_id):
 		_selected_player_id = ""
 	empty_label.visible = players.is_empty()
+	var player_by_id = {}
 	for player in players:
-		var row = _build_player_row(player)
-		roster_rows.add_child(row)
-		if not _player_field(player, "id", "").is_empty():
-			_buttons_by_player_id[_player_field(player, "id", "")] = row
+		player_by_id[_player_field(player, "id", "")] = player
+	var lineup_ids = _filled_lineup_ids_for_selected_side()
+	if not lineup_ids.is_empty():
+		_add_section_label("Batting Lineup")
+		for lineup_index in range(lineup_ids.size()):
+			var player_id = lineup_ids[lineup_index]
+			if player_by_id.has(player_id):
+				_add_player_row(player_by_id[player_id], lineup_index + 1)
+		_add_section_label("Bench / Roster")
+	for player in players:
+		var player_id = _player_field(player, "id", "")
+		if lineup_ids.has(player_id):
+			continue
+		_add_player_row(player, 0)
 	_update_player_selection()
 
 
@@ -111,17 +153,44 @@ func clear_selection() -> void:
 	_update_player_selection()
 
 
-func _build_player_row(player: Variant) -> Button:
+func _add_player_row(player: Variant, lineup_spot: int = 0) -> void:
+	var row = _build_player_row(player, lineup_spot)
+	roster_rows.add_child(row)
+	var player_id = _player_field(player, "id", "")
+	if not player_id.is_empty():
+		_buttons_by_player_id[player_id] = row
+
+func _add_section_label(text: String) -> void:
+	var label = Label.new()
+	label.text = text
+	GameEntryStyle.style_body_label(label)
+	roster_rows.add_child(label)
+
+func _filled_lineup_ids_for_selected_side() -> Array[String]:
+	var output: Array[String] = []
+	for player_id in Array(_lineups_by_side.get(_selected_side, [])):
+		var normalized_id = str(player_id).strip_edges()
+		if not normalized_id.is_empty():
+			output.append(normalized_id)
+	return output
+
+func _build_player_row(player: Variant, lineup_spot: int = 0) -> Button:
 	var player_id = _player_field(player, "id", "")
 	var jersey_number = _player_field(player, "jersey_number", "--")
 	var display_name = _player_display_name(player)
 	var button = Button.new()
-	button.text = "#%s %s" % [jersey_number, display_name]
+	var active_marker = "● " if player_id == str(_active_batter_ids_by_side.get(_selected_side, "")) else "  "
+	var lineup_prefix = "%d. " % lineup_spot if lineup_spot > 0 else ""
+	button.text = "%s%s#%s %s" % [active_marker, lineup_prefix, jersey_number, display_name]
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.tooltip_text = "Select %s" % display_name
 	button.pressed.connect(func() -> void: _select_player(player_id))
 	GameEntryStyle.style_button(button)
+	if active_marker.strip_edges() == "●":
+		button.add_theme_color_override("font_color", Color("#57d163"))
+		button.add_theme_color_override("font_hover_color", Color("#57d163"))
+		button.add_theme_color_override("font_pressed_color", Color("#57d163"))
 	return button
 
 

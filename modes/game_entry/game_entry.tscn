@@ -73,6 +73,11 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="EditBattingLineupButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Edit Batting Lineup"
+
 [node name="AddPlayerButton" type="Button" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox"]
 unique_name_in_owner = true
 layout_mode = 2
