@@ -5,6 +5,7 @@ const GameEntryStyle = preload("res://modes/game_entry/GameEntryStyle.gd")
 
 signal event_payload_changed(payload: Dictionary)
 signal event_edit_requested(event_id: String)
+signal event_delete_requested(event_id: String)
 signal event_selected(event_id: String)
 signal event_creation_cancel_requested()
 
@@ -29,6 +30,7 @@ func _ready() -> void:
 	event_creation_workspace.cancel_requested.connect(_on_cancel_event_pressed)
 	event_log_view.event_selected.connect(_on_event_log_selected)
 	event_log_view.event_edit_requested.connect(_on_event_log_edit_requested)
+	event_log_view.event_delete_requested.connect(_on_event_log_delete_requested)
 	show_review_mode()
 
 func _apply_style() -> void:
@@ -84,6 +86,9 @@ func _on_event_log_selected(event_id: String) -> void:
 
 func _on_event_log_edit_requested(event_id: String) -> void:
 	event_edit_requested.emit(event_id)
+
+func _on_event_log_delete_requested(event_id: String) -> void:
+	event_delete_requested.emit(event_id)
 
 func set_events(events: Array, context: Dictionary = {}) -> void:
 	event_log_view.set_events(events, context)

@@ -3,6 +3,7 @@ class_name EventLogView
 
 signal event_selected(event_id: String)
 signal event_edit_requested(event_id: String)
+signal event_delete_requested(event_id: String)
 
 const GameEntryStyle = preload("res://modes/game_entry/GameEntryStyle.gd")
 
@@ -116,16 +117,31 @@ func _make_event_card(event: Dictionary) -> PanelContainer:
 	if footer.text.is_empty():
 		footer.hide()
 	box.add_child(footer)
+	var actions_row = HBoxContainer.new()
+	actions_row.alignment = BoxContainer.ALIGNMENT_END
+	box.add_child(actions_row)
 	var edit_button = Button.new()
 	edit_button.text = "Edit Event"
 	edit_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	edit_button.pressed.connect(func() -> void: event_edit_requested.emit(_event_id(event)))
-	box.add_child(edit_button)
+	actions_row.add_child(edit_button)
+	var delete_button = Button.new()
+	delete_button.text = "Delete Event"
+	delete_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	delete_button.visible = _is_latest_event(event)
+	delete_button.pressed.connect(func() -> void: event_delete_requested.emit(_event_id(event)))
+	actions_row.add_child(delete_button)
 	_style_card(card, false)
 	GameEntryStyle.style_body_label(header)
 	GameEntryStyle.style_body_label(footer)
 	GameEntryStyle.style_button(edit_button)
+	GameEntryStyle.style_button(delete_button)
 	return card
+
+func _is_latest_event(event: Dictionary) -> bool:
+	if _events.is_empty():
+		return false
+	return _event_id(event) == _event_id(_event_to_dictionary(_events.back()))
 
 func _on_card_gui_input(input_event: InputEvent, event_id: String) -> void:
 	if input_event is InputEventMouseButton and input_event.pressed and input_event.button_index == MOUSE_BUTTON_LEFT:
