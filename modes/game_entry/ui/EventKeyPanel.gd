@@ -25,7 +25,7 @@ const EVENT_KEYS: Array[Dictionary] = [
 	{"label": "BK", "event_type": "balk", "implemented": true, "hint": "Balk"},
 	{"label": "DP", "event_type": "double_play", "implemented": true, "hint": "Double play"},
 	{"label": "TP", "event_type": "triple_play", "implemented": true, "hint": "Triple play"},
-	{"label": "SUB", "event_type": "substitution", "implemented": true, "hint": "Substitution", "shortcut": "U"},
+	{"label": "PH", "event_type": "pinch_hitter", "implemented": true, "hint": "Pinch hitter", "shortcut": "U"},
 	{"label": "PCH", "event_type": "pitching_change", "implemented": true, "hint": "Pitching change", "shortcut": "P"},
 	{"label": "MAN", "event_type": "manual_correction", "implemented": true, "hint": "Manual correction"},
 ]
