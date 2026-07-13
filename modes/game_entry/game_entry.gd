@@ -603,7 +603,7 @@ func _game_event_from_payload(payload: Dictionary, existing_event: GameEvent = n
 	details["event_type"] = event_type
 	event.sequence = existing_event.sequence if existing_event != null else next_sequence
 	event.sequence_number = existing_event.sequence_number if existing_event != null else next_sequence
-	event.inning = int(payload.get("inning", 1))
+	event.inning = _safe_int(payload.get("inning", 1), 1)
 	event.half = str(payload.get("half", payload.get("half_inning", "top"))).to_lower()
 	event.half_inning = event.half
 	event.event_type = event_type
@@ -617,9 +617,9 @@ func _game_event_from_payload(payload: Dictionary, existing_event: GameEvent = n
 	event.offensive_team_id = event.offense_team_id
 	event.defense_team_id = str(payload.get("defense_team_id", ""))
 	event.defensive_team_id = event.defense_team_id
-	event.outs_before = int(payload.get("outs_before", 0))
+	event.outs_before = _safe_int(payload.get("outs_before", 0), 0)
 	event.outs_added = _placeholder_outs_added(event_type, details)
-	var requested_outs_after = int(payload.get("outs_after", event.outs_before + event.outs_added))
+	var requested_outs_after = _safe_int(payload.get("outs_after", event.outs_before + event.outs_added), event.outs_before + event.outs_added)
 	if payload.has("outs_after") and requested_outs_after > event.outs_before:
 		event.outs_after = requested_outs_after
 		event.outs_added = max(0, event.outs_after - event.outs_before)
@@ -651,10 +651,25 @@ func _legacy_event_label(event_type: String) -> String:
 	var labels = {"single":"Single", "double":"Double", "triple":"Triple", "home_run":"Home run", "walk":"Walk", "hit_by_pitch":"Hit by pitch", "reached_on_error":"Reached on error", "fielders_choice":"Fielder's choice", "stolen_base":"Stolen base"}
 	return str(labels.get(event_type, event_type.replace("_", " ").capitalize()))
 
+
+func _safe_int(value: Variant, default_value: int = 0) -> int:
+	if value is int:
+		return value
+	if value is float:
+		return int(value)
+	if value is bool:
+		return 1 if value else 0
+	var text = str(value).strip_edges()
+	if text.is_valid_int():
+		return text.to_int()
+	if text.is_valid_float():
+		return int(text.to_float())
+	return default_value
+
 func _placeholder_outs_added(event_type: String, details: Dictionary) -> int:
 	var manual_overrides = Dictionary(details.get("manual_overrides", {})) if details.get("manual_overrides", {}) is Dictionary else {}
 	if manual_overrides.has("outs"):
-		return max(0, int(manual_overrides.get("outs", 0)))
+		return max(0, _safe_int(manual_overrides.get("outs", 0), 0))
 	var explicit_outs = _explicit_outs_added_from_details(details)
 	if explicit_outs >= 0:
 		return explicit_outs
@@ -679,10 +694,10 @@ func _placeholder_outs_added(event_type: String, details: Dictionary) -> int:
 func _explicit_outs_added_from_details(details: Dictionary) -> int:
 	for source in [details, Dictionary(details.get("event_details", {})) if details.get("event_details", {}) is Dictionary else {}]:
 		if source.has("outs_added") and str(source.get("outs_added", "")).strip_edges().is_valid_int():
-			return max(0, int(source.get("outs_added", 0)))
+			return max(0, _safe_int(source.get("outs_added", 0), 0))
 		for section in source.values():
 			if section is Dictionary and section.has("outs_added") and str(section.get("outs_added", "")).strip_edges().is_valid_int():
-				return max(0, int(section.get("outs_added", 0)))
+				return max(0, _safe_int(section.get("outs_added", 0), 0))
 	return -1
 
 func _outs_added_from_runner_advancements(advancements: Variant) -> int:
@@ -724,7 +739,7 @@ func _payload_runs_scored(payload: Dictionary, event_type: String, details: Dict
 	if raw_runs is Array:
 		return raw_runs.size()
 	if raw_runs is int or raw_runs is float:
-		return int(raw_runs)
+		return _safe_int(raw_runs, 0)
 	return _placeholder_runs_scored(event_type, details)
 
 func _placeholder_runs_scored(event_type: String, details: Dictionary) -> int:
