@@ -97,8 +97,7 @@ func create_player_for_team(team_id: String, player_data: Dictionary) -> Player:
 	player.first_name = first_name
 	player.last_name = last_name
 	player.jersey_number = str(player_data.get("jersey_number", "")).strip_edges()
-	var position = str(player_data.get("position", "")).strip_edges()
-	player.positions = [] if position.is_empty() else [position]
+	player.positions.assign(_positions_from_player_data(player_data))
 	player.bats = str(player_data.get("bats", "Unknown")).strip_edges()
 	if player.bats.is_empty():
 		player.bats = "Unknown"
@@ -107,6 +106,22 @@ func create_player_for_team(team_id: String, player_data: Dictionary) -> Player:
 		player.throws_hand = "Unknown"
 	player.notes = str(player_data.get("notes", "")).strip_edges()
 	return player if add_player(player) else null
+
+func _positions_from_player_data(player_data: Dictionary) -> Array[String]:
+	var parsed_positions: Array[String] = []
+	var raw_positions: Variant = player_data.get("positions", player_data.get("position", ""))
+	if raw_positions is Array:
+		for raw_position in raw_positions:
+			_add_position(parsed_positions, str(raw_position))
+	else:
+		for raw_position in str(raw_positions).split(",", false):
+			_add_position(parsed_positions, raw_position)
+	return parsed_positions
+
+func _add_position(positions: Array[String], raw_position: String) -> void:
+	var position = raw_position.strip_edges()
+	if not position.is_empty():
+		positions.append(position)
 
 func has_duplicate_jersey_number(team_id: String, jersey_number: String) -> bool:
 	var normalized_jersey = jersey_number.strip_edges()
