@@ -51,6 +51,8 @@ var _current_payload: Dictionary = {}
 var _current_validation_messages: Array = []
 var _editing_event_id = ""
 var _syncing_event_selection = false
+var _undo_event_actions: Array[Dictionary] = []
+var _redo_event_actions: Array[Dictionary] = []
 var lineup_dialog: AcceptDialog
 var lineup_selectors: Array[OptionButton] = []
 var _editing_lineup_side = ""
@@ -163,14 +165,93 @@ func _is_text_entry_focused() -> bool:
 	return focus_owner is LineEdit or focus_owner is TextEdit
 
 func undo_last_event() -> void:
-	# TODO: Replace this safe placeholder with event-log undo once the new docked
-	# workflow exposes command history for event commits and edits.
-	event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Undo is not wired to event history yet. TODO: connect Ctrl+Z to event-log undo." }])
+	if _undo_event_actions.is_empty():
+		event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Nothing to undo in the current event log." }])
+		return
+	var action = _undo_event_actions.pop_back()
+	if not _apply_event_history_action(action, true):
+		_undo_event_actions.append(action)
+		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not undo the last event-log action." }])
+		return
+	_redo_event_actions.append(action)
+	_complete_event_history_action("Undid %s." % _event_history_action_label(action, true), _selection_after_event_history_action(action, true))
 
 func redo_last_event() -> void:
-	# TODO: Replace this safe placeholder with redo-stack handling when undo is
-	# implemented for the new docked Game Entry coordinator.
-	event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Redo is not wired to event history yet. TODO: connect Ctrl+Y to event-log redo." }])
+	if _redo_event_actions.is_empty():
+		event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Nothing to redo in the current event log." }])
+		return
+	var action = _redo_event_actions.pop_back()
+	if not _apply_event_history_action(action, false):
+		_redo_event_actions.append(action)
+		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not redo the event-log action." }])
+		return
+	_undo_event_actions.append(action)
+	_complete_event_history_action("Redid %s." % _event_history_action_label(action, false), _selection_after_event_history_action(action, false))
+
+func _record_event_history_action(action: Dictionary) -> void:
+	_undo_event_actions.append(action.duplicate(true))
+	_redo_event_actions.clear()
+
+func _apply_event_history_action(action: Dictionary, undo: bool) -> bool:
+	if repository == null:
+		return false
+	var action_type = str(action.get("type", ""))
+	match action_type:
+		"create":
+			var created_event: GameEvent = _event_from_history_snapshot(action.get("after", {}))
+			if created_event == null:
+				return false
+			return repository.remove_game_event(created_event.id) if undo else repository.append_game_event(created_event)
+		"update":
+			var snapshot = action.get("before", {}) if undo else action.get("after", {})
+			var event: GameEvent = _event_from_history_snapshot(snapshot)
+			return event != null and repository.update_game_event(event)
+	return false
+
+func _complete_event_history_action(message: String, selected_event_id: String) -> void:
+	SaveManagerScript.save_project(repository)
+	_editing_event_id = ""
+	_current_payload.clear()
+	_current_validation_messages.clear()
+	_selected_event_id = selected_event_id
+	_refresh_game_context()
+	workspace_panel.show_review_mode()
+	if selected_event_id.is_empty():
+		workspace_panel.clear_event_selection()
+		skinny_event_history_panel.clear_selection()
+		compact_scoreboard_panel.set_state(_scoreboard_state_for_events(_events_for_current_game()))
+		_update_active_pitcher_panel("")
+		event_summary_panel.set_validation_messages([{ "severity": "info", "message": message }])
+	else:
+		_select_event(selected_event_id, "history_action")
+		event_summary_panel.set_validation_messages([{ "severity": "info", "message": message }])
+
+func _event_history_action_label(action: Dictionary, undo: bool) -> String:
+	var action_type = str(action.get("type", ""))
+	var snapshot = action.get("after", {}) if action_type == "create" or not undo else action.get("before", {})
+	var event_id = str(Dictionary(snapshot).get("id", Dictionary(snapshot).get("event_id", ""))) if snapshot is Dictionary else ""
+	match action_type:
+		"create":
+			return "created event %s" % event_id
+		"update":
+			return "event edit %s" % event_id
+	return "event-log action"
+
+func _selection_after_event_history_action(action: Dictionary, undo: bool) -> String:
+	var action_type = str(action.get("type", ""))
+	if action_type == "create" and undo:
+		var events = _events_for_current_game()
+		return events.back().id if not events.is_empty() else ""
+	var snapshot = action.get("before", {}) if undo else action.get("after", {})
+	return str(Dictionary(snapshot).get("id", Dictionary(snapshot).get("event_id", ""))) if snapshot is Dictionary else ""
+
+func _event_history_snapshot(event: GameEvent) -> Dictionary:
+	return event.to_dict().duplicate(true) if event != null else {}
+
+func _event_from_history_snapshot(snapshot: Variant) -> GameEvent:
+	if not (snapshot is Dictionary):
+		return null
+	return GameEventScript.from_dict(Dictionary(snapshot).duplicate(true))
 
 func _apply_style() -> void:
 	GameEntryStyle.apply_shell_style(
@@ -344,12 +425,18 @@ func _on_event_summary_confirm_requested() -> void:
 		event_summary_panel.set_validation_messages(_current_validation_messages)
 		event_summary_panel.set_active(false)
 		return
+	var history_action = {
+		"type": "update" if existing_event != null else "create",
+		"before": _event_history_snapshot(existing_event),
+	}
 	var event = _game_event_from_payload(_current_payload, existing_event)
 	var saved = repository.update_game_event(event) if existing_event != null else repository.append_game_event(event)
 	if not saved:
 		var action = "update" if existing_event != null else "append"
 		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not %s the event in the current game log." % action }])
 		return
+	history_action["after"] = _event_history_snapshot(event)
+	_record_event_history_action(history_action)
 	SaveManagerScript.save_project(repository)
 	_selected_event_id = event.id
 	_editing_event_id = ""

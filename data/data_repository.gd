@@ -197,6 +197,18 @@ func update_game_event(event: GameEvent) -> bool:
 			return true
 	return false
 
+func remove_game_event(event_id: String) -> bool:
+	if event_id.is_empty():
+		return false
+	for index in range(game_events.size()):
+		if game_events[index].id == event_id:
+			var game: Game = find_entity_by_id(game_events[index].game_id, "games")
+			game_events.remove_at(index)
+			if game != null:
+				game.event_ids.erase(event_id)
+			return true
+	return false
+
 func find_entity_by_id(entity_id: String, collection_name: String = "") -> Variant:
 	if entity_id.is_empty():
 		return null
