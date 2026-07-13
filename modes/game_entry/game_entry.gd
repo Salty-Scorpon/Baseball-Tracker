@@ -337,12 +337,13 @@ func _on_event_summary_confirm_requested() -> void:
 		return
 	if _current_payload.is_empty():
 		_current_payload = workspace_panel.get_event_payload()
+	var existing_event = _find_current_game_event(_editing_event_id) if not _editing_event_id.is_empty() else null
+	_current_payload = _payload_with_current_quick_roster_batter(_current_payload, existing_event)
 	_current_validation_messages = EventValidatorScript.validate_event_payload(_current_payload)
 	if EventValidatorScript.has_errors(_current_validation_messages):
 		event_summary_panel.set_validation_messages(_current_validation_messages)
 		event_summary_panel.set_active(false)
 		return
-	var existing_event = _find_current_game_event(_editing_event_id) if not _editing_event_id.is_empty() else null
 	var event = _game_event_from_payload(_current_payload, existing_event)
 	var saved = repository.update_game_event(event) if existing_event != null else repository.append_game_event(event)
 	if not saved:
@@ -431,11 +432,37 @@ func _build_workspace_game_context() -> Dictionary:
 		"away_team_id": current_game.away_team_id,
 		"offense_team_id": offense_team_id,
 		"defense_team_id": defense_team_id,
-		"batter_id": _first_player_id_for_team(offense_team_id),
+		"batter_id": _active_batter_id_from_quick_roster(offense_team_id),
 		"pitcher_id": _active_pitcher_id_for_defense_side(defense_team_id, events),
 		"offensive_lineup": _players_for_team(offense_team_id),
 		"defensive_players": _players_for_team(defense_team_id),
 	}
+
+func _payload_with_current_quick_roster_batter(payload: Dictionary, existing_event: GameEvent = null) -> Dictionary:
+	var output = payload.duplicate(true)
+	if existing_event != null:
+		return output
+	var offense_team_id = str(output.get("offense_team_id", ""))
+	if offense_team_id.is_empty() and output.get("game_context", {}) is Dictionary:
+		offense_team_id = str(output["game_context"].get("offense_team_id", ""))
+	var active_batter_id = _active_batter_id_from_quick_roster(offense_team_id)
+	if active_batter_id.is_empty():
+		return output
+	output["batter_id"] = active_batter_id
+	if output.get("game_context", {}) is Dictionary:
+		var context = Dictionary(output["game_context"]).duplicate(true)
+		context["batter_id"] = active_batter_id
+		output["game_context"] = context
+	return output
+
+func _active_batter_id_from_quick_roster(team_id: String) -> String:
+	if team_id.strip_edges().is_empty():
+		return ""
+	var marked_batter_id = team_quick_roster_panel.get_active_batter_id_for_team_id(team_id)
+	if not marked_batter_id.strip_edges().is_empty():
+		return marked_batter_id
+	var calculated_batter_id = _active_batter_id_for_team(team_id)
+	return calculated_batter_id if not calculated_batter_id.strip_edges().is_empty() else _first_player_id_for_team(team_id)
 
 func _game_event_from_payload(payload: Dictionary, existing_event: GameEvent = null) -> GameEvent:
 	var events = _events_for_current_game()
