@@ -42,6 +42,8 @@ var notes_field: TextEdit
 var validation_label: Label
 var duplicate_warning_label: Label
 var _pending_add_team_id = ""
+var _editing_player_id = ""
+var _selected_player_id = ""
 var _selected_event_id = ""
 var _current_payload: Dictionary = {}
 var _current_validation_messages: Array = []
@@ -233,6 +235,8 @@ func _event_log_context() -> Dictionary:
 
 func _on_event_key_pressed(event_type: String) -> void:
 	_editing_event_id = ""
+	_selected_player_id = ""
+	team_quick_roster_panel.clear_selection()
 	_current_payload.clear()
 	_current_validation_messages.clear()
 	workspace_panel.show_create_event_mode(event_type, _build_workspace_game_context())
@@ -259,6 +263,8 @@ func _select_event(event_id: String, source: String = "") -> void:
 	if _syncing_event_selection or event_id.strip_edges().is_empty():
 		return
 	_syncing_event_selection = true
+	_selected_player_id = ""
+	team_quick_roster_panel.clear_selection()
 	_selected_event_id = event_id
 	workspace_panel.show_review_mode()
 	match source:
@@ -281,6 +287,8 @@ func _on_workspace_event_edit_requested(event_id: String) -> void:
 	if event == null:
 		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not find event %s in the current game log." % event_id }])
 		return
+	_selected_player_id = ""
+	team_quick_roster_panel.clear_selection()
 	_selected_event_id = event_id
 	_editing_event_id = event_id
 	_current_payload = _payload_from_game_event(event)
@@ -341,6 +349,9 @@ func _on_event_summary_cancel_requested() -> void:
 		event_summary_panel.set_selected_event_summary(_summary_for_event(_selected_event_id))
 
 func _on_event_summary_edit_requested() -> void:
+	if not _selected_player_id.is_empty():
+		_open_edit_player_dialog(_selected_player_id)
+		return
 	var event_id = _selected_event_id
 	if event_id.is_empty():
 		event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Edit requested. Select a saved event from the narrative log to edit it." }])
@@ -532,6 +543,7 @@ func _player_name_for_id(player_id: String) -> String:
 	return player.display_name if player != null and not player.display_name.is_empty() else player_id
 
 func _on_roster_team_tab_changed(side: String) -> void:
+	_selected_player_id = ""
 	event_summary_panel.set_selected_event_summary("Showing %s quick roster. Add Player will target this tab's team." % side.capitalize())
 	_update_add_player_button_state()
 
@@ -540,15 +552,41 @@ func _update_add_player_button_state() -> void:
 	add_player_button.text = "Add Player" if not add_player_button.disabled else "Add Player (select team)"
 
 func _on_roster_player_selected(player_id: String) -> void:
-	event_summary_panel.set_selected_event_summary("Selected roster player: %s" % player_id)
+	var player: Player = repository.find_entity_by_id(player_id, "players") if repository != null else null
+	if player == null:
+		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not find selected roster player %s." % player_id }])
+		return
+	_selected_event_id = ""
+	_editing_event_id = ""
+	_current_payload.clear()
+	_current_validation_messages.clear()
+	_selected_player_id = player_id
+	workspace_panel.clear_event_selection()
+	skinny_event_history_panel.clear_selection()
+	compact_scoreboard_panel.set_state(_scoreboard_state_for_events(_events_for_current_game()))
+	event_summary_panel.set_selected_event_summary(_summary_for_player(player))
 
 func _on_roster_add_player_requested(team_id: String) -> void:
 	_pending_add_team_id = team_id
+	_editing_player_id = ""
 	add_player_requested.emit(team_id)
 	_clear_add_player_dialog()
 	_validate_add_player_dialog()
 	var team: Team = repository.find_entity_by_id(team_id, "teams") if repository != null else null
 	add_player_dialog.title = "Add Player — %s" % _team_name(team)
+	add_player_dialog.popup_centered(Vector2i(420, 420))
+
+func _open_edit_player_dialog(player_id: String) -> void:
+	var player: Player = repository.find_entity_by_id(player_id, "players") if repository != null else null
+	if player == null:
+		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not find selected roster player %s." % player_id }])
+		return
+	_editing_player_id = player.id
+	_pending_add_team_id = player.team_id
+	_populate_player_dialog(player)
+	_validate_add_player_dialog()
+	var team: Team = repository.find_entity_by_id(player.team_id, "teams") if repository != null else null
+	add_player_dialog.title = "Edit Player — %s" % _team_name(team)
 	add_player_dialog.popup_centered(Vector2i(420, 420))
 
 func _build_add_player_dialog() -> void:
@@ -597,13 +635,22 @@ func _clear_add_player_dialog() -> void:
 		field.text = ""
 	notes_field.text = ""
 
+func _populate_player_dialog(player: Player) -> void:
+	jersey_number_field.text = player.jersey_number
+	first_name_field.text = player.first_name
+	last_name_field.text = player.last_name
+	position_field.text = ", ".join(player.positions)
+	bats_field.text = player.bats
+	throws_field.text = player.throws_hand
+	notes_field.text = player.notes
+
 func _validate_add_player_dialog() -> bool:
 	var errors: Array[String] = []
 	if last_name_field.text.strip_edges().is_empty():
 		errors.append("Last name is required.")
 	if _pending_add_team_id.strip_edges().is_empty():
 		errors.append("Select a Home or Away team before adding a player.")
-	var duplicate = repository != null and repository.has_duplicate_jersey_number(_pending_add_team_id, jersey_number_field.text)
+	var duplicate = repository != null and _has_duplicate_jersey_number_for_other_player(_pending_add_team_id, jersey_number_field.text, _editing_player_id)
 	validation_label.text = "\n".join(errors)
 	duplicate_warning_label.text = "Warning: another player on this team already uses jersey #%s." % jersey_number_field.text.strip_edges() if duplicate else ""
 	add_player_dialog.get_ok_button().disabled = not errors.is_empty()
@@ -612,6 +659,9 @@ func _validate_add_player_dialog() -> bool:
 func _on_add_player_confirmed() -> void:
 	if not _validate_add_player_dialog():
 		add_player_dialog.popup_centered(Vector2i(420, 420))
+		return
+	if not _editing_player_id.is_empty():
+		_on_edit_player_confirmed()
 		return
 	var player = repository.create_player_for_team(_pending_add_team_id, {
 		"jersey_number": jersey_number_field.text,
@@ -628,6 +678,54 @@ func _on_add_player_confirmed() -> void:
 	SaveManagerScript.save_project(repository)
 	_refresh_game_context()
 	event_summary_panel.set_selected_event_summary("Added #%s %s to %s roster." % [player.jersey_number, player.display_name, team_quick_roster_panel.get_selected_side().capitalize()])
+
+func _on_edit_player_confirmed() -> void:
+	var player: Player = repository.find_entity_by_id(_editing_player_id, "players") if repository != null else null
+	if player == null:
+		event_summary_panel.set_selected_event_summary("Could not update missing player %s." % _editing_player_id)
+		return
+	player.jersey_number = jersey_number_field.text.strip_edges()
+	player.first_name = first_name_field.text.strip_edges()
+	player.last_name = last_name_field.text.strip_edges()
+	player.display_name = player.last_name if not player.last_name.is_empty() else ("%s %s" % [player.first_name, player.last_name]).strip_edges()
+	player.positions = _positions_from_field(position_field.text)
+	player.bats = bats_field.text.strip_edges()
+	if player.bats.is_empty():
+		player.bats = "Unknown"
+	player.throws_hand = throws_field.text.strip_edges()
+	if player.throws_hand.is_empty():
+		player.throws_hand = "Unknown"
+	player.notes = notes_field.text.strip_edges()
+	SaveManagerScript.save_project(repository)
+	_selected_player_id = player.id
+	_editing_player_id = ""
+	_refresh_game_context()
+	event_summary_panel.set_selected_event_summary(_summary_for_player(player))
+
+func _positions_from_field(value: String) -> Array[String]:
+	var positions: Array[String] = []
+	for raw_position in value.split(",", false):
+		var position = raw_position.strip_edges()
+		if not position.is_empty():
+			positions.append(position)
+	return positions
+
+func _has_duplicate_jersey_number_for_other_player(team_id: String, jersey_number: String, ignored_player_id: String = "") -> bool:
+	var normalized_jersey = jersey_number.strip_edges()
+	if repository == null or team_id.is_empty() or normalized_jersey.is_empty():
+		return false
+	for player in repository.players:
+		if player.id != ignored_player_id and player.team_id == team_id and player.jersey_number.strip_edges() == normalized_jersey:
+			return true
+	return false
+
+func _summary_for_player(player: Player) -> String:
+	var parts: Array[String] = ["Selected roster player: #%s %s" % [player.jersey_number if not player.jersey_number.is_empty() else "--", player.display_name if not player.display_name.is_empty() else player.id]]
+	if not player.positions.is_empty():
+		parts.append("Positions: %s" % ", ".join(player.positions))
+	parts.append("Bats: %s | Throws: %s" % [player.bats, player.throws_hand])
+	parts.append("Click Edit to update this player.")
+	return "\n".join(parts)
 
 func _team_name(team: Team) -> String:
 	return team.name if team != null and not team.name.is_empty() else "Unknown Team"

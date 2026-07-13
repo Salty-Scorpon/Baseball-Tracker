@@ -32,6 +32,10 @@ func select_event_silent(event_id: String) -> void:
 	_selected_event_id = event_id
 	_update_card_selection()
 
+func clear_selection() -> void:
+	_selected_event_id = ""
+	_update_card_selection()
+
 func select_event(event_id: String) -> void:
 	if event_id.is_empty() or not _cards_by_event_id.has(event_id):
 		return

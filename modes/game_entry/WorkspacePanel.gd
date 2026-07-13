@@ -94,6 +94,9 @@ func select_event(event_id: String) -> void:
 func select_event_silent(event_id: String) -> void:
 	event_log_view.select_event_silent(event_id)
 
+func clear_event_selection() -> void:
+	event_log_view.clear_selection()
+
 func scroll_to_event(event_id: String, emit_selection: bool = true) -> void:
 	event_log_view.scroll_to_event(event_id, emit_selection)
 
