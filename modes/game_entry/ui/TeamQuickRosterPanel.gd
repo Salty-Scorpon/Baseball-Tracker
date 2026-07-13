@@ -21,6 +21,8 @@ var _home_roster: Array = []
 var _away_roster: Array = []
 var _home_team_id = "home"
 var _away_team_id = "away"
+var _selected_player_id = ""
+var _buttons_by_player_id: Dictionary = {}
 
 
 func set_team_ids(home_team_id: String, away_team_id: String) -> void:
@@ -89,12 +91,24 @@ func can_add_player_to_selected_team() -> bool:
 
 
 func _refresh_roster_rows() -> void:
+	_buttons_by_player_id.clear()
 	for child in roster_rows.get_children():
 		child.queue_free()
 	var players = _current_roster()
+	if not _selected_player_id.is_empty() and not players.any(func(player: Variant) -> bool: return _player_field(player, "id", "") == _selected_player_id):
+		_selected_player_id = ""
 	empty_label.visible = players.is_empty()
 	for player in players:
-		roster_rows.add_child(_build_player_row(player))
+		var row = _build_player_row(player)
+		roster_rows.add_child(row)
+		if not _player_field(player, "id", "").is_empty():
+			_buttons_by_player_id[_player_field(player, "id", "")] = row
+	_update_player_selection()
+
+
+func clear_selection() -> void:
+	_selected_player_id = ""
+	_update_player_selection()
 
 
 func _build_player_row(player: Variant) -> Button:
@@ -106,9 +120,22 @@ func _build_player_row(player: Variant) -> Button:
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.tooltip_text = "Select %s" % display_name
-	button.pressed.connect(func() -> void: player_selected.emit(player_id))
+	button.pressed.connect(func() -> void: _select_player(player_id))
 	GameEntryStyle.style_button(button)
 	return button
+
+
+func _select_player(player_id: String) -> void:
+	if player_id.strip_edges().is_empty():
+		return
+	_selected_player_id = player_id
+	_update_player_selection()
+	player_selected.emit(player_id)
+
+
+func _update_player_selection() -> void:
+	for player_id in _buttons_by_player_id.keys():
+		GameEntryStyle.set_button_selected(_buttons_by_player_id[player_id], player_id == _selected_player_id)
 
 
 func _player_display_name(player: Variant) -> String:
