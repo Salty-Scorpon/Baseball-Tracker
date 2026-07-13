@@ -91,6 +91,19 @@ func get_lineup_for_team_id(team_id: String) -> Array:
 		return get_lineup_for_side(SIDE_AWAY)
 	return []
 
+func get_active_batter_id_for_side(side: String) -> String:
+	var normalized_side = side.to_lower()
+	if not VALID_SIDES.has(normalized_side):
+		return ""
+	return str(_active_batter_ids_by_side.get(normalized_side, ""))
+
+func get_active_batter_id_for_team_id(team_id: String) -> String:
+	if team_id == _home_team_id:
+		return get_active_batter_id_for_side(SIDE_HOME)
+	if team_id == _away_team_id:
+		return get_active_batter_id_for_side(SIDE_AWAY)
+	return ""
+
 func set_lineup_for_side(side: String, lineup: Array) -> void:
 	var normalized_side = side.to_lower()
 	if not VALID_SIDES.has(normalized_side):
