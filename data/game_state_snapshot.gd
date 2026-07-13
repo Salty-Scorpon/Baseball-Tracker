@@ -24,6 +24,10 @@ static func replay_game_until_sequence(events: Array, sequence_number: int = -1,
 		"current_pitcher_id": pitcher_id,
 		"current_pitcher_name": str(player_names_by_id.get(pitcher_id, pitcher_id)).strip_edges(),
 		"current_pitcher_strikeouts": _strikeouts_for_pitcher_until(events, pitcher_id, sequence_number),
+		"home_pitcher_id": str(replay_state.current_pitchers.get("home", "")).strip_edges(),
+		"away_pitcher_id": str(replay_state.current_pitchers.get("away", "")).strip_edges(),
+		"home_pitcher_name": str(player_names_by_id.get(str(replay_state.current_pitchers.get("home", "")).strip_edges(), str(replay_state.current_pitchers.get("home", "")).strip_edges())).strip_edges(),
+		"away_pitcher_name": str(player_names_by_id.get(str(replay_state.current_pitchers.get("away", "")).strip_edges(), str(replay_state.current_pitchers.get("away", "")).strip_edges())).strip_edges(),
 	}
 
 static func get_game_state_at_event(events: Array, game_id: String, event_id: String, player_names_by_id: Dictionary = {}, starting_pitchers: Dictionary = {}) -> Dictionary:

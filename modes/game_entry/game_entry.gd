@@ -26,6 +26,7 @@ const GameEventScript = preload("res://data/models/game_event.gd")
 @onready var event_summary_panel: EventSummaryPanel = %EventSummaryPanel
 @onready var skinny_event_history_panel: SkinnyEventHistoryPanel = %SkinnyEventHistoryPanel
 @onready var compact_scoreboard_panel: CompactScoreboardPanel = %CompactScoreboardPanel
+@onready var active_pitcher_panel: ActivePitcherPanel = %ActivePitcherPanel
 @onready var workspace_label: Label = %WorkspaceTitleLabel
 @onready var event_history_label: Label = %EventHistoryLabel
 @onready var workspace_placeholder: Label = %WorkspaceContextLabel
@@ -53,6 +54,10 @@ var _syncing_event_selection = false
 var lineup_dialog: AcceptDialog
 var lineup_selectors: Array[OptionButton] = []
 var _editing_lineup_side = ""
+var starting_pitcher_dialog: AcceptDialog
+var home_starting_pitcher_selector: OptionButton
+var away_starting_pitcher_selector: OptionButton
+var starting_pitcher_warning_label: Label
 
 const SHORTCUT_EVENT_TYPES = {
 	KEY_S: "single",
@@ -76,6 +81,7 @@ func _ready() -> void:
 	_apply_responsive_layout()
 	_build_add_player_dialog()
 	_build_lineup_dialog()
+	_build_starting_pitcher_dialog()
 	event_key_panel.event_type_selected.connect(_on_event_key_pressed)
 	workspace_panel.event_payload_changed.connect(_on_workspace_event_payload_changed)
 	workspace_panel.event_selected.connect(_on_workspace_event_selected)
@@ -90,6 +96,7 @@ func _ready() -> void:
 	team_quick_roster_panel.add_player_requested.connect(_on_roster_add_player_requested)
 	edit_batting_lineup_button.pressed.connect(_on_edit_batting_lineup_pressed)
 	add_player_button.pressed.connect(team_quick_roster_panel.request_add_player)
+	active_pitcher_panel.select_starting_pitchers_requested.connect(_on_select_starting_pitchers_requested)
 	_load_repository()
 	_refresh_game_context()
 
@@ -201,6 +208,7 @@ func _refresh_game_context() -> void:
 		_update_add_player_button_state()
 		skinny_event_history_panel.clear()
 		compact_scoreboard_panel.clear()
+		active_pitcher_panel.clear()
 		event_summary_panel.set_idle()
 		return
 	team_quick_roster_panel.set_team_ids(current_game.home_team_id, current_game.away_team_id)
@@ -215,7 +223,10 @@ func _refresh_game_context() -> void:
 	workspace_panel.set_events(events, event_context)
 	skinny_event_history_panel.set_events(events, event_context)
 	compact_scoreboard_panel.set_state(_scoreboard_state_for_events(events))
+	_update_active_pitcher_panel(_selected_event_id)
 	event_summary_panel.set_idle()
+	if _starting_pitchers_missing():
+		call_deferred("_open_starting_pitcher_dialog", true)
 
 func _players_for_team(team_id: String) -> Array:
 	var output: Array = []
@@ -285,6 +296,7 @@ func _select_event(event_id: String, source: String = "") -> void:
 			skinny_event_history_panel.select_event_silent(event_id)
 	event_summary_panel.set_selected_event_summary(_summary_for_event(event_id))
 	compact_scoreboard_panel.set_state(_scoreboard_state_for_event(event_id))
+	_update_active_pitcher_panel(event_id)
 	_syncing_event_selection = false
 
 func _on_workspace_event_edit_requested(event_id: String) -> void:
@@ -420,7 +432,7 @@ func _build_workspace_game_context() -> Dictionary:
 		"offense_team_id": offense_team_id,
 		"defense_team_id": defense_team_id,
 		"batter_id": _first_player_id_for_team(offense_team_id),
-		"pitcher_id": _first_player_id_for_team(defense_team_id),
+		"pitcher_id": _active_pitcher_id_for_defense_side(defense_team_id, events),
 		"offensive_lineup": _players_for_team(offense_team_id),
 		"defensive_players": _players_for_team(defense_team_id),
 	}
@@ -444,6 +456,9 @@ func _game_event_from_payload(payload: Dictionary, existing_event: GameEvent = n
 	event.event_group = str(details.get("template", {}).get("event_group", "")) if details.get("template", {}) is Dictionary else ""
 	event.batter_id = str(payload.get("batter_id", ""))
 	event.pitcher_id = str(payload.get("pitcher_id", ""))
+	if event_type == "pitching_change":
+		var pitching_change = Dictionary(details.get("pitching_change", details)) if details is Dictionary else {}
+		event.pitcher_id = str(pitching_change.get("incoming_pitcher_id", event.pitcher_id))
 	event.offense_team_id = str(payload.get("offense_team_id", ""))
 	event.offensive_team_id = event.offense_team_id
 	event.defense_team_id = str(payload.get("defense_team_id", ""))
@@ -520,10 +535,10 @@ func _first_player_id_for_team(team_id: String) -> String:
 	return ""
 
 func get_game_state_at_event(game_id: String, event_id: String) -> Dictionary:
-	return GameStateSnapshotScript.get_game_state_at_event(_events_for_current_game(), game_id, event_id, _player_names_by_id())
+	return GameStateSnapshotScript.get_game_state_at_event(_events_for_current_game(), game_id, event_id, _player_names_by_id(), _starting_pitcher_ids())
 
 func replay_game_until_sequence(game_id: String, sequence: int) -> Dictionary:
-	return GameStateSnapshotScript.replay_game_until_sequence(_events_for_game_id(game_id), sequence, _player_names_by_id())
+	return GameStateSnapshotScript.replay_game_until_sequence(_events_for_game_id(game_id), sequence, _player_names_by_id(), _starting_pitcher_ids())
 
 func _scoreboard_state_for_event(event_id: String) -> Dictionary:
 	if current_game == null:
@@ -531,7 +546,7 @@ func _scoreboard_state_for_event(event_id: String) -> Dictionary:
 	return get_game_state_at_event(current_game.id, event_id)
 
 func _scoreboard_state_for_events(events: Array, sequence_number: int = -1) -> Dictionary:
-	return GameStateSnapshotScript.replay_game_until_sequence(events, sequence_number, _player_names_by_id())
+	return GameStateSnapshotScript.replay_game_until_sequence(events, sequence_number, _player_names_by_id(), _starting_pitcher_ids())
 
 func _events_for_game_id(game_id: String) -> Array:
 	return _events_for_current_game().filter(func(event: GameEvent) -> bool: return game_id.is_empty() or event.game_id == game_id)
@@ -830,3 +845,147 @@ func _summary_for_player(player: Player) -> String:
 
 func _team_name(team: Team) -> String:
 	return team.name if team != null and not team.name.is_empty() else "Unknown Team"
+
+func _starting_pitcher_ids() -> Dictionary:
+	if current_game == null:
+		return {}
+	return {"home": current_game.home_starting_pitcher_id, "away": current_game.away_starting_pitcher_id}
+
+func _starting_pitchers_missing() -> bool:
+	return current_game != null and (current_game.home_starting_pitcher_id.strip_edges().is_empty() or current_game.away_starting_pitcher_id.strip_edges().is_empty())
+
+func _active_pitcher_id_for_defense_side(defense_team_id: String, events: Array) -> String:
+	if current_game == null:
+		return ""
+	var state = _scoreboard_state_for_events(events)
+	if defense_team_id == current_game.home_team_id:
+		return str(state.get("home_pitcher_id", current_game.home_starting_pitcher_id))
+	if defense_team_id == current_game.away_team_id:
+		return str(state.get("away_pitcher_id", current_game.away_starting_pitcher_id))
+	return ""
+
+func _update_active_pitcher_panel(event_id: String = "") -> void:
+	var state = _scoreboard_state_for_event(event_id) if not event_id.strip_edges().is_empty() else _scoreboard_state_for_events(_events_for_current_game())
+	active_pitcher_panel.set_pitchers(str(state.get("home_pitcher_name", "")), str(state.get("away_pitcher_name", "")))
+
+func _on_select_starting_pitchers_requested() -> void:
+	_open_starting_pitcher_dialog(false)
+
+func _build_starting_pitcher_dialog() -> void:
+	starting_pitcher_dialog = AcceptDialog.new()
+	starting_pitcher_dialog.title = "Select Starting Pitchers"
+	starting_pitcher_dialog.min_size = Vector2i(520, 300)
+	starting_pitcher_dialog.confirmed.connect(_on_starting_pitchers_confirmed)
+	add_child(starting_pitcher_dialog)
+	var box = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	starting_pitcher_dialog.add_child(box)
+	var help = Label.new()
+	help.text = "Choose one player from each roster to act as the starting pitchers for this game."
+	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(help)
+	GameEntryStyle.style_body_label(help)
+	home_starting_pitcher_selector = _add_pitcher_selector_row(box, "Home Pitcher")
+	away_starting_pitcher_selector = _add_pitcher_selector_row(box, "Away Pitcher")
+	starting_pitcher_warning_label = Label.new()
+	starting_pitcher_warning_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(starting_pitcher_warning_label)
+	GameEntryStyle.style_body_label(starting_pitcher_warning_label)
+
+func _add_pitcher_selector_row(parent: VBoxContainer, label_text: String) -> OptionButton:
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+	var label = Label.new()
+	label.custom_minimum_size.x = 120
+	label.text = label_text
+	row.add_child(label)
+	var selector = OptionButton.new()
+	selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(selector)
+	selector.item_selected.connect(func(_index: int) -> void: _refresh_starting_pitcher_warning())
+	return selector
+
+func _open_starting_pitcher_dialog(required: bool = false) -> void:
+	_populate_starting_pitcher_selector(home_starting_pitcher_selector, current_game.home_team_id, current_game.home_starting_pitcher_id)
+	_populate_starting_pitcher_selector(away_starting_pitcher_selector, current_game.away_team_id, current_game.away_starting_pitcher_id)
+	_refresh_starting_pitcher_warning()
+	starting_pitcher_dialog.title = "Select Starting Pitchers" if not required else "Select Starting Pitchers Required"
+	starting_pitcher_dialog.popup_centered(Vector2i(520, 300))
+
+func _populate_starting_pitcher_selector(selector: OptionButton, team_id: String, selected_player_id: String) -> void:
+	selector.clear()
+	selector.add_item("-- Select pitcher --")
+	selector.set_item_metadata(0, "")
+	for player in _players_for_team(team_id):
+		selector.add_item("#%s %s" % [player.jersey_number if not player.jersey_number.is_empty() else "--", player.display_name])
+		selector.set_item_metadata(selector.item_count - 1, player.id)
+	for index in range(selector.item_count):
+		if str(selector.get_item_metadata(index)) == selected_player_id:
+			selector.select(index)
+			return
+	selector.select(0)
+
+func _refresh_starting_pitcher_warning() -> void:
+	if starting_pitcher_warning_label == null or current_game == null:
+		return
+	var selected_home = _selected_option_meta(home_starting_pitcher_selector)
+	var selected_away = _selected_option_meta(away_starting_pitcher_selector)
+	starting_pitcher_dialog.get_ok_button().disabled = selected_home.is_empty() or selected_away.is_empty()
+	var changed_home = selected_home != current_game.home_starting_pitcher_id
+	var changed_away = selected_away != current_game.away_starting_pitcher_id
+	var impacted = _starting_pitcher_impacted_events(changed_home, changed_away)
+	if _events_have_more_than_one_inning() and not impacted.is_empty():
+		starting_pitcher_warning_label.text = "Warning: changing starting pitchers will update pitcher_id on %d event(s) before an official pitching change: %s" % [impacted.size(), ", ".join(impacted)]
+	else:
+		starting_pitcher_warning_label.text = ""
+
+func _on_starting_pitchers_confirmed() -> void:
+	if _selected_option_meta(home_starting_pitcher_selector).is_empty() or _selected_option_meta(away_starting_pitcher_selector).is_empty():
+		_open_starting_pitcher_dialog(true)
+		return
+	var old_home = current_game.home_starting_pitcher_id
+	var old_away = current_game.away_starting_pitcher_id
+	current_game.home_starting_pitcher_id = _selected_option_meta(home_starting_pitcher_selector)
+	current_game.away_starting_pitcher_id = _selected_option_meta(away_starting_pitcher_selector)
+	_apply_starting_pitcher_to_early_events("home", old_home, current_game.home_starting_pitcher_id)
+	_apply_starting_pitcher_to_early_events("away", old_away, current_game.away_starting_pitcher_id)
+	SaveManagerScript.save_project(repository)
+	_refresh_game_context()
+
+func _apply_starting_pitcher_to_early_events(side: String, old_id: String, new_id: String) -> void:
+	if old_id == new_id or new_id.strip_edges().is_empty():
+		return
+	for event in _events_before_first_pitching_change(side):
+		if old_id.strip_edges().is_empty() or event.pitcher_id == old_id:
+			event.pitcher_id = new_id
+
+func _events_before_first_pitching_change(side: String) -> Array:
+	var output: Array = []
+	for event in _events_for_current_game():
+		var event_side = "home" if event.half_inning == "top" else "away"
+		if event_side != side:
+			continue
+		if _normalize_event_type(str(event.details.get("event_type", event.event_type))) == "pitching_change":
+			break
+		output.append(event)
+	return output
+
+func _starting_pitcher_impacted_events(changed_home: bool, changed_away: bool) -> Array[String]:
+	var impacted: Array[String] = []
+	if changed_home:
+		for event in _events_before_first_pitching_change("home"):
+			impacted.append("#%d %s" % [event.sequence_number, event.event_type])
+	if changed_away:
+		for event in _events_before_first_pitching_change("away"):
+			impacted.append("#%d %s" % [event.sequence_number, event.event_type])
+	return impacted
+
+func _events_have_more_than_one_inning() -> bool:
+	for event in _events_for_current_game():
+		if event.inning > 1:
+			return true
+	return false
+
+func _selected_option_meta(selector: OptionButton) -> String:
+	return str(selector.get_item_metadata(selector.selected)) if selector != null and selector.selected >= 0 else ""
