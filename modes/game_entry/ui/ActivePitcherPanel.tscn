@@ -1,0 +1,51 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://modes/game_entry/ui/ActivePitcherPanel.gd" id="1_active_pitcher"]
+
+[node name="ActivePitcherPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 130)
+script = ExtResource("1_active_pitcher")
+
+[node name="ActivePitcherBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ActivePitcherTitleLabel" type="Label" parent="ActivePitcherBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Active Pitchers"
+
+[node name="HomePitcherRow" type="HBoxContainer" parent="ActivePitcherBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HomePitcherLabel" type="Label" parent="ActivePitcherBox/HomePitcherRow"]
+layout_mode = 2
+text = "Home Pitcher"
+
+[node name="HomePitcherValue" type="Label" parent="ActivePitcherBox/HomePitcherRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "No pitcher selected"
+autowrap_mode = 3
+
+[node name="AwayPitcherRow" type="HBoxContainer" parent="ActivePitcherBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AwayPitcherLabel" type="Label" parent="ActivePitcherBox/AwayPitcherRow"]
+layout_mode = 2
+text = "Away Pitcher"
+
+[node name="AwayPitcherValue" type="Label" parent="ActivePitcherBox/AwayPitcherRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "No pitcher selected"
+autowrap_mode = 3
+
+[node name="SelectStartingPitchersButton" type="Button" parent="ActivePitcherBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Select Starting Pitchers"

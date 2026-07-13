@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://modes/game_entry/game_entry.gd" id="1_game_entry"]
 [ext_resource type="Script" path="res://modes/game_entry/WorkspacePanel.gd" id="2_workspace_panel"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/EventSummaryPanel.tscn" id="6_event_summary_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/SkinnyEventHistoryPanel.tscn" id="7_skinny_history_panel"]
 [ext_resource type="PackedScene" path="res://modes/game_entry/ui/CompactScoreboardPanel.tscn" id="8_compact_scoreboard_panel"]
+[ext_resource type="PackedScene" path="res://modes/game_entry/ui/ActivePitcherPanel.tscn" id="9_active_pitcher_panel"]
 
 [node name="GameEntryMode" type="Control"]
 custom_minimum_size = Vector2(960, 540)
@@ -82,6 +83,10 @@ text = "Edit Batting Lineup"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Add Player"
+
+[node name="ActivePitcherPanel" parent="RootMarginContainer/MainVBox/MainContentRow/LeftDock/LeftDockBox" instance=ExtResource("9_active_pitcher_panel")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [node name="CenterDock" type="PanelContainer" parent="RootMarginContainer/MainVBox/MainContentRow"]
 unique_name_in_owner = true
