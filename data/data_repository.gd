@@ -84,14 +84,18 @@ func create_player_for_team(team_id: String, player_data: Dictionary) -> Player:
 	if team == null:
 		push_error("Cannot create player for missing team: %s" % team_id)
 		return null
-	var display_name = str(player_data.get("display_name", "")).strip_edges()
+	var first_name = str(player_data.get("first_name", "")).strip_edges()
+	var last_name = str(player_data.get("last_name", "")).strip_edges()
+	var display_name = str(player_data.get("display_name", last_name)).strip_edges()
 	if display_name.is_empty():
-		push_error("Cannot create player without a display name.")
+		push_error("Cannot create player without a last name or display name.")
 		return null
 	var player_id = str(player_data.get("id", "")).strip_edges()
 	if player_id.is_empty():
 		player_id = _next_entity_id("player")
 	var player = PlayerModel.new(player_id, team_id, display_name)
+	player.first_name = first_name
+	player.last_name = last_name
 	player.jersey_number = str(player_data.get("jersey_number", "")).strip_edges()
 	var position = str(player_data.get("position", "")).strip_edges()
 	player.positions = [] if position.is_empty() else [position]
