@@ -31,4 +31,4 @@ func _apply_style() -> void:
 	GameEntryStyle.style_title_label(title_label)
 	for label in [home_pitcher_value, away_pitcher_value]:
 		GameEntryStyle.style_body_label(label)
-	GameEntryStyle.style_primary_button(select_button)
+	GameEntryStyle.style_button(select_button)
