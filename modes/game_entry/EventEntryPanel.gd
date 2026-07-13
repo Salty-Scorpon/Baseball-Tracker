@@ -329,7 +329,7 @@ func _default_detail_value(field: String) -> String:
 		return "true"
 	if field == "sacrifice_fly" and _event_type == "sacrifice_fly":
 		return "true"
-	if field == "outs_added" and _event_type in ["sacrifice_bunt", "sacrifice_fly", "caught_stealing"]:
+	if field == "outs_added" and _event_type in ["strikeout", "groundout", "flyout", "fielders_choice", "sacrifice_bunt", "sacrifice_fly", "caught_stealing"]:
 		return "1"
 	if field == "outs_added" and _event_type == "double_play":
 		return "2"

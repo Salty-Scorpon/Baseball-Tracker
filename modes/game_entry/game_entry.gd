@@ -74,7 +74,7 @@ const SHORTCUT_EVENT_TYPES = {
 	KEY_C: "fielders_choice",
 	KEY_B: "stolen_base",
 	KEY_P: "pitching_change",
-	KEY_U: "substitution",
+	KEY_U: "pinch_hitter",
 }
 
 func _ready() -> void:
@@ -612,15 +612,72 @@ func _legacy_event_label(event_type: String) -> String:
 	return str(labels.get(event_type, event_type.replace("_", " ").capitalize()))
 
 func _placeholder_outs_added(event_type: String, details: Dictionary) -> int:
-	if details.has("out_assignments") and details["out_assignments"] is Array:
+	var manual_overrides = Dictionary(details.get("manual_overrides", {})) if details.get("manual_overrides", {}) is Dictionary else {}
+	if manual_overrides.has("outs"):
+		return max(0, int(manual_overrides.get("outs", 0)))
+	var explicit_outs = _explicit_outs_added_from_details(details)
+	if explicit_outs >= 0:
+		return explicit_outs
+	var advancement_outs = _outs_added_from_runner_advancements(details.get("runner_advancements", []))
+	if advancement_outs > 0:
+		return advancement_outs
+	if details.has("out_assignments") and details["out_assignments"] is Array and not details["out_assignments"].is_empty():
 		return min(3, details["out_assignments"].size())
-	if ["strikeout", "groundout", "flyout", "sacrifice_bunt", "sacrifice_fly", "caught_stealing"].has(event_type):
-		return 1
-	if event_type == "double_play":
-		return 2
-	if event_type == "triple_play":
-		return 3
+	match event_type:
+		"strikeout", "groundout", "flyout", "fielders_choice", "sacrifice_bunt", "sacrifice_fly", "caught_stealing":
+			return 1
+		"double_play":
+			return 2
+		"triple_play":
+			return 3
+		"dropped_third_strike":
+			return 1 if _dropped_third_strike_batter_is_out(details) else 0
+		"pickoff":
+			return 1 if _pickoff_runner_is_out(details) else 0
 	return 0
+
+func _explicit_outs_added_from_details(details: Dictionary) -> int:
+	for source in [details, Dictionary(details.get("event_details", {})) if details.get("event_details", {}) is Dictionary else {}]:
+		if source.has("outs_added") and str(source.get("outs_added", "")).strip_edges().is_valid_int():
+			return max(0, int(source.get("outs_added", 0)))
+		for section in source.values():
+			if section is Dictionary and section.has("outs_added") and str(section.get("outs_added", "")).strip_edges().is_valid_int():
+				return max(0, int(section.get("outs_added", 0)))
+	return -1
+
+func _outs_added_from_runner_advancements(advancements: Variant) -> int:
+	if not (advancements is Array):
+		return 0
+	var total = 0
+	for advancement in advancements:
+		if advancement is Dictionary:
+			var end_base = str(advancement.get("end_base", "")).strip_edges().to_upper()
+			if bool(advancement.get("out", false)) or end_base == "OUT":
+				total += 1
+	return min(3, total)
+
+func _dropped_third_strike_batter_is_out(details: Dictionary) -> bool:
+	var flat = _flatten_detail_sections(details)
+	var result = str(flat.get("batter_reached_or_out", flat.get("result", ""))).strip_edges().to_lower()
+	return result in ["out", "batter_out", "retired"]
+
+func _pickoff_runner_is_out(details: Dictionary) -> bool:
+	var flat = _flatten_detail_sections(details)
+	return str(flat.get("safe_or_out", "")).strip_edges().to_lower() in ["out", "caught", "retired"]
+
+func _flatten_detail_sections(details: Dictionary) -> Dictionary:
+	var output = {}
+	for key in details.keys():
+		if details[key] is Dictionary:
+			for nested_key in details[key].keys():
+				if details[key][nested_key] is Dictionary:
+					for leaf_key in details[key][nested_key].keys():
+						output[leaf_key] = details[key][nested_key][leaf_key]
+				else:
+					output[nested_key] = details[key][nested_key]
+		else:
+			output[key] = details[key]
+	return output
 
 func _payload_runs_scored(payload: Dictionary, event_type: String, details: Dictionary) -> int:
 	var raw_runs = payload.get("runs_scored", null)
