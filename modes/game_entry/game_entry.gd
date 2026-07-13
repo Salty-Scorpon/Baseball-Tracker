@@ -33,7 +33,8 @@ var repository: DataRepository
 var current_game: Game
 var add_player_dialog: AcceptDialog
 var jersey_number_field: LineEdit
-var display_name_field: LineEdit
+var first_name_field: LineEdit
+var last_name_field: LineEdit
 var position_field: LineEdit
 var bats_field: LineEdit
 var throws_field: LineEdit
@@ -560,7 +561,8 @@ func _build_add_player_dialog() -> void:
 	box.add_theme_constant_override("separation", 8)
 	add_player_dialog.add_child(box)
 	jersey_number_field = _add_line_field(box, "Jersey number")
-	display_name_field = _add_line_field(box, "Display name")
+	first_name_field = _add_line_field(box, "First name")
+	last_name_field = _add_line_field(box, "Last name")
 	position_field = _add_line_field(box, "Position (optional)")
 	bats_field = _add_line_field(box, "Bats (optional)")
 	throws_field = _add_line_field(box, "Throws (optional)")
@@ -576,7 +578,7 @@ func _build_add_player_dialog() -> void:
 	duplicate_warning_label = Label.new()
 	duplicate_warning_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(duplicate_warning_label)
-	for field in [jersey_number_field, display_name_field, position_field, bats_field, throws_field]:
+	for field in [jersey_number_field, first_name_field, last_name_field, position_field, bats_field, throws_field]:
 		field.text_changed.connect(func(_text: String) -> void: _validate_add_player_dialog())
 	GameEntryStyle.style_body_label(validation_label)
 	GameEntryStyle.style_body_label(duplicate_warning_label)
@@ -591,14 +593,14 @@ func _add_line_field(parent: VBoxContainer, label_text: String) -> LineEdit:
 	return field
 
 func _clear_add_player_dialog() -> void:
-	for field in [jersey_number_field, display_name_field, position_field, bats_field, throws_field]:
+	for field in [jersey_number_field, first_name_field, last_name_field, position_field, bats_field, throws_field]:
 		field.text = ""
 	notes_field.text = ""
 
 func _validate_add_player_dialog() -> bool:
 	var errors: Array[String] = []
-	if display_name_field.text.strip_edges().is_empty():
-		errors.append("Display name is required.")
+	if last_name_field.text.strip_edges().is_empty():
+		errors.append("Last name is required.")
 	if _pending_add_team_id.strip_edges().is_empty():
 		errors.append("Select a Home or Away team before adding a player.")
 	var duplicate = repository != null and repository.has_duplicate_jersey_number(_pending_add_team_id, jersey_number_field.text)
@@ -613,7 +615,8 @@ func _on_add_player_confirmed() -> void:
 		return
 	var player = repository.create_player_for_team(_pending_add_team_id, {
 		"jersey_number": jersey_number_field.text,
-		"display_name": display_name_field.text,
+		"first_name": first_name_field.text,
+		"last_name": last_name_field.text,
 		"position": position_field.text,
 		"bats": bats_field.text,
 		"throws": throws_field.text,
