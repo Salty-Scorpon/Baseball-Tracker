@@ -88,6 +88,7 @@ func _ready() -> void:
 	workspace_panel.event_payload_changed.connect(_on_workspace_event_payload_changed)
 	workspace_panel.event_selected.connect(_on_workspace_event_selected)
 	workspace_panel.event_edit_requested.connect(_on_workspace_event_edit_requested)
+	workspace_panel.event_delete_requested.connect(_on_workspace_event_delete_requested)
 	workspace_panel.event_creation_cancel_requested.connect(_on_workspace_event_creation_cancel_requested)
 	event_summary_panel.confirm_requested.connect(_on_event_summary_confirm_requested)
 	event_summary_panel.cancel_requested.connect(_on_event_summary_cancel_requested)
@@ -206,6 +207,11 @@ func _apply_event_history_action(action: Dictionary, undo: bool) -> bool:
 			var snapshot = action.get("before", {}) if undo else action.get("after", {})
 			var event: GameEvent = _event_from_history_snapshot(snapshot)
 			return event != null and repository.update_game_event(event)
+		"delete":
+			var deleted_event: GameEvent = _event_from_history_snapshot(action.get("before", {}))
+			if deleted_event == null:
+				return false
+			return repository.append_game_event(deleted_event) if undo else repository.remove_game_event(deleted_event.id)
 	return false
 
 func _complete_event_history_action(message: String, selected_event_id: String) -> void:
@@ -235,11 +241,13 @@ func _event_history_action_label(action: Dictionary, undo: bool) -> String:
 			return "created event %s" % event_id
 		"update":
 			return "event edit %s" % event_id
+		"delete":
+			return "deleted event %s" % event_id
 	return "event-log action"
 
 func _selection_after_event_history_action(action: Dictionary, undo: bool) -> String:
 	var action_type = str(action.get("type", ""))
-	if action_type == "create" and undo:
+	if (action_type == "create" and undo) or (action_type == "delete" and not undo):
 		var events = _events_for_current_game()
 		return events.back().id if not events.is_empty() else ""
 	var snapshot = action.get("before", {}) if undo else action.get("after", {})
@@ -295,6 +303,7 @@ func _refresh_game_context() -> void:
 	team_quick_roster_panel.set_team_ids(current_game.home_team_id, current_game.away_team_id)
 	team_quick_roster_panel.set_home_roster(_players_for_team(current_game.home_team_id))
 	team_quick_roster_panel.set_away_roster(_players_for_team(current_game.away_team_id))
+	_load_batting_lineups_for_current_game()
 	team_quick_roster_panel.set_active_batter_ids(_active_batter_id_for_team(current_game.home_team_id), _active_batter_id_for_team(current_game.away_team_id))
 	_update_add_player_button_state()
 	var home_team: Team = repository.find_entity_by_id(current_game.home_team_id, "teams")
@@ -399,6 +408,37 @@ func _on_workspace_event_edit_requested(event_id: String) -> void:
 	event_summary_panel.set_preview_text(EventSummaryFormatterScript.summarize(_current_payload))
 	event_summary_panel.set_validation_messages(_current_validation_messages)
 	event_summary_panel.set_active(not EventValidatorScript.has_errors(_current_validation_messages))
+
+func _on_workspace_event_delete_requested(event_id: String) -> void:
+	if _is_current_game_finalized():
+		event_summary_panel.set_validation_messages([{ "severity": "warning", "message": "This game is marked Final; deleting is locked until a formal unlock workflow is added." }])
+		return
+	var event = _find_current_game_event(event_id)
+	if event == null:
+		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not find event %s in the current game log." % event_id }])
+		return
+	var events = _events_for_current_game()
+	if events.is_empty() or events.back().id != event_id:
+		event_summary_panel.set_validation_messages([{ "severity": "warning", "message": "Only the latest event can be deleted." }])
+		return
+	var history_action = {"type": "delete", "before": _event_history_snapshot(event), "after": {}}
+	if not repository.remove_game_event(event_id):
+		event_summary_panel.set_validation_messages([{ "severity": "error", "message": "Could not delete event %s from the current game log." % event_id }])
+		return
+	_record_event_history_action(history_action)
+	SaveManagerScript.save_project(repository)
+	_selected_event_id = ""
+	_editing_event_id = ""
+	_current_payload.clear()
+	_current_validation_messages.clear()
+	_refresh_game_context()
+	workspace_panel.show_review_mode()
+	var remaining_events = _events_for_current_game()
+	if remaining_events.is_empty():
+		event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Deleted event %s." % event_id }])
+	else:
+		_select_event(remaining_events.back().id, "delete")
+		event_summary_panel.set_validation_messages([{ "severity": "info", "message": "Deleted event %s." % event_id }])
 
 func _on_workspace_event_creation_cancel_requested() -> void:
 	_editing_event_id = ""
@@ -822,9 +862,31 @@ func _on_lineup_confirmed() -> void:
 	for selector in lineup_selectors:
 		lineup.append(str(selector.get_meta("selected_player_id", "")))
 	team_quick_roster_panel.set_lineup_for_side(_editing_lineup_side, lineup)
+	_save_batting_lineup_for_current_game(_editing_lineup_side, lineup)
 	if current_game != null:
 		team_quick_roster_panel.set_active_batter_ids(_active_batter_id_for_team(current_game.home_team_id), _active_batter_id_for_team(current_game.away_team_id))
 	event_summary_panel.set_selected_event_summary("Updated %s batting lineup." % _editing_lineup_side.capitalize())
+
+func _load_batting_lineups_for_current_game() -> void:
+	if current_game == null:
+		return
+	team_quick_roster_panel.set_lineup_for_side("home", current_game.home_batting_lineup)
+	team_quick_roster_panel.set_lineup_for_side("away", current_game.away_batting_lineup)
+
+func _save_batting_lineup_for_current_game(side: String, lineup: Array) -> void:
+	if current_game == null:
+		return
+	var normalized_side = side.to_lower()
+	var saved_lineup: Array[String] = []
+	for index in range(9):
+		saved_lineup.append(str(lineup[index]) if index < lineup.size() else "")
+	if normalized_side == "home":
+		current_game.home_batting_lineup = saved_lineup
+	elif normalized_side == "away":
+		current_game.away_batting_lineup = saved_lineup
+	else:
+		return
+	SaveManagerScript.save_project(repository)
 
 func _on_roster_team_tab_changed(side: String) -> void:
 	_selected_player_id = ""

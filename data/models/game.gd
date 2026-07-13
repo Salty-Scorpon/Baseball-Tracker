@@ -17,6 +17,8 @@ var notes: String
 var event_ids: Array[String]
 var home_starting_pitcher_id: String
 var away_starting_pitcher_id: String
+var home_batting_lineup: Array[String]
+var away_batting_lineup: Array[String]
 
 func _init(p_id: String = "", p_competition_id: String = "") -> void:
 	id = p_id
@@ -33,9 +35,11 @@ func _init(p_id: String = "", p_competition_id: String = "") -> void:
 	event_ids = []
 	home_starting_pitcher_id = ""
 	away_starting_pitcher_id = ""
+	home_batting_lineup = []
+	away_batting_lineup = []
 
 func to_dict() -> Dictionary:
-	return {"id": id, "competition_id": competition_id, "home_team_id": home_team_id, "away_team_id": away_team_id, "date": date, "start_time": start_time, "venue": venue, "round": round, "game_number": game_number, "status": status, "notes": notes, "event_ids": event_ids.duplicate(), "home_starting_pitcher_id": home_starting_pitcher_id, "away_starting_pitcher_id": away_starting_pitcher_id}
+	return {"id": id, "competition_id": competition_id, "home_team_id": home_team_id, "away_team_id": away_team_id, "date": date, "start_time": start_time, "venue": venue, "round": round, "game_number": game_number, "status": status, "notes": notes, "event_ids": event_ids.duplicate(), "home_starting_pitcher_id": home_starting_pitcher_id, "away_starting_pitcher_id": away_starting_pitcher_id, "home_batting_lineup": home_batting_lineup.duplicate(), "away_batting_lineup": away_batting_lineup.duplicate()}
 
 static func from_dict(data: Dictionary) -> Game:
 	var game = Game.new(str(data.get("id", "")), str(data.get("competition_id", "")))
@@ -51,6 +55,8 @@ static func from_dict(data: Dictionary) -> Game:
 	game.event_ids.assign(data.get("event_ids", []))
 	game.home_starting_pitcher_id = str(data.get("home_starting_pitcher_id", ""))
 	game.away_starting_pitcher_id = str(data.get("away_starting_pitcher_id", ""))
+	game.home_batting_lineup.assign(data.get("home_batting_lineup", []))
+	game.away_batting_lineup.assign(data.get("away_batting_lineup", []))
 	return game
 
 func validate() -> PackedStringArray:
